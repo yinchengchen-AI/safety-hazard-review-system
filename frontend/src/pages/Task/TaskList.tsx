@@ -28,6 +28,13 @@ const statusMap: Record<string, { color: string; text: string }> = {
   cancelled: { color: 'default', text: '已取消' },
 }
 
+const reportStatusMap: Record<string, { color: string; text: string }> = {
+  pending: { color: 'blue', text: '生成中' },
+  processing: { color: 'processing', text: '处理中' },
+  completed: { color: 'success', text: '已完成' },
+  failed: { color: 'error', text: '生成失败' },
+}
+
 const { Title, Text } = Typography
 
 function TaskList() {
@@ -92,6 +99,19 @@ function TaskList() {
       render: (status: string) => (
         <Tag color={statusMap[status]?.color}>{statusMap[status]?.text}</Tag>
       ),
+    },
+    {
+      title: '报告状态',
+      dataIndex: 'report_status',
+      key: 'report_status',
+      render: (report_status: string | undefined) =>
+        report_status ? (
+          <Tag color={reportStatusMap[report_status]?.color}>
+            {reportStatusMap[report_status]?.text || report_status}
+          </Tag>
+        ) : (
+          <span>-</span>
+        ),
     },
     {
       title: '操作',

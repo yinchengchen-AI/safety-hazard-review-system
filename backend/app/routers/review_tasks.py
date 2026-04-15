@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 from app.core.database import get_db
 from app.schemas import ReviewTaskCreate, ReviewTaskResponse, ReviewTaskDetailResponse, TaskHazardReview, TaskHazardResponse, BatchReviewRequest
-from app.models import ReviewTask, Hazard, TaskHazard, HazardStatusHistory, User, Photo
+from app.models import ReviewTask, Hazard, TaskHazard, HazardStatusHistory, User, Photo, Report
 from app.dependencies.auth import get_current_active_user
 from app.services.report_orchestration_service import ReportOrchestrationService
 
@@ -120,6 +120,14 @@ async def list_review_tasks(
             )
         )
         resp.reviewed_count = reviewed_result.scalar()
+
+        # Report status
+        report_result = await db.execute(
+            select(Report.status).where(Report.task_id == task.id)
+        )
+        report_status = report_result.scalar_one_or_none()
+        resp.report_status = report_status
+
         responses.append(resp)
 
     return responses

@@ -24,6 +24,7 @@ class ReviewTaskResponse(BaseModel):
     creator_username: Optional[str] = None
     hazard_count: int = 0
     reviewed_count: int = 0
+    report_status: Optional[str] = None
 
 
 class ReviewTaskDetailResponse(ReviewTaskResponse):
