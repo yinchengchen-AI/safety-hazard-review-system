@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
@@ -8,6 +8,7 @@ from app.schemas import ReportStatusResponse, ReportGenerateResponse
 from app.models import Report
 from app.dependencies.auth import get_current_active_user
 from app.services.report_orchestration_service import ReportOrchestrationService
+from app.services.storage_service import StorageService
 
 router = APIRouter()
 
@@ -52,4 +53,25 @@ async def download_report(
     if not path:
         raise HTTPException(status_code=404, detail=f"{format} report not available")
 
-    return {"download_url": path}
+    storage = StorageService()
+    try:
+        data = storage.get_file(path)
+        content = data.read()
+        data.close()
+        data.release_conn()
+    except Exception:
+        raise HTTPException(status_code=404, detail="Report file not found in storage")
+
+    content_type = (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        if format == "word"
+        else "application/pdf"
+    )
+    extension = "docx" if format == "word" else "pdf"
+    filename = f"report_{task_id}.{extension}"
+
+    return Response(
+        content=content,
+        media_type=content_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

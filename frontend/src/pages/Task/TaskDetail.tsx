@@ -22,7 +22,7 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import { UploadOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import { getTask, reviewHazard, removeHazardFromTask, batchReviewHazard, completeTask } from '../../api/task'
 import { uploadPhoto, deletePhoto } from '../../api/photo'
-import { generateReport, getReportStatus, downloadReport } from '../../api/report'
+import { generateReport, getReportStatus } from '../../api/report'
 
 const statusMap: Record<string, { color: string; text: string }> = {
   pending: { color: 'orange', text: '待复核' },
@@ -442,13 +442,13 @@ function TaskDetail() {
             )}
             {reportStatus?.status === 'completed' && task.status !== 'cancelled' && (
               <>
-                <Button onClick={async () => {
-                  const res: any = await downloadReport(id!, 'word')
-                  window.open(res.download_url, '_blank')
+                <Button onClick={() => {
+                  const token = localStorage.getItem('token') || ''
+                  window.location.href = `/api/v1/reports/${id}/download?format=word&token=${encodeURIComponent(token)}`
                 }}>下载 Word</Button>
-                <Button onClick={async () => {
-                  const res: any = await downloadReport(id!, 'pdf')
-                  window.open(res.download_url, '_blank')
+                <Button onClick={() => {
+                  const token = localStorage.getItem('token') || ''
+                  window.location.href = `/api/v1/reports/${id}/download?format=pdf&token=${encodeURIComponent(token)}`
                 }}>下载 PDF</Button>
               </>
             )}

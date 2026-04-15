@@ -53,11 +53,8 @@ class StorageService:
             content_type=f"image/{ext}" if ext != "jpg" else "image/jpeg",
         )
 
-        # Build URLs (presigned or direct)
-        original_url = f"/{self.bucket}/{object_name}"
-        thumbnail_url = f"/{self.bucket}/{thumb_name}"
-
-        return original_url, thumbnail_url
+        # Return object names for backend proxying
+        return object_name, thumb_name
 
     def upload_file(self, content: bytes, object_name: str, content_type: str = "application/octet-stream") -> str:
         self.client.put_object(
@@ -67,7 +64,7 @@ class StorageService:
             length=len(content),
             content_type=content_type,
         )
-        return f"/{self.bucket}/{object_name}"
+        return object_name
 
     def get_file(self, object_name: str):
         # object_name should not include bucket prefix

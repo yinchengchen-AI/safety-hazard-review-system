@@ -5,7 +5,7 @@ celery_app = Celery(
     "safety_hazard",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.tasks.report_tasks"],
+    include=["app.tasks.report_tasks", "app.tasks.photo_cleanup_tasks"],
 )
 
 celery_app.conf.update(
