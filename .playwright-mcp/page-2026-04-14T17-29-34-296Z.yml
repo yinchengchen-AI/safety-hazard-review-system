@@ -1,0 +1,351 @@
+- generic [ref=e35]:
+  - banner [ref=e36]:
+    - generic [ref=e37]: 安全生产隐患复核系统
+    - button "退出登录" [ref=e38] [cursor=pointer]:
+      - generic [ref=e39]: 退出登录
+  - generic [ref=e40]:
+    - complementary [ref=e41]:
+      - menu [ref=e43]:
+        - menuitem "隐患管理" [ref=e44] [cursor=pointer]:
+          - generic [ref=e45]: 隐患管理
+        - menuitem "批量导入" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: 批量导入
+        - menuitem "导入历史" [ref=e48] [cursor=pointer]:
+          - generic [ref=e49]: 导入历史
+        - menuitem "复核任务" [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]: 复核任务
+        - menuitem "统计分析" [ref=e52] [cursor=pointer]:
+          - generic [ref=e53]: 统计分析
+        - menuitem "用户管理" [ref=e54] [cursor=pointer]:
+          - generic [ref=e55]: 用户管理
+    - main [ref=e56]:
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - button "批量导入" [ref=e60] [cursor=pointer]:
+            - generic [ref=e61]: 批量导入
+          - button "创建复核任务 (0)" [disabled] [ref=e63]:
+            - generic: 创建复核任务 (0)
+        - generic [ref=e66]:
+          - table [ref=e70]:
+            - rowgroup [ref=e73]:
+              - row "Select all 企业 统一社会信用代码 属地 详细地址 负责人 隐患描述 位置 批次 状态 复核次数" [ref=e74]:
+                - columnheader "Select all" [ref=e75]:
+                  - checkbox "Select all" [ref=e79] [cursor=pointer]
+                - columnheader "企业" [ref=e81]
+                - columnheader "统一社会信用代码" [ref=e82]
+                - columnheader "属地" [ref=e83]
+                - columnheader "详细地址" [ref=e84]
+                - columnheader "负责人" [ref=e85]
+                - columnheader "隐患描述" [ref=e86]
+                - columnheader "位置" [ref=e87]
+                - columnheader "批次" [ref=e88]
+                - columnheader "状态" [ref=e89]
+                - columnheader "复核次数" [ref=e90]
+            - rowgroup [ref=e91]:
+              - row "阿尔泰山机械 高空作业未系安全带 仓库B区 hazards_100.xlsx 待复核 0" [ref=e92]:
+                - cell [ref=e93]:
+                  - checkbox [ref=e96] [cursor=pointer]
+                - cell "阿尔泰山机械" [ref=e98]
+                - cell [ref=e99]
+                - cell [ref=e100]
+                - cell [ref=e101]
+                - cell [ref=e102]
+                - cell "高空作业未系安全带" [ref=e103]
+                - cell "仓库B区" [ref=e104]
+                - cell "hazards_100.xlsx" [ref=e105]
+                - cell "待复核" [ref=e106]:
+                  - generic [ref=e107]: 待复核
+                - cell "0" [ref=e108]
+              - row "褒禅山物流 管道阀门泄漏 锅炉房 hazards_100.xlsx 待复核 0" [ref=e109]:
+                - cell [ref=e110]:
+                  - checkbox [ref=e113] [cursor=pointer]
+                - cell "褒禅山物流" [ref=e115]
+                - cell [ref=e116]
+                - cell [ref=e117]
+                - cell [ref=e118]
+                - cell [ref=e119]
+                - cell "管道阀门泄漏" [ref=e120]
+                - cell "锅炉房" [ref=e121]
+                - cell "hazards_100.xlsx" [ref=e122]
+                - cell "待复核" [ref=e123]:
+                  - generic [ref=e124]: 待复核
+                - cell "0" [ref=e125]
+              - row "北方钢铁 配电箱未上锁 配电房 hazards_100.xlsx 待复核 0" [ref=e126]:
+                - cell [ref=e127]:
+                  - checkbox [ref=e130] [cursor=pointer]
+                - cell "北方钢铁" [ref=e132]
+                - cell [ref=e133]
+                - cell [ref=e134]
+                - cell [ref=e135]
+                - cell [ref=e136]
+                - cell "配电箱未上锁" [ref=e137]
+                - cell "配电房" [ref=e138]
+                - cell "hazards_100.xlsx" [ref=e139]
+                - cell "待复核" [ref=e140]:
+                  - generic [ref=e141]: 待复核
+                - cell "0" [ref=e142]
+              - row "博平岭化工 警示标识脱落 三号车间 hazards_100.xlsx 待复核 0" [ref=e143]:
+                - cell [ref=e144]:
+                  - checkbox [ref=e147] [cursor=pointer]
+                - cell "博平岭化工" [ref=e149]
+                - cell [ref=e150]
+                - cell [ref=e151]
+                - cell [ref=e152]
+                - cell [ref=e153]
+                - cell "警示标识脱落" [ref=e154]
+                - cell "三号车间" [ref=e155]
+                - cell "hazards_100.xlsx" [ref=e156]
+                - cell "待复核" [ref=e157]:
+                  - generic [ref=e158]: 待复核
+                - cell "0" [ref=e159]
+              - row "大别山矿业 实验室通风橱故障 实验室 hazards_100.xlsx 待复核 0" [ref=e160]:
+                - cell [ref=e161]:
+                  - checkbox [ref=e164] [cursor=pointer]
+                - cell "大别山矿业" [ref=e166]
+                - cell [ref=e167]
+                - cell [ref=e168]
+                - cell [ref=e169]
+                - cell [ref=e170]
+                - cell "实验室通风橱故障" [ref=e171]
+                - cell "实验室" [ref=e172]
+                - cell "hazards_100.xlsx" [ref=e173]
+                - cell "待复核" [ref=e174]:
+                  - generic [ref=e175]: 待复核
+                - cell "0" [ref=e176]
+              - row "大桂山矿业 坑洞无盖板 实验室 hazards_100.xlsx 待复核 0" [ref=e177]:
+                - cell [ref=e178]:
+                  - checkbox [ref=e181] [cursor=pointer]
+                - cell "大桂山矿业" [ref=e183]
+                - cell [ref=e184]
+                - cell [ref=e185]
+                - cell [ref=e186]
+                - cell [ref=e187]
+                - cell "坑洞无盖板" [ref=e188]
+                - cell "实验室" [ref=e189]
+                - cell "hazards_100.xlsx" [ref=e190]
+                - cell "待复核" [ref=e191]:
+                  - generic [ref=e192]: 待复核
+                - cell "0" [ref=e193]
+              - row "大苗山电力 高空作业未系安全带 一号车间 hazards_100.xlsx 待复核 0" [ref=e194]:
+                - cell [ref=e195]:
+                  - checkbox [ref=e198] [cursor=pointer]
+                - cell "大苗山电力" [ref=e200]
+                - cell [ref=e201]
+                - cell [ref=e202]
+                - cell [ref=e203]
+                - cell [ref=e204]
+                - cell "高空作业未系安全带" [ref=e205]
+                - cell "一号车间" [ref=e206]
+                - cell "hazards_100.xlsx" [ref=e207]
+                - cell "待复核" [ref=e208]:
+                  - generic [ref=e209]: 待复核
+                - cell "0" [ref=e210]
+              - row "大明山钢铁 基坑支护变形 办公楼二楼 hazards_100.xlsx 待复核 0" [ref=e211]:
+                - cell [ref=e212]:
+                  - checkbox [ref=e215] [cursor=pointer]
+                - cell "大明山钢铁" [ref=e217]
+                - cell [ref=e218]
+                - cell [ref=e219]
+                - cell [ref=e220]
+                - cell [ref=e221]
+                - cell "基坑支护变形" [ref=e222]
+                - cell "办公楼二楼" [ref=e223]
+                - cell "hazards_100.xlsx" [ref=e224]
+                - cell "待复核" [ref=e225]:
+                  - generic [ref=e226]: 待复核
+                - cell "0" [ref=e227]
+              - row "大南山钢铁 动火作业无审批 二号车间 hazards_100.xlsx 待复核 0" [ref=e228]:
+                - cell [ref=e229]:
+                  - checkbox [ref=e232] [cursor=pointer]
+                - cell "大南山钢铁" [ref=e234]
+                - cell [ref=e235]
+                - cell [ref=e236]
+                - cell [ref=e237]
+                - cell [ref=e238]
+                - cell "动火作业无审批" [ref=e239]
+                - cell "二号车间" [ref=e240]
+                - cell "hazards_100.xlsx" [ref=e241]
+                - cell "待复核" [ref=e242]:
+                  - generic [ref=e243]: 待复核
+                - cell "0" [ref=e244]
+              - row "大蜀山化工 辐射源未设警戒 食堂后厨 hazards_100.xlsx 待复核 0" [ref=e245]:
+                - cell [ref=e246]:
+                  - checkbox [ref=e249] [cursor=pointer]
+                - cell "大蜀山化工" [ref=e251]
+                - cell [ref=e252]
+                - cell [ref=e253]
+                - cell [ref=e254]
+                - cell [ref=e255]
+                - cell "辐射源未设警戒" [ref=e256]
+                - cell "食堂后厨" [ref=e257]
+                - cell "hazards_100.xlsx" [ref=e258]
+                - cell "待复核" [ref=e259]:
+                  - generic [ref=e260]: 待复核
+                - cell "0" [ref=e261]
+              - row "大兴安岭电子 动火作业无审批 危化品库 hazards_100.xlsx 待复核 0" [ref=e262]:
+                - cell [ref=e263]:
+                  - checkbox [ref=e266] [cursor=pointer]
+                - cell "大兴安岭电子" [ref=e268]
+                - cell [ref=e269]
+                - cell [ref=e270]
+                - cell [ref=e271]
+                - cell [ref=e272]
+                - cell "动火作业无审批" [ref=e273]
+                - cell "危化品库" [ref=e274]
+                - cell "hazards_100.xlsx" [ref=e275]
+                - cell "待复核" [ref=e276]:
+                  - generic [ref=e277]: 待复核
+                - cell "0" [ref=e278]
+              - row "大瑶山化工 消火栓水压不足 食堂后厨 hazards_100.xlsx 待复核 0" [ref=e279]:
+                - cell [ref=e280]:
+                  - checkbox [ref=e283] [cursor=pointer]
+                - cell "大瑶山化工" [ref=e285]
+                - cell [ref=e286]
+                - cell [ref=e287]
+                - cell [ref=e288]
+                - cell [ref=e289]
+                - cell "消火栓水压不足" [ref=e290]
+                - cell "食堂后厨" [ref=e291]
+                - cell "hazards_100.xlsx" [ref=e292]
+                - cell "待复核" [ref=e293]:
+                  - generic [ref=e294]: 待复核
+                - cell "0" [ref=e295]
+              - row "玳瑁山建材 应急照明损坏 配电房 hazards_100.xlsx 待复核 0" [ref=e296]:
+                - cell [ref=e297]:
+                  - checkbox [ref=e300] [cursor=pointer]
+                - cell "玳瑁山建材" [ref=e302]
+                - cell [ref=e303]
+                - cell [ref=e304]
+                - cell [ref=e305]
+                - cell [ref=e306]
+                - cell "应急照明损坏" [ref=e307]
+                - cell "配电房" [ref=e308]
+                - cell "hazards_100.xlsx" [ref=e309]
+                - cell "待复核" [ref=e310]:
+                  - generic [ref=e311]: 待复核
+                - cell "0" [ref=e312]
+              - row "戴云山钢铁 防护栏杆缺失 二号车间 hazards_100.xlsx 待复核 0" [ref=e313]:
+                - cell [ref=e314]:
+                  - checkbox [ref=e317] [cursor=pointer]
+                - cell "戴云山钢铁" [ref=e319]
+                - cell [ref=e320]
+                - cell [ref=e321]
+                - cell [ref=e322]
+                - cell [ref=e323]
+                - cell "防护栏杆缺失" [ref=e324]
+                - cell "二号车间" [ref=e325]
+                - cell "hazards_100.xlsx" [ref=e326]
+                - cell "待复核" [ref=e327]:
+                  - generic [ref=e328]: 待复核
+                - cell "0" [ref=e329]
+              - row "洞宫山矿业 配电箱未上锁 实验室 hazards_100.xlsx 待复核 0" [ref=e330]:
+                - cell [ref=e331]:
+                  - checkbox [ref=e334] [cursor=pointer]
+                - cell "洞宫山矿业" [ref=e336]
+                - cell [ref=e337]
+                - cell [ref=e338]
+                - cell [ref=e339]
+                - cell [ref=e340]
+                - cell "配电箱未上锁" [ref=e341]
+                - cell "实验室" [ref=e342]
+                - cell "hazards_100.xlsx" [ref=e343]
+                - cell "待复核" [ref=e344]:
+                  - generic [ref=e345]: 待复核
+                - cell "0" [ref=e346]
+              - row "都庞岭电力 安全出口锁闭 办公楼一楼 hazards_100.xlsx 待复核 0" [ref=e347]:
+                - cell [ref=e348]:
+                  - checkbox [ref=e351] [cursor=pointer]
+                - cell "都庞岭电力" [ref=e353]
+                - cell [ref=e354]
+                - cell [ref=e355]
+                - cell [ref=e356]
+                - cell [ref=e357]
+                - cell "安全出口锁闭" [ref=e358]
+                - cell "办公楼一楼" [ref=e359]
+                - cell "hazards_100.xlsx" [ref=e360]
+                - cell "待复核" [ref=e361]:
+                  - generic [ref=e362]: 待复核
+                - cell "0" [ref=e363]
+              - row "峨眉山物流 消火栓水压不足 维修车间 hazards_100.xlsx 待复核 0" [ref=e364]:
+                - cell [ref=e365]:
+                  - checkbox [ref=e368] [cursor=pointer]
+                - cell "峨眉山物流" [ref=e370]
+                - cell [ref=e371]
+                - cell [ref=e372]
+                - cell [ref=e373]
+                - cell [ref=e374]
+                - cell "消火栓水压不足" [ref=e375]
+                - cell "维修车间" [ref=e376]
+                - cell "hazards_100.xlsx" [ref=e377]
+                - cell "待复核" [ref=e378]:
+                  - generic [ref=e379]: 待复核
+                - cell "0" [ref=e380]
+              - row "方山矿业 锅炉水位计模糊 实验室 hazards_100.xlsx 已通过 1" [ref=e381]:
+                - cell [ref=e382]:
+                  - checkbox [ref=e385] [cursor=pointer]
+                - cell "方山矿业" [ref=e387]
+                - cell [ref=e388]
+                - cell [ref=e389]
+                - cell [ref=e390]
+                - cell [ref=e391]
+                - cell "锅炉水位计模糊" [ref=e392]
+                - cell "实验室" [ref=e393]
+                - cell "hazards_100.xlsx" [ref=e394]
+                - cell "已通过" [ref=e395]:
+                  - generic [ref=e396]: 已通过
+                - cell "1" [ref=e397]
+              - row "伏牛山物流 辐射源未设警戒 维修车间 hazards_100.xlsx 待复核 0" [ref=e398]:
+                - cell [ref=e399]:
+                  - checkbox [ref=e402] [cursor=pointer]
+                - cell "伏牛山物流" [ref=e404]
+                - cell [ref=e405]
+                - cell [ref=e406]
+                - cell [ref=e407]
+                - cell [ref=e408]
+                - cell "辐射源未设警戒" [ref=e409]
+                - cell "维修车间" [ref=e410]
+                - cell "hazards_100.xlsx" [ref=e411]
+                - cell "待复核" [ref=e412]:
+                  - generic [ref=e413]: 待复核
+                - cell "0" [ref=e414]
+              - row "浮槎山电力 噪声防护耳塞缺失 办公楼一楼 hazards_100.xlsx 待复核 0" [ref=e415]:
+                - cell [ref=e416]:
+                  - checkbox [ref=e419] [cursor=pointer]
+                - cell "浮槎山电力" [ref=e421]
+                - cell [ref=e422]
+                - cell [ref=e423]
+                - cell [ref=e424]
+                - cell [ref=e425]
+                - cell "噪声防护耳塞缺失" [ref=e426]
+                - cell "办公楼一楼" [ref=e427]
+                - cell "hazards_100.xlsx" [ref=e428]
+                - cell "待复核" [ref=e429]:
+                  - generic [ref=e430]: 待复核
+                - cell "0" [ref=e431]
+          - list [ref=e432]:
+            - listitem "上一页" [ref=e433]:
+              - button "left" [disabled] [ref=e434]:
+                - img "left" [ref=e435]:
+                  - img [ref=e436]
+            - listitem "1" [ref=e438] [cursor=pointer]:
+              - generic [ref=e439]: "1"
+            - listitem "2" [ref=e440] [cursor=pointer]:
+              - generic [ref=e441]: "2"
+            - listitem "3" [ref=e442] [cursor=pointer]:
+              - generic [ref=e443]: "3"
+            - listitem "4" [ref=e444] [cursor=pointer]:
+              - generic [ref=e445]: "4"
+            - listitem "5" [ref=e446] [cursor=pointer]:
+              - generic [ref=e447]: "5"
+            - listitem "下一页" [ref=e448] [cursor=pointer]:
+              - button "right" [ref=e449]:
+                - img "right" [ref=e450]:
+                  - img [ref=e451]
+            - listitem [ref=e453]:
+              - generic "页码" [ref=e454] [cursor=pointer]:
+                - generic [ref=e456]:
+                  - combobox "页码" [ref=e458]
+                  - generic "20 条/页" [ref=e459]
+                - generic:
+                  - img:
+                    - img

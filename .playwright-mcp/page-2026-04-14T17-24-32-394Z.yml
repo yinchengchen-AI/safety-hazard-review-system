@@ -1,0 +1,45 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: 安全生产隐患复核系统
+    - button "退出登录" [ref=e6] [cursor=pointer]:
+      - generic [ref=e7]: 退出登录
+  - generic [ref=e8]:
+    - complementary [ref=e9]:
+      - menu [ref=e11]:
+        - menuitem "隐患管理" [ref=e12] [cursor=pointer]:
+          - generic [ref=e13]: 隐患管理
+        - menuitem "批量导入" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: 批量导入
+        - menuitem "导入历史" [ref=e16] [cursor=pointer]:
+          - generic [ref=e17]: 导入历史
+        - menuitem "复核任务" [ref=e18] [cursor=pointer]:
+          - generic [ref=e19]: 复核任务
+        - menuitem "统计分析" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: 统计分析
+        - menuitem "用户管理" [ref=e22] [cursor=pointer]:
+          - generic [ref=e23]: 用户管理
+    - main [ref=e24]:
+      - generic [ref=e26]:
+        - generic [ref=e29]: 隐患批量导入
+        - generic [ref=e31]:
+          - generic [ref=e33]:
+            - button "upload 选择文件" [ref=e38] [cursor=pointer]:
+              - img "upload" [ref=e40]:
+                - img [ref=e41]
+              - generic [ref=e43]: 选择文件
+            - button "预 览" [ref=e45] [cursor=pointer]:
+              - generic [ref=e46]: 预 览
+            - button "下载 Excel 模板" [ref=e48] [cursor=pointer]:
+              - generic [ref=e49]: 下载 Excel 模板
+            - button "下载 CSV 模板" [ref=e51] [cursor=pointer]:
+              - generic [ref=e52]: 下载 CSV 模板
+          - generic [ref=e54]:
+            - paragraph [ref=e55]:
+              - strong [ref=e56]: 导入说明：
+            - list [ref=e57]:
+              - listitem [ref=e58]: 支持 .xlsx、.xls、.csv 格式文件
+              - listitem [ref=e59]: 文件需包含以下列：企业名称、统一社会信用代码、属地、详细地址、负责人、隐患描述、隐患位置
+              - listitem [ref=e60]: 企业名称和隐患描述为必填项，不能为空
+              - listitem [ref=e61]: 系统会自动检测最近 1 个月内是否已存在相同的企业 + 隐患描述 + 隐患位置，重复数据将被拒绝导入
+              - listitem [ref=e62]: 导入前请先下载模板，按模板格式填写数据
+              - listitem [ref=e63]: 上传文件后点击“预览”可查看前 20 条数据的校验结果，确认无误后再点击“确认导入”

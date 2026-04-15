@@ -1,0 +1,90 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: 安全生产隐患复核系统
+    - button "退出登录" [ref=e6] [cursor=pointer]:
+      - generic [ref=e7]: 退出登录
+  - generic [ref=e8]:
+    - complementary [ref=e9]:
+      - menu [ref=e11]:
+        - menuitem "隐患管理" [ref=e12] [cursor=pointer]:
+          - generic [ref=e13]: 隐患管理
+        - menuitem "批量导入" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: 批量导入
+        - menuitem "导入历史" [ref=e16] [cursor=pointer]:
+          - generic [ref=e17]: 导入历史
+        - menuitem "复核任务" [ref=e18] [cursor=pointer]:
+          - generic [ref=e19]: 复核任务
+        - menuitem "统计分析" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: 统计分析
+        - menuitem "用户管理" [ref=e22] [cursor=pointer]:
+          - generic [ref=e23]: 用户管理
+    - main [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e27]:
+          - button "下载 Excel 模板" [ref=e29] [cursor=pointer]:
+            - generic [ref=e30]: 下载 Excel 模板
+          - button "下载 CSV 模板" [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]: 下载 CSV 模板
+        - generic [ref=e35]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - table:
+                    - rowgroup:
+                      - row "批次名称 导入时间 导入人 总条数 成功数 失败数 操作":
+                        - columnheader "批次名称"
+                        - columnheader "导入时间"
+                        - columnheader "导入人"
+                        - columnheader "总条数"
+                        - columnheader "成功数"
+                        - columnheader "失败数"
+                        - columnheader "操作"
+                    - rowgroup:
+                      - row "hazards_100.xlsx 2026-04-14T16:57:02.526627Z admin 100 0 100 下载失败明细 下载原始文件 删除":
+                        - cell "hazards_100.xlsx"
+                        - cell "2026-04-14T16:57:02.526627Z"
+                        - cell "admin"
+                        - cell "100"
+                        - cell "0"
+                        - cell "100"
+                        - cell "下载失败明细 下载原始文件 删除":
+                          - generic:
+                            - generic:
+                              - button "下载失败明细":
+                                - generic: 下载失败明细
+                            - generic:
+                              - button "下载原始文件":
+                                - generic: 下载原始文件
+                            - generic:
+                              - button "删除":
+                                - generic: 删除
+                      - row "hazards_100.xlsx 2026-04-14T16:46:24.789089Z admin 100 100 0 下载失败明细 下载原始文件 删除":
+                        - cell "hazards_100.xlsx"
+                        - cell "2026-04-14T16:46:24.789089Z"
+                        - cell "admin"
+                        - cell "100"
+                        - cell "100"
+                        - cell "0"
+                        - cell "下载失败明细 下载原始文件 删除":
+                          - generic:
+                            - generic:
+                              - button "下载失败明细":
+                                - generic: 下载失败明细
+                            - generic:
+                              - button "下载原始文件":
+                                - generic: 下载原始文件
+                            - generic:
+                              - button "删除":
+                                - generic: 删除
+        - list [ref=e43]:
+          - listitem "上一页" [ref=e44]:
+            - button "left" [disabled] [ref=e45]:
+              - img "left" [ref=e46]:
+                - img [ref=e47]
+          - listitem "1" [ref=e49] [cursor=pointer]:
+            - generic [ref=e50]: "1"
+          - listitem "下一页" [ref=e51]:
+            - button "right" [disabled] [ref=e52]:
+              - img "right" [ref=e53]:
+                - img [ref=e54]

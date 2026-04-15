@@ -1,0 +1,11 @@
+{
+  "active": true,
+  "iteration": 13,
+  "max_iterations": 100,
+  "started_at": "2026-04-14T15:55:59.999Z",
+  "prompt": "oh-my-claudecode:ralph来执行这个计划",
+  "session_id": "4d3f7ddf-1aaf-469f-8400-6a928d633858",
+  "project_path": "D:\\ClaudeCode\\safety-hazard-review-system\\backend",
+  "linked_ultrawork": true,
+  "last_checked_at": "2026-04-14T17:42:39.691Z"
+}

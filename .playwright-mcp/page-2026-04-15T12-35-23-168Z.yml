@@ -1,0 +1,10 @@
+- generic [ref=e4]:
+  - generic [ref=e7]: 安全生产隐患复核系统
+  - generic [ref=e9]:
+    - textbox "用户名" [ref=e15]
+    - generic [ref=e21]:
+      - textbox "密码" [ref=e22]
+      - img "eye-invisible" [ref=e24] [cursor=pointer]:
+        - img [ref=e25]
+    - button "登 录" [ref=e33] [cursor=pointer]:
+      - generic [ref=e34]: 登 录

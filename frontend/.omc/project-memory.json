@@ -1,0 +1,259 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1776190519538,
+  "projectRoot": "D:\\ClaudeCode\\safety-hazard-review-system\\frontend",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "18.2.0",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "18.2.0",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "5.1.0",
+        "category": "build"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc && vite build",
+      "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+      "preview": "vite preview"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 1,
+      "lastAccessed": 1776190519524,
+      "keyFiles": [
+        "index.html"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1776190519524,
+      "keyFiles": [
+        "App.tsx",
+        "index.css",
+        "main.tsx"
+      ]
+    },
+    "dist\\assets": {
+      "path": "dist\\assets",
+      "purpose": "Static assets",
+      "fileCount": 2,
+      "lastAccessed": 1776190519528,
+      "keyFiles": [
+        "index-AblwY9Lp.js",
+        "index-BuUynwku.css"
+      ]
+    },
+    "src\\api": {
+      "path": "src\\api",
+      "purpose": "API routes",
+      "fileCount": 9,
+      "lastAccessed": 1776190519528,
+      "keyFiles": [
+        "auth.ts",
+        "batch.ts",
+        "hazard.ts"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 0,
+      "lastAccessed": 1776190519528,
+      "keyFiles": []
+    },
+    "src\\pages": {
+      "path": "src\\pages",
+      "purpose": "Page components",
+      "fileCount": 1,
+      "lastAccessed": 1776190519528,
+      "keyFiles": [
+        "Login.tsx"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src\\pages\\Hazard\\HazardList.tsx",
+      "accessCount": 36,
+      "lastAccessed": 1776261442178,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\Batch\\BatchImport.tsx",
+      "accessCount": 13,
+      "lastAccessed": 1776259300364,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\Layout\\index.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1776257491323,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\Task\\TaskList.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1776261675261,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\Task\\TaskDetail.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1776266873664,
+      "type": "file"
+    },
+    {
+      "path": ".eslintrc.cjs",
+      "accessCount": 4,
+      "lastAccessed": 1776257307104,
+      "type": "file"
+    },
+    {
+      "path": "src\\api\\hazard.ts",
+      "accessCount": 3,
+      "lastAccessed": 1776257133711,
+      "type": "file"
+    },
+    {
+      "path": "src\\api\\photo.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776190635104,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 2,
+      "lastAccessed": 1776257114195,
+      "type": "directory"
+    },
+    {
+      "path": "src\\App.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776257120741,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 1,
+      "lastAccessed": 1776190695173,
+      "type": "directory"
+    },
+    {
+      "path": "src\\pages\\Statistics\\Statistics.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776193280530,
+      "type": "file"
+    },
+    {
+      "path": "src\\api\\request.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776257108104,
+      "type": "file"
+    },
+    {
+      "path": "src\\api\\auth.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776257117298,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\Login.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776257117352,
+      "type": "file"
+    },
+    {
+      "path": "src\\api\\user.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776257123719,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\User\\UserList.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776257126173,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1776257268136,
+      "type": "file"
+    },
+    {
+      "path": "src\\api\\task.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776261590971,
+      "type": "file"
+    },
+    {
+      "path": "src\\api\\batch.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776261621860,
+      "type": "file"
+    },
+    {
+      "path": "vite.config.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776263600846,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

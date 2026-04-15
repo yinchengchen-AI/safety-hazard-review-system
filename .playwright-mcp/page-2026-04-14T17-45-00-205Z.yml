@@ -1,0 +1,104 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]: 安全生产隐患复核系统
+      - button "退出登录" [ref=e6] [cursor=pointer]:
+        - generic [ref=e7]: 退出登录
+    - generic [ref=e8]:
+      - complementary [ref=e9]:
+        - menu [ref=e11]:
+          - menuitem "隐患管理" [ref=e12] [cursor=pointer]:
+            - generic [ref=e13]: 隐患管理
+          - menuitem "批量导入" [ref=e14] [cursor=pointer]:
+            - generic [ref=e15]: 批量导入
+          - menuitem "导入历史" [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: 导入历史
+          - menuitem "复核任务" [ref=e18] [cursor=pointer]:
+            - generic [ref=e19]: 复核任务
+          - menuitem "统计分析" [ref=e20] [cursor=pointer]:
+            - generic [ref=e21]: 统计分析
+          - menuitem "用户管理" [ref=e22] [cursor=pointer]:
+            - generic [ref=e23]: 用户管理
+      - main [ref=e24]:
+        - generic [ref=e26]:
+          - generic [ref=e29]: 隐患批量导入
+          - generic [ref=e31]:
+            - generic [ref=e33]:
+              - generic [ref=e35]:
+                - button "upload 选择文件" [ref=e38] [cursor=pointer]:
+                  - img "upload" [ref=e40]:
+                    - img [ref=e41]
+                  - generic [ref=e43]: 选择文件
+                - generic [ref=e66]:
+                  - img "paper-clip" [ref=e68]:
+                    - img [ref=e69]
+                  - generic "test_preview.csv" [ref=e71]
+                  - button "delete" [ref=e73] [cursor=pointer]:
+                    - img "delete" [ref=e75]:
+                      - img [ref=e76]
+              - button "预 览" [ref=e45] [cursor=pointer]:
+                - generic [ref=e46]: 预 览
+              - button "下载 Excel 模板" [ref=e48] [cursor=pointer]:
+                - generic [ref=e49]: 下载 Excel 模板
+              - button "下载 CSV 模板" [ref=e51] [cursor=pointer]:
+                - generic [ref=e52]: 下载 CSV 模板
+            - generic [ref=e54]:
+              - paragraph [ref=e55]:
+                - strong [ref=e56]: 导入说明：
+              - list [ref=e57]:
+                - listitem [ref=e58]: 支持 .xlsx、.xls、.csv 格式文件
+                - listitem [ref=e59]: 文件需包含以下列：企业名称、统一社会信用代码、属地、详细地址、负责人、隐患描述、隐患位置
+                - listitem [ref=e60]: 企业名称和隐患描述为必填项，不能为空
+                - listitem [ref=e61]: 系统会自动检测最近 1 个月内是否已存在相同的企业 + 隐患描述 + 隐患位置，重复数据将被拒绝导入
+                - listitem [ref=e62]: 导入前请先下载模板，按模板格式填写数据
+                - listitem [ref=e63]: 上传文件后点击“预览”可查看前 20 条数据的校验结果，确认无误后再点击“确认导入”
+  - generic [ref=e78]:
+    - dialog "数据预览（共 2 条，展示前 20 条）":
+      - generic [ref=e79]:
+        - button "Close" [ref=e80] [cursor=pointer]:
+          - generic "关闭" [ref=e81]:
+            - img "close" [ref=e82]:
+              - img [ref=e83]
+        - generic [ref=e86]: 数据预览（共 2 条，展示前 20 条）
+        - generic [ref=e87]:
+          - generic [ref=e88]:
+            - text: 批次名称：
+            - textbox [ref=e89]: test_preview.csv
+          - table [ref=e96]:
+            - rowgroup [ref=e107]:
+              - row "行号 企业名称 统一社会信用代码 属地 详细地址 负责人 隐患描述 隐患位置 校验结果" [ref=e108]:
+                - columnheader "行号" [ref=e109]
+                - columnheader "企业名称" [ref=e110]
+                - columnheader "统一社会信用代码" [ref=e111]
+                - columnheader "属地" [ref=e112]
+                - columnheader "详细地址" [ref=e113]
+                - columnheader "负责人" [ref=e114]
+                - columnheader "隐患描述" [ref=e115]
+                - columnheader "隐患位置" [ref=e116]
+                - columnheader "校验结果" [ref=e117]
+            - rowgroup [ref=e118]:
+              - row "2 测试企业A 91110000MA001 北京市 北京市朝阳区测试路1号 张三 消防通道堵塞 一号楼 通过" [ref=e119]:
+                - cell "2" [ref=e120]
+                - cell "测试企业A" [ref=e121]
+                - cell "91110000MA001" [ref=e122]
+                - cell "北京市" [ref=e123]
+                - cell "北京市朝阳区测试路1号" [ref=e124]
+                - cell "张三" [ref=e125]
+                - cell "消防通道堵塞" [ref=e126]
+                - cell "一号楼" [ref=e127]
+                - cell "通过" [ref=e128]
+              - row "3 测试企业B 91110000MA002 上海市 上海市浦东新区测试路2号 李四 配电箱无警示标识 二号楼 通过" [ref=e129]:
+                - cell "3" [ref=e130]
+                - cell "测试企业B" [ref=e131]
+                - cell "91110000MA002" [ref=e132]
+                - cell "上海市" [ref=e133]
+                - cell "上海市浦东新区测试路2号" [ref=e134]
+                - cell "李四" [ref=e135]
+                - cell "配电箱无警示标识" [ref=e136]
+                - cell "二号楼" [ref=e137]
+                - cell "通过" [ref=e138]
+        - generic [ref=e139]:
+          - button "取 消" [ref=e140] [cursor=pointer]:
+            - generic [ref=e141]: 取 消
+          - button "确认导入" [ref=e142] [cursor=pointer]:
+            - generic [ref=e143]: 确认导入

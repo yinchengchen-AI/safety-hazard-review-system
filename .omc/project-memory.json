@@ -1,0 +1,408 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1776252449708,
+  "projectRoot": "D:\\ClaudeCode\\safety-hazard-review-system",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "backend": {
+      "path": "backend",
+      "purpose": null,
+      "fileCount": 7,
+      "lastAccessed": 1776252449689,
+      "keyFiles": [
+        "alembic.ini",
+        "Dockerfile",
+        "hazards_multi_enterprise.csv",
+        "pytest.ini",
+        "requirements.txt"
+      ]
+    },
+    "frontend": {
+      "path": "frontend",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1776252449689,
+      "keyFiles": [
+        "Dockerfile",
+        "index.html",
+        "nginx.conf",
+        "package-lock.json",
+        "package.json"
+      ]
+    },
+    "state": {
+      "path": "state",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1776252449690,
+      "keyFiles": [
+        "cancel-signal-state.json"
+      ]
+    },
+    "backend\\app": {
+      "path": "backend\\app",
+      "purpose": "Application code",
+      "fileCount": 2,
+      "lastAccessed": 1776252449690,
+      "keyFiles": [
+        "main.py",
+        "__init__.py"
+      ]
+    },
+    "frontend\\dist": {
+      "path": "frontend\\dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 1,
+      "lastAccessed": 1776252449691,
+      "keyFiles": [
+        "index.html"
+      ]
+    },
+    "frontend\\node_modules": {
+      "path": "frontend\\node_modules",
+      "purpose": "Dependencies",
+      "fileCount": 1,
+      "lastAccessed": 1776252449691,
+      "keyFiles": []
+    },
+    "frontend\\src": {
+      "path": "frontend\\src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1776252449692,
+      "keyFiles": [
+        "App.tsx",
+        "index.css",
+        "main.tsx"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "frontend\\src\\pages\\Task\\TaskDetail.tsx",
+      "accessCount": 25,
+      "lastAccessed": 1776266799399,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\routers\\review_tasks.py",
+      "accessCount": 19,
+      "lastAccessed": 1776267591278,
+      "type": "file"
+    },
+    {
+      "path": "frontend\\src\\pages\\Hazard\\HazardList.tsx",
+      "accessCount": 18,
+      "lastAccessed": 1776267275311,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\schemas\\hazard.py",
+      "accessCount": 16,
+      "lastAccessed": 1776267304172,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\routers\\hazards.py",
+      "accessCount": 11,
+      "lastAccessed": 1776267275251,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\schemas\\review_task.py",
+      "accessCount": 10,
+      "lastAccessed": 1776266707747,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\services\\import_service.py",
+      "accessCount": 10,
+      "lastAccessed": 1776268272052,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\models\\hazard.py",
+      "accessCount": 6,
+      "lastAccessed": 1776264045966,
+      "type": "file"
+    },
+    {
+      "path": "frontend\\src",
+      "accessCount": 4,
+      "lastAccessed": 1776267288143,
+      "type": "directory"
+    },
+    {
+      "path": "backend\\app\\services\\template_service.py",
+      "accessCount": 4,
+      "lastAccessed": 1776268272115,
+      "type": "file"
+    },
+    {
+      "path": "frontend\\src\\api\\hazard.ts",
+      "accessCount": 3,
+      "lastAccessed": 1776261106949,
+      "type": "file"
+    },
+    {
+      "path": "frontend\\src\\App.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776261173092,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\schemas\\enterprise.py",
+      "accessCount": 3,
+      "lastAccessed": 1776262729489,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\core\\database.py",
+      "accessCount": 3,
+      "lastAccessed": 1776263289035,
+      "type": "file"
+    },
+    {
+      "path": "backend\\test_fields.py",
+      "accessCount": 3,
+      "lastAccessed": 1776263295135,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\routers",
+      "accessCount": 3,
+      "lastAccessed": 1776267271891,
+      "type": "directory"
+    },
+    {
+      "path": "",
+      "accessCount": 3,
+      "lastAccessed": 1776268266142,
+      "type": "directory"
+    },
+    {
+      "path": "backend\\app\\models\\enterprise.py",
+      "accessCount": 2,
+      "lastAccessed": 1776255654768,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\models\\batch.py",
+      "accessCount": 2,
+      "lastAccessed": 1776255661837,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\schemas\\batch.py",
+      "accessCount": 2,
+      "lastAccessed": 1776255692442,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\routers\\enterprises.py",
+      "accessCount": 2,
+      "lastAccessed": 1776255747507,
+      "type": "file"
+    },
+    {
+      "path": "backend\\alembic\\versions\\ca5186604393_hazard_redesign_add_new_fields_to_.py",
+      "accessCount": 2,
+      "lastAccessed": 1776255850358,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\schemas\\__init__.py",
+      "accessCount": 2,
+      "lastAccessed": 1776257879233,
+      "type": "file"
+    },
+    {
+      "path": "frontend\\src\\pages\\Batch\\BatchImport.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776259960122,
+      "type": "file"
+    },
+    {
+      "path": "frontend\\src\\api\\batch.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776260179333,
+      "type": "file"
+    },
+    {
+      "path": "backend\\test_api.py",
+      "accessCount": 2,
+      "lastAccessed": 1776263326035,
+      "type": "file"
+    },
+    {
+      "path": "backend\\check_task_hazards.py",
+      "accessCount": 2,
+      "lastAccessed": 1776264649644,
+      "type": "file"
+    },
+    {
+      "path": "backend\\delete_old_task.py",
+      "accessCount": 2,
+      "lastAccessed": 1776264800694,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\routers\\batches.py",
+      "accessCount": 2,
+      "lastAccessed": 1776268265967,
+      "type": "file"
+    },
+    {
+      "path": "backend\\.env",
+      "accessCount": 1,
+      "lastAccessed": 1776254012084,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\core\\config.py",
+      "accessCount": 1,
+      "lastAccessed": 1776254012090,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\models\\__init__.py",
+      "accessCount": 1,
+      "lastAccessed": 1776255635156,
+      "type": "file"
+    },
+    {
+      "path": "C:\\Users\\35496\\AppData\\Local\\Temp\\claude\\D--ClaudeCode-safety-hazard-review-system\\f202c3b2-9a5f-4a52-9bb7-e376a21a9c9b\\tasks\\b00lydhg1.output",
+      "accessCount": 1,
+      "lastAccessed": 1776257928694,
+      "type": "file"
+    },
+    {
+      "path": "C:\\Users\\35496\\debug_utf8.txt",
+      "accessCount": 1,
+      "lastAccessed": 1776259494747,
+      "type": "file"
+    },
+    {
+      "path": "C:\\Users\\35496\\AppData\\Local\\Temp\\claude\\D--ClaudeCode-safety-hazard-review-system\\f202c3b2-9a5f-4a52-9bb7-e376a21a9c9b\\tasks\\bxy2n6xly.output",
+      "accessCount": 1,
+      "lastAccessed": 1776259503297,
+      "type": "file"
+    },
+    {
+      "path": "C:\\Users\\35496\\AppData\\Local\\Temp\\claude\\D--ClaudeCode-safety-hazard-review-system\\f202c3b2-9a5f-4a52-9bb7-e376a21a9c9b\\tasks\\b0b0r2tcc.output",
+      "accessCount": 1,
+      "lastAccessed": 1776259530840,
+      "type": "file"
+    },
+    {
+      "path": "frontend\\src\\api\\request.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776260185491,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\services\\storage_service.py",
+      "accessCount": 1,
+      "lastAccessed": 1776260237963,
+      "type": "directory"
+    },
+    {
+      "path": "frontend\\src\\pages\\Batch\\BatchHistory.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776260261912,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/Hazard",
+      "accessCount": 1,
+      "lastAccessed": 1776261093494,
+      "type": "directory"
+    },
+    {
+      "path": "frontend\\src\\components\\Layout\\index.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776261113766,
+      "type": "file"
+    },
+    {
+      "path": "backend/app/schemas",
+      "accessCount": 1,
+      "lastAccessed": 1776261113777,
+      "type": "directory"
+    },
+    {
+      "path": "frontend\\src\\pages\\Hazard\\HazardDetail.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776261161042,
+      "type": "file"
+    },
+    {
+      "path": "backend\\excel_columns.json",
+      "accessCount": 1,
+      "lastAccessed": 1776263865666,
+      "type": "file"
+    },
+    {
+      "path": "backend\\check_db.py",
+      "accessCount": 1,
+      "lastAccessed": 1776263878460,
+      "type": "file"
+    },
+    {
+      "path": "backend\\backfill_reporting_unit.py",
+      "accessCount": 1,
+      "lastAccessed": 1776264354212,
+      "type": "file"
+    },
+    {
+      "path": "backend\\test_import.py",
+      "accessCount": 1,
+      "lastAccessed": 1776264590192,
+      "type": "file"
+    },
+    {
+      "path": "backend\\check_latest_import.py",
+      "accessCount": 1,
+      "lastAccessed": 1776264620937,
+      "type": "file"
+    },
+    {
+      "path": "backend\\app\\models",
+      "accessCount": 1,
+      "lastAccessed": 1776264644431,
+      "type": "directory"
+    },
+    {
+      "path": "backend\\check_task_batches.py",
+      "accessCount": 1,
+      "lastAccessed": 1776264669150,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

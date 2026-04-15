@@ -1,0 +1,93 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: 安全生产隐患复核系统
+    - button "退出登录" [ref=e6] [cursor=pointer]:
+      - generic [ref=e7]: 退出登录
+  - generic [ref=e8]:
+    - complementary [ref=e9]:
+      - menu [ref=e11]:
+        - menuitem "隐患管理" [ref=e12] [cursor=pointer]:
+          - generic [ref=e13]: 隐患管理
+        - menuitem "批量导入" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: 批量导入
+        - menuitem "导入历史" [ref=e16] [cursor=pointer]:
+          - generic [ref=e17]: 导入历史
+        - menuitem "复核任务" [ref=e18] [cursor=pointer]:
+          - generic [ref=e19]: 复核任务
+        - menuitem "统计分析" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: 统计分析
+        - menuitem "用户管理" [ref=e22] [cursor=pointer]:
+          - generic [ref=e23]: 用户管理
+    - main [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e28]:
+          - textbox "搜索企业名称" [ref=e31]
+          - generic [ref=e34] [cursor=pointer]:
+            - generic [ref=e36]:
+              - combobox [ref=e38]
+              - generic: 隐患分类
+            - generic:
+              - img:
+                - img
+          - generic [ref=e40] [cursor=pointer]:
+            - generic [ref=e42]:
+              - combobox [ref=e44]
+              - generic: 是否整改
+            - generic:
+              - img:
+                - img
+          - generic [ref=e46] [cursor=pointer]:
+            - generic [ref=e48]:
+              - combobox [ref=e50]
+              - generic: 检查方式
+            - generic:
+              - img:
+                - img
+          - button "批量导入" [ref=e52] [cursor=pointer]:
+            - generic [ref=e53]: 批量导入
+        - generic [ref=e54]:
+          - generic [ref=e57]: 隐患列表 · 共 0 条
+          - generic [ref=e58]:
+            - table [ref=e65]:
+              - rowgroup [ref=e81]:
+                - row "企业名称 隐患分类 隐患描述 位置 检查方式 检查时间 是否整改 整改完成时间 上报单位 批次 状态 复核次数 锁定 操作" [ref=e82]:
+                  - columnheader "企业名称" [ref=e83]
+                  - columnheader "隐患分类" [ref=e84]
+                  - columnheader "隐患描述" [ref=e85]
+                  - columnheader "位置" [ref=e86]
+                  - columnheader "检查方式" [ref=e87]
+                  - columnheader "检查时间" [ref=e88]
+                  - columnheader "是否整改" [ref=e89]
+                  - columnheader "整改完成时间" [ref=e90]
+                  - columnheader "上报单位" [ref=e91]
+                  - columnheader "批次" [ref=e92]
+                  - columnheader "状态" [ref=e93]
+                  - columnheader "复核次数" [ref=e94]
+                  - columnheader "锁定" [ref=e95]
+                  - columnheader "操作" [ref=e96]
+              - rowgroup [ref=e97]:
+                - row "暂无数据 暂无隐患数据" [ref=e98]:
+                  - cell "暂无数据 暂无隐患数据" [ref=e99]:
+                    - generic [ref=e101]:
+                      - img "暂无数据" [ref=e103]
+                      - generic [ref=e115]: 暂无隐患数据
+            - list [ref=e116]:
+              - listitem [ref=e117]: 共 0 条
+              - listitem "上一页" [ref=e118]:
+                - button "left" [disabled] [ref=e119]:
+                  - img "left" [ref=e120]:
+                    - img [ref=e121]
+              - listitem "1" [ref=e123] [cursor=pointer]:
+                - generic [ref=e124]: "1"
+              - listitem "下一页" [ref=e125]:
+                - button "right" [disabled] [ref=e126]:
+                  - img "right" [ref=e127]:
+                    - img [ref=e128]
+              - listitem [ref=e130]:
+                - generic "页码" [ref=e131] [cursor=pointer]:
+                  - generic [ref=e133]:
+                    - combobox "页码" [ref=e135]
+                    - generic "20 条/页" [ref=e136]
+                  - generic:
+                    - img:
+                      - img

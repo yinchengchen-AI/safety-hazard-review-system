@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"D:\\\\ClaudeCode\\\\safety-hazard-review-system\\\\frontend\\\\src\\\\frontend\\\\src\\\\components\\\\Layout\\\\index.tsx\"}",
+  "error": "File does not exist. Note: your current working directory is D:\\ClaudeCode\\safety-hazard-review-system\\frontend\\src.",
+  "timestamp": "2026-04-14T18:39:43.076Z",
+  "retry_count": 1
+}

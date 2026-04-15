@@ -1,0 +1,149 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: 安全生产隐患复核系统
+    - button "退出登录" [ref=e6] [cursor=pointer]:
+      - generic [ref=e7]: 退出登录
+  - generic [ref=e8]:
+    - complementary [ref=e9]:
+      - menu [ref=e11]:
+        - menuitem "批次管理" [ref=e12] [cursor=pointer]:
+          - generic [ref=e13]: 批次管理
+        - menuitem "批量导入" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: 批量导入
+        - menuitem "导入历史" [ref=e16] [cursor=pointer]:
+          - generic [ref=e17]: 导入历史
+        - menuitem "复核任务" [ref=e18] [cursor=pointer]:
+          - generic [ref=e19]: 复核任务
+        - menuitem "统计分析" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: 统计分析
+        - menuitem "用户管理" [ref=e22] [cursor=pointer]:
+          - generic [ref=e23]: 用户管理
+    - main [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e28]:
+          - button "check-square 全选所有批次" [ref=e30] [cursor=pointer]:
+            - img "check-square" [ref=e32]:
+              - img [ref=e33]
+            - generic [ref=e36]: 全选所有批次
+          - button "clear 清空选择" [ref=e38] [cursor=pointer]:
+            - img "clear" [ref=e97]:
+              - img [ref=e98]
+            - generic [ref=e100]: 清空选择
+          - button "创建复核任务 (1 批次)" [ref=e101] [cursor=pointer]:
+            - generic [ref=e102]: 创建复核任务 (1 批次)
+          - button "批量导入" [ref=e42] [cursor=pointer]:
+            - generic [ref=e43]: 批量导入
+        - generic [ref=e44]:
+          - generic [ref=e46]:
+            - generic [ref=e50]:
+              - checkbox [checked] [ref=e54] [cursor=pointer]
+              - generic [ref=e56]: 批次列表
+            - generic [ref=e57]:
+              - textbox "搜索批次" [ref=e60]
+              - generic [ref=e64] [cursor=pointer]:
+                - checkbox [checked] [ref=e68]
+                - generic [ref=e71]:
+                  - generic [ref=e72]: test_import_new
+                  - generic [ref=e73]:
+                    - text: 2026-04-15 · 可选
+                    - strong [ref=e74]: "1"
+                    - text: 条
+          - generic [ref=e76]:
+            - generic [ref=e79]: 隐患列表 · 已选 1 个批次 · 共 1 条可选隐患
+            - generic [ref=e80]:
+              - generic [ref=e105]:
+                - generic [ref=e107] [cursor=pointer]:
+                  - generic [ref=e109]:
+                    - combobox [ref=e111]
+                    - generic: 隐患分类
+                  - generic:
+                    - img:
+                      - img
+                - generic [ref=e113] [cursor=pointer]:
+                  - generic [ref=e115]:
+                    - combobox [ref=e117]
+                    - generic: 是否整改
+                  - generic:
+                    - img:
+                      - img
+                - generic [ref=e119] [cursor=pointer]:
+                  - generic [ref=e121]:
+                    - combobox [ref=e123]
+                    - generic: 检查方式
+                  - generic:
+                    - img:
+                      - img
+              - table [ref=e130]:
+                - rowgroup [ref=e153]:
+                  - row "Select all 企业名称 行业领域 企业类型 隐患分类 隐患描述 位置 检查方式 检查人 检查时间 判定依据 违反条款 是否整改 整改完成时间 整改责任人 整改措施 上报单位 批次 状态 复核次数 锁定" [ref=e154]:
+                    - columnheader "Select all" [ref=e155]:
+                      - checkbox "Select all" [ref=e159] [cursor=pointer]
+                    - columnheader "企业名称" [ref=e161]
+                    - columnheader "行业领域" [ref=e162]
+                    - columnheader "企业类型" [ref=e163]
+                    - columnheader "隐患分类" [ref=e164]
+                    - columnheader "隐患描述" [ref=e165]
+                    - columnheader "位置" [ref=e166]
+                    - columnheader "检查方式" [ref=e167]
+                    - columnheader "检查人" [ref=e168]
+                    - columnheader "检查时间" [ref=e169]
+                    - columnheader "判定依据" [ref=e170]
+                    - columnheader "违反条款" [ref=e171]
+                    - columnheader "是否整改" [ref=e172]
+                    - columnheader "整改完成时间" [ref=e173]
+                    - columnheader "整改责任人" [ref=e174]
+                    - columnheader "整改措施" [ref=e175]
+                    - columnheader "上报单位" [ref=e176]
+                    - columnheader "批次" [ref=e177]
+                    - columnheader "状态" [ref=e178]
+                    - columnheader "复核次数" [ref=e179]
+                    - columnheader "锁定" [ref=e180]
+                - rowgroup [ref=e181]:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - checkbox
+                  - row "测试餐饮企业 商务系统 个体经营 管理不到位 燃气使用场所安装可燃气体报警装置未启用 厨房 企业自查 李四、王五 2026-03-16 《商务领域安全生产重大隐患排查事项清单》 《商务系统安全生产风险隐患事项清单》七、餐饮领域 已整改 2026-03-23 崇贤街道/李四 可燃气体报警器已通电启用 崇贤街道 test_import_new 待复核 0 -" [ref=e182]:
+                    - cell [ref=e183]:
+                      - checkbox [ref=e186] [cursor=pointer]
+                    - cell "测试餐饮企业" [ref=e188]
+                    - cell "商务系统" [ref=e189]
+                    - cell "个体经营" [ref=e190]
+                    - cell "管理不到位" [ref=e191]
+                    - cell "燃气使用场所安装可燃气体报警装置未启用" [ref=e192]
+                    - cell "厨房" [ref=e193]
+                    - cell "企业自查" [ref=e194]
+                    - cell "李四、王五" [ref=e195]
+                    - cell "2026-03-16" [ref=e196]
+                    - cell "《商务领域安全生产重大隐患排查事项清单》" [ref=e197]
+                    - cell "《商务系统安全生产风险隐患事项清单》七、餐饮领域" [ref=e198]
+                    - cell "已整改" [ref=e199]
+                    - cell "2026-03-23" [ref=e200]
+                    - cell "崇贤街道/李四" [ref=e201]
+                    - cell "可燃气体报警器已通电启用" [ref=e202]
+                    - cell "崇贤街道" [ref=e203]
+                    - cell "test_import_new" [ref=e204]
+                    - cell "待复核" [ref=e205]:
+                      - generic [ref=e206]: 待复核
+                    - cell "0" [ref=e207]
+                    - cell "-" [ref=e208]
+              - list [ref=e209]:
+                - listitem [ref=e210]: 共 1 条
+                - listitem "上一页" [ref=e211]:
+                  - button "left" [disabled] [ref=e212]:
+                    - img "left" [ref=e213]:
+                      - img [ref=e214]
+                - listitem "1" [ref=e216] [cursor=pointer]:
+                  - generic [ref=e217]: "1"
+                - listitem "下一页" [ref=e218]:
+                  - button "right" [disabled] [ref=e219]:
+                    - img "right" [ref=e220]:
+                      - img [ref=e221]
+                - listitem [ref=e223]:
+                  - generic "页码" [ref=e224] [cursor=pointer]:
+                    - generic [ref=e226]:
+                      - combobox "页码" [ref=e228]
+                      - generic "20 条/页" [ref=e229]
+                    - generic:
+                      - img:
+                        - img

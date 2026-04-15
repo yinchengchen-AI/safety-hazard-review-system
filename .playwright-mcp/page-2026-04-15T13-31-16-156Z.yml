@@ -1,0 +1,145 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]: 安全生产隐患复核系统
+      - button "退出登录" [ref=e6] [cursor=pointer]:
+        - generic [ref=e7]: 退出登录
+    - generic [ref=e8]:
+      - complementary [ref=e9]:
+        - menu [ref=e11]:
+          - menuitem "隐患管理" [ref=e12] [cursor=pointer]:
+            - generic [ref=e13]: 隐患管理
+          - menuitem "批量导入" [ref=e14] [cursor=pointer]:
+            - generic [ref=e15]: 批量导入
+          - menuitem "导入历史" [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: 导入历史
+          - menuitem "复核任务" [ref=e18] [cursor=pointer]:
+            - generic [ref=e19]: 复核任务
+          - menuitem "统计分析" [ref=e20] [cursor=pointer]:
+            - generic [ref=e21]: 统计分析
+          - menuitem "用户管理" [ref=e22] [cursor=pointer]:
+            - generic [ref=e23]: 用户管理
+      - main [ref=e24]:
+        - generic [ref=e26]:
+          - generic [ref=e29]: 隐患批量导入
+          - generic [ref=e31]:
+            - generic [ref=e33]:
+              - generic [ref=e35]:
+                - button "upload 选择文件" [ref=e38] [cursor=pointer]:
+                  - img "upload" [ref=e40]:
+                    - img [ref=e41]
+                  - generic [ref=e43]: 选择文件
+                - generic [ref=e90]:
+                  - img "paper-clip" [ref=e92]:
+                    - img [ref=e93]
+                  - generic "test_new_hazard.xlsx" [ref=e95]
+                  - button "delete" [ref=e97] [cursor=pointer]:
+                    - img "delete" [ref=e99]:
+                      - img [ref=e100]
+              - button "预 览" [ref=e45] [cursor=pointer]:
+                - generic [ref=e46]: 预 览
+              - button "下载 Excel 模板" [ref=e48] [cursor=pointer]:
+                - generic [ref=e49]: 下载 Excel 模板
+              - button "下载 CSV 模板" [ref=e51] [cursor=pointer]:
+                - generic [ref=e52]: 下载 CSV 模板
+            - generic [ref=e54]:
+              - paragraph [ref=e55]:
+                - strong [ref=e56]: 导入说明：
+              - list [ref=e57]:
+                - listitem [ref=e58]: 支持 .xlsx、.xls、.csv 格式文件
+                - listitem [ref=e59]: 系统支持以下列名（中英文均可），您可根据实际排查表提供对应字段：
+                - listitem [ref=e60]:
+                  - generic [ref=e61]:
+                    - generic [ref=e62]: • 企业名称 / enterprise_name
+                    - generic [ref=e63]: • 统一社会信用代码 / credit_code
+                    - generic [ref=e64]: • 属地 / region
+                    - generic [ref=e65]: • 详细地址 / address
+                    - generic [ref=e66]: • 负责人 / contact_person
+                    - generic [ref=e67]: • 行业领域 / industry_sector
+                    - generic [ref=e68]: • 企业类型 / enterprise_type
+                    - generic [ref=e69]: • 上报单位 / reporting_unit
+                    - generic [ref=e70]: • 重大隐患描述 / description
+                    - generic [ref=e71]: • 隐患位置 / location
+                    - generic [ref=e72]: • 隐患分类 / category
+                    - generic [ref=e73]: • 检查方式 / inspection_method
+                    - generic [ref=e74]: • 检查人 / inspector
+                    - generic [ref=e75]: • 检查时间 / inspection_date
+                    - generic [ref=e76]: • 判定依据 / judgment_basis
+                    - generic [ref=e77]: • 违反判定依据具体条款 / violation_clause
+                    - generic [ref=e78]: • 是否整改 / is_rectified
+                    - generic [ref=e79]: • 实际整改完成时间 / rectification_date
+                    - generic [ref=e80]: • 整改责任部门/责任人 / rectification_responsible
+                    - generic [ref=e81]: • 整改措施 / rectification_measures
+                    - generic [ref=e82]: • 举报情况备注 / report_remarks
+                - listitem [ref=e83]:
+                  - strong [ref=e84]: 必填项：
+                  - text: 企业名称、重大隐患描述。若为空则该行数据无法导入。
+                - listitem [ref=e85]: 系统会自动检测最近 1 个月内是否已存在相同的企业 + 重大隐患描述 + 隐患位置，重复数据将被拒绝导入。
+                - listitem [ref=e86]: 导入后，若某些字段在文件中为空，管理员可在“隐患管理”页面中对该隐患进行补充编辑；已有值的字段不可修改。
+                - listitem [ref=e87]: 建议先下载模板，按模板格式整理数据后再上传。上传后点击“预览”查看校验结果，确认无误后再点击“确认导入”。
+  - generic [ref=e102]:
+    - dialog "数据预览（共 1 条，展示前 50 条）":
+      - generic [ref=e103]:
+        - button "Close" [ref=e104] [cursor=pointer]:
+          - generic "关闭" [ref=e105]:
+            - img "close" [ref=e106]:
+              - img [ref=e107]
+        - generic [ref=e110]: 数据预览（共 1 条，展示前 50 条）
+        - generic [ref=e111]:
+          - generic [ref=e112]:
+            - text: 批次名称：
+            - textbox [ref=e113]: test_new_hazard.xlsx
+          - table [ref=e120]:
+            - rowgroup [ref=e144]:
+              - row "行号 企业名称 统一社会信用代码 属地 详细地址 负责人 行业领域 企业类型 上报单位 重大隐患描述 隐患位置 隐患分类 检查方式 检查人 检查时间 判定依据 是否整改 整改完成时间 整改责任人 整改措施 举报备注 校验结果" [ref=e145]:
+                - columnheader "行号" [ref=e146]
+                - columnheader "企业名称" [ref=e147]
+                - columnheader "统一社会信用代码" [ref=e148]
+                - columnheader "属地" [ref=e149]
+                - columnheader "详细地址" [ref=e150]
+                - columnheader "负责人" [ref=e151]
+                - columnheader "行业领域" [ref=e152]
+                - columnheader "企业类型" [ref=e153]
+                - columnheader "上报单位" [ref=e154]
+                - columnheader "重大隐患描述" [ref=e155]
+                - columnheader "隐患位置" [ref=e156]
+                - columnheader "隐患分类" [ref=e157]
+                - columnheader "检查方式" [ref=e158]
+                - columnheader "检查人" [ref=e159]
+                - columnheader "检查时间" [ref=e160]
+                - columnheader "判定依据" [ref=e161]
+                - columnheader "是否整改" [ref=e162]
+                - columnheader "整改完成时间" [ref=e163]
+                - columnheader "整改责任人" [ref=e164]
+                - columnheader "整改措施" [ref=e165]
+                - columnheader "举报备注" [ref=e166]
+                - columnheader "校验结果" [ref=e167]
+            - rowgroup [ref=e168]:
+              - row "2 测试餐饮企业 91110000123456789X 临平区 崇贤街道XX路 张三 商务系统 个体经营 崇贤街道 燃气使用场所安装可燃气体报警装置未启用 厨房 管理不到位 企业自查 李四、王五 2026-03-16 《商务领域安全生产重大隐患排查事项清单》 已整改 2026-03-23 崇贤街道/李四 可燃气体报警器已通电启用 通过" [ref=e169]:
+                - cell "2" [ref=e170]
+                - cell "测试餐饮企业" [ref=e171]
+                - cell "91110000123456789X" [ref=e172]
+                - cell "临平区" [ref=e173]
+                - cell "崇贤街道XX路" [ref=e174]
+                - cell "张三" [ref=e175]
+                - cell "商务系统" [ref=e176]
+                - cell "个体经营" [ref=e177]
+                - cell "崇贤街道" [ref=e178]
+                - cell "燃气使用场所安装可燃气体报警装置未启用" [ref=e179]
+                - cell "厨房" [ref=e180]
+                - cell "管理不到位" [ref=e181]
+                - cell "企业自查" [ref=e182]
+                - cell "李四、王五" [ref=e183]
+                - cell "2026-03-16" [ref=e184]
+                - cell "《商务领域安全生产重大隐患排查事项清单》" [ref=e185]
+                - cell "已整改" [ref=e186]
+                - cell "2026-03-23" [ref=e187]
+                - cell "崇贤街道/李四" [ref=e188]
+                - cell "可燃气体报警器已通电启用" [ref=e189]
+                - cell [ref=e190]
+                - cell "通过" [ref=e191]
+        - generic [ref=e192]:
+          - button "取 消" [ref=e193] [cursor=pointer]:
+            - generic [ref=e194]: 取 消
+          - button "确认导入" [ref=e195] [cursor=pointer]:
+            - generic [ref=e196]: 确认导入

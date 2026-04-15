@@ -1,0 +1,73 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: 安全生产隐患复核系统
+    - button "退出登录" [ref=e6] [cursor=pointer]:
+      - generic [ref=e7]: 退出登录
+  - generic [ref=e8]:
+    - complementary [ref=e9]:
+      - menu [ref=e11]:
+        - menuitem "隐患管理" [ref=e12] [cursor=pointer]:
+          - generic [ref=e13]: 隐患管理
+        - menuitem "批量导入" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: 批量导入
+        - menuitem "导入历史" [ref=e16] [cursor=pointer]:
+          - generic [ref=e17]: 导入历史
+        - menuitem "复核任务" [ref=e18] [cursor=pointer]:
+          - generic [ref=e19]: 复核任务
+        - menuitem "统计分析" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: 统计分析
+        - menuitem "用户管理" [ref=e22] [cursor=pointer]:
+          - generic [ref=e23]: 用户管理
+    - main [ref=e24]:
+      - generic [ref=e35]:
+        - table [ref=e39]:
+          - rowgroup [ref=e40]:
+            - row "任务名称 创建人 隐患数 已复核 状态 操作" [ref=e41]:
+              - columnheader "任务名称" [ref=e42]
+              - columnheader "创建人" [ref=e43]
+              - columnheader "隐患数" [ref=e44]
+              - columnheader "已复核" [ref=e45]
+              - columnheader "状态" [ref=e46]
+              - columnheader "操作" [ref=e47]
+          - rowgroup [ref=e48]:
+            - row "12333 admin 3 0 已完成 详情" [ref=e49]:
+              - cell "12333" [ref=e50]
+              - cell "admin" [ref=e51]
+              - cell "3" [ref=e52]
+              - cell "0" [ref=e53]
+              - cell "已完成" [ref=e54]:
+                - generic [ref=e55]: 已完成
+              - cell "详情" [ref=e56]:
+                - button "详情" [ref=e59] [cursor=pointer]:
+                  - generic [ref=e60]: 详情
+            - row "1111 admin 3 0 已完成 详情" [ref=e61]:
+              - cell "1111" [ref=e62]
+              - cell "admin" [ref=e63]
+              - cell "3" [ref=e64]
+              - cell "0" [ref=e65]
+              - cell "已完成" [ref=e66]:
+                - generic [ref=e67]: 已完成
+              - cell "详情" [ref=e68]:
+                - button "详情" [ref=e71] [cursor=pointer]:
+                  - generic [ref=e72]: 详情
+            - row "11111 admin 3 3 已完成 详情" [ref=e73]:
+              - cell "11111" [ref=e74]
+              - cell "admin" [ref=e75]
+              - cell "3" [ref=e76]
+              - cell "3" [ref=e77]
+              - cell "已完成" [ref=e78]:
+                - generic [ref=e79]: 已完成
+              - cell "详情" [ref=e80]:
+                - button "详情" [ref=e83] [cursor=pointer]:
+                  - generic [ref=e84]: 详情
+        - list [ref=e85]:
+          - listitem "上一页" [ref=e86]:
+            - button "left" [disabled] [ref=e87]:
+              - img "left" [ref=e88]:
+                - img [ref=e89]
+          - listitem "1" [ref=e91] [cursor=pointer]:
+            - generic [ref=e92]: "1"
+          - listitem "下一页" [ref=e93]:
+            - button "right" [disabled] [ref=e94]:
+              - img "right" [ref=e95]:
+                - img [ref=e96]

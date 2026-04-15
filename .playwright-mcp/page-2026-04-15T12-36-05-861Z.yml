@@ -1,0 +1,59 @@
+- generic [ref=e35]:
+  - banner [ref=e36]:
+    - generic [ref=e37]: 安全生产隐患复核系统
+    - button "退出登录" [ref=e38] [cursor=pointer]:
+      - generic [ref=e39]: 退出登录
+  - generic [ref=e40]:
+    - complementary [ref=e41]:
+      - menu [ref=e43]:
+        - menuitem "批次管理" [ref=e44] [cursor=pointer]:
+          - generic [ref=e45]: 批次管理
+        - menuitem "批量导入" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: 批量导入
+        - menuitem "导入历史" [active] [ref=e48] [cursor=pointer]:
+          - generic [ref=e49]: 导入历史
+        - menuitem "复核任务" [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]: 复核任务
+        - menuitem "统计分析" [ref=e52] [cursor=pointer]:
+          - generic [ref=e53]: 统计分析
+        - menuitem "用户管理" [ref=e54] [cursor=pointer]:
+          - generic [ref=e55]: 用户管理
+    - main [ref=e56]:
+      - generic [ref=e134]:
+        - table [ref=e141]:
+          - rowgroup [ref=e142]:
+            - row "批次名称 导入时间 导入人 总条数 成功数 失败数 操作" [ref=e143]:
+              - columnheader "批次名称" [ref=e144]
+              - columnheader "导入时间" [ref=e145]
+              - columnheader "导入人" [ref=e146]
+              - columnheader "总条数" [ref=e147]
+              - columnheader "成功数" [ref=e148]
+              - columnheader "失败数" [ref=e149]
+              - columnheader "操作" [ref=e150]
+          - rowgroup [ref=e151]:
+            - row "test_import_new 2026-04-15T12:32:32.912147Z admin 1 1 0 下载失败明细 下载原始文件 删除" [ref=e152]:
+              - cell "test_import_new" [ref=e153]
+              - cell "2026-04-15T12:32:32.912147Z" [ref=e154]
+              - cell "admin" [ref=e155]
+              - cell "1" [ref=e156]
+              - cell "1" [ref=e157]
+              - cell "0" [ref=e158]
+              - cell "下载失败明细 下载原始文件 删除" [ref=e159]:
+                - generic [ref=e160]:
+                  - button "下载失败明细" [ref=e162] [cursor=pointer]:
+                    - generic [ref=e163]: 下载失败明细
+                  - button "下载原始文件" [ref=e165] [cursor=pointer]:
+                    - generic [ref=e166]: 下载原始文件
+                  - button "删除" [ref=e168] [cursor=pointer]:
+                    - generic [ref=e169]: 删除
+        - list [ref=e170]:
+          - listitem "上一页" [ref=e171]:
+            - button "left" [disabled] [ref=e172]:
+              - img "left" [ref=e173]:
+                - img [ref=e174]
+          - listitem "1" [ref=e176] [cursor=pointer]:
+            - generic [ref=e177]: "1"
+          - listitem "下一页" [ref=e178]:
+            - button "right" [disabled] [ref=e179]:
+              - img "right" [ref=e180]:
+                - img [ref=e181]

@@ -1,0 +1,57 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: 安全生产隐患复核系统
+    - button "退出登录" [ref=e6] [cursor=pointer]:
+      - generic [ref=e7]: 退出登录
+  - generic [ref=e8]:
+    - complementary [ref=e9]:
+      - menu [ref=e11]:
+        - menuitem "隐患管理" [ref=e12] [cursor=pointer]:
+          - generic [ref=e13]: 隐患管理
+        - menuitem "批量导入" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: 批量导入
+        - menuitem "导入历史" [ref=e16] [cursor=pointer]:
+          - generic [ref=e17]: 导入历史
+        - menuitem "复核任务" [ref=e18] [cursor=pointer]:
+          - generic [ref=e19]: 复核任务
+        - menuitem "统计分析" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: 统计分析
+        - menuitem "用户管理" [ref=e22] [cursor=pointer]:
+          - generic [ref=e23]: 用户管理
+    - main [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - button "批量导入" [ref=e28] [cursor=pointer]:
+            - generic [ref=e29]: 批量导入
+          - button "创建复核任务 (0)" [disabled] [ref=e31]:
+            - generic: 创建复核任务 (0)
+        - generic [ref=e33]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - table:
+                    - rowgroup:
+                      - row "Select all 隐患描述 位置 企业 统一社会信用代码 属地 详细地址 负责人 批次 状态 复核次数":
+                        - columnheader "Select all":
+                          - generic:
+                            - generic:
+                              - generic:
+                                - checkbox "Select all" [disabled]
+                        - columnheader "隐患描述"
+                        - columnheader "位置"
+                        - columnheader "企业"
+                        - columnheader "统一社会信用代码"
+                        - columnheader "属地"
+                        - columnheader "详细地址"
+                        - columnheader "负责人"
+                        - columnheader "批次"
+                        - columnheader "状态"
+                        - columnheader "复核次数"
+                    - rowgroup:
+                      - row "暂无数据 暂无数据":
+                        - cell "暂无数据 暂无数据":
+                          - generic:
+                            - generic:
+                              - img "暂无数据"
+                            - generic: 暂无数据

@@ -1,0 +1,245 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: 安全生产隐患复核系统
+    - button "退出登录" [ref=e6] [cursor=pointer]:
+      - generic [ref=e7]: 退出登录
+  - generic [ref=e8]:
+    - complementary [ref=e9]:
+      - menu [ref=e11]:
+        - menuitem "隐患管理" [ref=e12] [cursor=pointer]:
+          - generic [ref=e13]: 隐患管理
+        - menuitem "批量导入" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: 批量导入
+        - menuitem "导入历史" [ref=e16] [cursor=pointer]:
+          - generic [ref=e17]: 导入历史
+        - menuitem "复核任务" [ref=e18] [cursor=pointer]:
+          - generic [ref=e19]: 复核任务
+        - menuitem "统计分析" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: 统计分析
+        - menuitem "用户管理" [ref=e22] [cursor=pointer]:
+          - generic [ref=e23]: 用户管理
+    - main [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - button "批量导入" [ref=e28] [cursor=pointer]:
+            - generic [ref=e29]: 批量导入
+          - button "创建复核任务 (0)" [disabled] [ref=e31]:
+            - generic: 创建复核任务 (0)
+        - generic [ref=e32]:
+          - button "collapsed 北京钢铁集团 91110000123456789X | 北京市 | 北京市朝阳区钢铁大街1号 | 张伟 3 条隐患" [ref=e34] [cursor=pointer]:
+            - img "collapsed" [ref=e36]:
+              - img [ref=e37]
+            - generic [ref=e40]:
+              - checkbox [ref=e44]
+              - generic [ref=e46]: 北京钢铁集团
+              - generic [ref=e48]: 91110000123456789X | 北京市 | 北京市朝阳区钢铁大街1号 | 张伟
+              - generic [ref=e50]: 3 条隐患
+          - button "collapsed 成都建筑材料 91510100678901234C | 四川省成都市 | 成都市金牛区建材路6号 | 杨静 3 条隐患" [ref=e52] [cursor=pointer]:
+            - img "collapsed" [ref=e54]:
+              - img [ref=e55]
+            - generic [ref=e58]:
+              - checkbox [ref=e62]
+              - generic [ref=e64]: 成都建筑材料
+              - generic [ref=e66]: 91510100678901234C | 四川省成都市 | 成都市金牛区建材路6号 | 杨静
+              - generic [ref=e68]: 3 条隐患
+          - button "collapsed 重庆汽车制造 91500000223456789H | 重庆市 | 重庆市渝北区汽车大道11号 | 孙丽 6 条隐患" [ref=e70] [cursor=pointer]:
+            - img "collapsed" [ref=e72]:
+              - img [ref=e73]
+            - generic [ref=e76]:
+              - checkbox [ref=e80]
+              - generic [ref=e82]: 重庆汽车制造
+              - generic [ref=e84]: 91500000223456789H | 重庆市 | 重庆市渝北区汽车大道11号 | 孙丽
+              - generic [ref=e86]: 6 条隐患
+          - button "collapsed 大连石化公司 91210200445678901J | 辽宁省大连市 | 大连市甘井子区石化街13号 | 徐敏 5 条隐患" [ref=e88] [cursor=pointer]:
+            - img "collapsed" [ref=e90]:
+              - img [ref=e91]
+            - generic [ref=e94]:
+              - checkbox [ref=e98]
+              - generic [ref=e100]: 大连石化公司
+              - generic [ref=e102]: 91210200445678901J | 辽宁省大连市 | 大连市甘井子区石化街13号 | 徐敏
+              - generic [ref=e104]: 5 条隐患
+          - button "collapsed 广州电子科技 91440000345678901Z | 广东省广州市 | 广州市天河区科技大道3号 | 王强 6 条隐患" [ref=e106] [cursor=pointer]:
+            - img "collapsed" [ref=e108]:
+              - img [ref=e109]
+            - generic [ref=e112]:
+              - checkbox [ref=e116]
+              - generic [ref=e118]: 广州电子科技
+              - generic [ref=e120]: 91440000345678901Z | 广东省广州市 | 广州市天河区科技大道3号 | 王强
+              - generic [ref=e122]: 6 条隐患
+          - button "collapsed 杭州食品厂 91330100901234567F | 浙江省杭州市 | 杭州市余杭区食品街9号 | 吴刚 5 条隐患" [ref=e124] [cursor=pointer]:
+            - img "collapsed" [ref=e126]:
+              - img [ref=e127]
+            - generic [ref=e130]:
+              - checkbox [ref=e134]
+              - generic [ref=e136]: 杭州食品厂
+              - generic [ref=e138]: 91330100901234567F | 浙江省杭州市 | 杭州市余杭区食品街9号 | 吴刚
+              - generic [ref=e140]: 5 条隐患
+          - button "collapsed 昆明有色金属 91530100212345678Q | 云南省昆明市 | 昆明市五华区有色街20号 | 谢燕 3 条隐患" [ref=e142] [cursor=pointer]:
+            - img "collapsed" [ref=e144]:
+              - img [ref=e145]
+            - generic [ref=e148]:
+              - checkbox [ref=e152]
+              - generic [ref=e154]: 昆明有色金属
+              - generic [ref=e156]: 91530100212345678Q | 云南省昆明市 | 昆明市五华区有色街20号 | 谢燕
+              - generic [ref=e158]: 3 条隐患
+          - button "collapsed 南京纺织集团 91320100890123456E | 江苏省南京市 | 南京市鼓楼区纺织路8号 | 周婷 7 条隐患" [ref=e160] [cursor=pointer]:
+            - img "collapsed" [ref=e162]:
+              - img [ref=e163]
+            - generic [ref=e166]:
+              - checkbox [ref=e170]
+              - generic [ref=e172]: 南京纺织集团
+              - generic [ref=e174]: 91320100890123456E | 江苏省南京市 | 南京市鼓楼区纺织路8号 | 周婷
+              - generic [ref=e176]: 7 条隐患
+          - button "collapsed 宁波物流公司 91330200778901234M | 浙江省宁波市 | 宁波市北仑区物流街16号 | 郭峰 3 条隐患" [ref=e178] [cursor=pointer]:
+            - img "collapsed" [ref=e180]:
+              - img [ref=e181]
+            - generic [ref=e184]:
+              - checkbox [ref=e188]
+              - generic [ref=e190]: 宁波物流公司
+              - generic [ref=e192]: 91330200778901234M | 浙江省宁波市 | 宁波市北仑区物流街16号 | 郭峰
+              - generic [ref=e194]: 3 条隐患
+          - button "collapsed 青岛船舶重工 91370200334567890I | 山东省青岛市 | 青岛市黄岛区船舶路12号 | 朱军 8 条隐患" [ref=e196] [cursor=pointer]:
+            - img "collapsed" [ref=e198]:
+              - img [ref=e199]
+            - generic [ref=e202]:
+              - checkbox [ref=e206]
+              - generic [ref=e208]: 青岛船舶重工
+              - generic [ref=e210]: 91370200334567890I | 山东省青岛市 | 青岛市黄岛区船舶路12号 | 朱军
+              - generic [ref=e212]: 8 条隐患
+          - generic [ref=e213]:
+            - button "expanded 厦门航空维修 91350200556789012K | 福建省厦门市 | 厦门市湖里区航空路14号 | 马超 6 条隐患" [expanded] [active] [ref=e214] [cursor=pointer]:
+              - img "expanded" [ref=e216]:
+                - img [ref=e217]
+              - generic [ref=e220]:
+                - checkbox [ref=e224]
+                - generic [ref=e226]: 厦门航空维修
+                - generic [ref=e228]: 91350200556789012K | 福建省厦门市 | 厦门市湖里区航空路14号 | 马超
+                - generic [ref=e230]: 6 条隐患
+            - table [ref=e239]:
+              - rowgroup [ref=e242]:
+                - row "动火作业无审批 停车场 hazards_multi_enterprise.csv 待复核 0" [ref=e243]:
+                  - cell [ref=e244]:
+                    - checkbox [ref=e247] [cursor=pointer]
+                  - cell "动火作业无审批" [ref=e249]
+                  - cell "停车场" [ref=e250]
+                  - cell "hazards_multi_enterprise.csv" [ref=e251]
+                  - cell "待复核" [ref=e252]:
+                    - generic [ref=e253]: 待复核
+                  - cell "0" [ref=e254]
+                - row "管道阀门泄漏 锅炉房 hazards_multi_enterprise.csv 待复核 0" [ref=e255]:
+                  - cell [ref=e256]:
+                    - checkbox [ref=e259] [cursor=pointer]
+                  - cell "管道阀门泄漏" [ref=e261]
+                  - cell "锅炉房" [ref=e262]
+                  - cell "hazards_multi_enterprise.csv" [ref=e263]
+                  - cell "待复核" [ref=e264]:
+                    - generic [ref=e265]: 待复核
+                  - cell "0" [ref=e266]
+                - row "储罐防腐层脱落 空压机房 hazards_multi_enterprise.csv 待复核 0" [ref=e267]:
+                  - cell [ref=e268]:
+                    - checkbox [ref=e271] [cursor=pointer]
+                  - cell "储罐防腐层脱落" [ref=e273]
+                  - cell "空压机房" [ref=e274]
+                  - cell "hazards_multi_enterprise.csv" [ref=e275]
+                  - cell "待复核" [ref=e276]:
+                    - generic [ref=e277]: 待复核
+                  - cell "0" [ref=e278]
+                - row "储罐防腐层脱落 办公楼二楼 hazards_multi_enterprise.csv 待复核 0" [ref=e279]:
+                  - cell [ref=e280]:
+                    - checkbox [ref=e283] [cursor=pointer]
+                  - cell "储罐防腐层脱落" [ref=e285]
+                  - cell "办公楼二楼" [ref=e286]
+                  - cell "hazards_multi_enterprise.csv" [ref=e287]
+                  - cell "待复核" [ref=e288]:
+                    - generic [ref=e289]: 待复核
+                  - cell "0" [ref=e290]
+                - row "废液桶未分类 仓库A区 hazards_multi_enterprise.csv 待复核 0" [ref=e291]:
+                  - cell [ref=e292]:
+                    - checkbox [ref=e295] [cursor=pointer]
+                  - cell "废液桶未分类" [ref=e297]
+                  - cell "仓库A区" [ref=e298]
+                  - cell "hazards_multi_enterprise.csv" [ref=e299]
+                  - cell "待复核" [ref=e300]:
+                    - generic [ref=e301]: 待复核
+                  - cell "0" [ref=e302]
+                - row "电气线路老化裸露 配电房 hazards_multi_enterprise.csv 待复核 0" [ref=e303]:
+                  - cell [ref=e304]:
+                    - checkbox [ref=e307] [cursor=pointer]
+                  - cell "电气线路老化裸露" [ref=e309]
+                  - cell "配电房" [ref=e310]
+                  - cell "hazards_multi_enterprise.csv" [ref=e311]
+                  - cell "待复核" [ref=e312]:
+                    - generic [ref=e313]: 待复核
+                  - cell "0" [ref=e314]
+          - button "collapsed 上海化工有限公司 91310000234567890Y | 上海市 | 上海市浦东新区化工路2号 | 李娜 4 条隐患" [ref=e316] [cursor=pointer]:
+            - img "collapsed" [ref=e318]:
+              - img [ref=e319]
+            - generic [ref=e322]:
+              - checkbox [ref=e326]
+              - generic [ref=e328]: 上海化工有限公司
+              - generic [ref=e330]: 91310000234567890Y | 上海市 | 上海市浦东新区化工路2号 | 李娜
+              - generic [ref=e332]: 4 条隐患
+          - button "collapsed 深圳制造企业 91440300456789012A | 广东省深圳市 | 深圳市南山区制造路4号 | 刘洋 5 条隐患" [ref=e334] [cursor=pointer]:
+            - img "collapsed" [ref=e336]:
+              - img [ref=e337]
+            - generic [ref=e340]:
+              - checkbox [ref=e344]
+              - generic [ref=e346]: 深圳制造企业
+              - generic [ref=e348]: 91440300456789012A | 广东省深圳市 | 深圳市南山区制造路4号 | 刘洋
+              - generic [ref=e350]: 5 条隐患
+          - button "collapsed 沈阳机床集团 91210100889012345N | 辽宁省沈阳市 | 沈阳市铁西区机床路17号 | 林芳 4 条隐患" [ref=e352] [cursor=pointer]:
+            - img "collapsed" [ref=e354]:
+              - img [ref=e355]
+            - generic [ref=e358]:
+              - checkbox [ref=e362]
+              - generic [ref=e364]: 沈阳机床集团
+              - generic [ref=e366]: 91210100889012345N | 辽宁省沈阳市 | 沈阳市铁西区机床路17号 | 林芳
+              - generic [ref=e368]: 4 条隐患
+          - button "collapsed 苏州精密仪器 91320500667890123L | 江苏省苏州市 | 苏州市工业园区精密路15号 | 胡雪 7 条隐患" [ref=e370] [cursor=pointer]:
+            - img "collapsed" [ref=e372]:
+              - img [ref=e373]
+            - generic [ref=e376]:
+              - checkbox [ref=e380]
+              - generic [ref=e382]: 苏州精密仪器
+              - generic [ref=e384]: 91320500667890123L | 江苏省苏州市 | 苏州市工业园区精密路15号 | 胡雪
+              - generic [ref=e386]: 7 条隐患
+          - button "collapsed 天津港务集团 91120000112345678G | 天津市 | 天津市滨海新区港务路10号 | 郑华 4 条隐患" [ref=e388] [cursor=pointer]:
+            - img "collapsed" [ref=e390]:
+              - img [ref=e391]
+            - generic [ref=e394]:
+              - checkbox [ref=e398]
+              - generic [ref=e400]: 天津港务集团
+              - generic [ref=e402]: 91120000112345678G | 天津市 | 天津市滨海新区港务路10号 | 郑华
+              - generic [ref=e404]: 4 条隐患
+          - button "collapsed 武汉重工机械 91420100567890123B | 湖北省武汉市 | 武汉市武昌区重工街5号 | 陈明 7 条隐患" [ref=e406] [cursor=pointer]:
+            - img "collapsed" [ref=e408]:
+              - img [ref=e409]
+            - generic [ref=e412]:
+              - checkbox [ref=e416]
+              - generic [ref=e418]: 武汉重工机械
+              - generic [ref=e420]: 91420100567890123B | 湖北省武汉市 | 武汉市武昌区重工街5号 | 陈明
+              - generic [ref=e422]: 7 条隐患
+          - button "collapsed 西安电力公司 91610100789012345D | 陕西省西安市 | 西安市雁塔区电力街7号 | 赵磊 4 条隐患" [ref=e424] [cursor=pointer]:
+            - img "collapsed" [ref=e426]:
+              - img [ref=e427]
+            - generic [ref=e430]:
+              - checkbox [ref=e434]
+              - generic [ref=e436]: 西安电力公司
+              - generic [ref=e438]: 91610100789012345D | 陕西省西安市 | 西安市雁塔区电力街7号 | 赵磊
+              - generic [ref=e440]: 4 条隐患
+          - button "collapsed 长沙工程机械 91430100990123456O | 湖南省长沙市 | 长沙市岳麓区工程街18号 | 何伟 4 条隐患" [ref=e442] [cursor=pointer]:
+            - img "collapsed" [ref=e444]:
+              - img [ref=e445]
+            - generic [ref=e448]:
+              - checkbox [ref=e452]
+              - generic [ref=e454]: 长沙工程机械
+              - generic [ref=e456]: 91430100990123456O | 湖南省长沙市 | 长沙市岳麓区工程街18号 | 何伟
+              - generic [ref=e458]: 4 条隐患
+          - button "collapsed 郑州煤矿机械 91410100101234567P | 河南省郑州市 | 郑州市二七区煤矿路19号 | 高强 6 条隐患" [ref=e460] [cursor=pointer]:
+            - img "collapsed" [ref=e462]:
+              - img [ref=e463]
+            - generic [ref=e466]:
+              - checkbox [ref=e470]
+              - generic [ref=e472]: 郑州煤矿机械
+              - generic [ref=e474]: 91410100101234567P | 河南省郑州市 | 郑州市二七区煤矿路19号 | 高强
+              - generic [ref=e476]: 6 条隐患

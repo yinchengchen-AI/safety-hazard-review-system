@@ -1,0 +1,61 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e35]:
+    - banner [ref=e36]:
+      - generic [ref=e37]: 安全生产隐患复核系统
+      - button "退出登录" [ref=e38] [cursor=pointer]:
+        - generic [ref=e39]: 退出登录
+    - generic [ref=e40]:
+      - complementary [ref=e41]:
+        - menu [ref=e43]:
+          - menuitem "批次管理" [ref=e44] [cursor=pointer]:
+            - generic [ref=e45]: 批次管理
+          - menuitem "批量导入" [ref=e46] [cursor=pointer]:
+            - generic [ref=e47]: 批量导入
+          - menuitem "导入历史" [ref=e48] [cursor=pointer]:
+            - generic [ref=e49]: 导入历史
+          - menuitem "复核任务" [ref=e50] [cursor=pointer]:
+            - generic [ref=e51]: 复核任务
+          - menuitem "统计分析" [ref=e52] [cursor=pointer]:
+            - generic [ref=e53]: 统计分析
+          - menuitem "用户管理" [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: 用户管理
+      - main [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e60]:
+            - button "check-square 全选所有批次" [ref=e62] [cursor=pointer]:
+              - img "check-square" [ref=e64]:
+                - img [ref=e65]
+              - generic [ref=e68]: 全选所有批次
+            - button "clear 清空选择" [disabled] [ref=e70]:
+              - generic:
+                - img "clear":
+                  - img
+              - generic: 清空选择
+            - button "创建复核任务 (0 批次)" [disabled] [ref=e72]:
+              - generic: 创建复核任务 (0 批次)
+            - button "批量导入" [ref=e74] [cursor=pointer]:
+              - generic [ref=e75]: 批量导入
+          - generic [ref=e76]:
+            - generic [ref=e78]:
+              - generic [ref=e82]:
+                - checkbox [ref=e86] [cursor=pointer]
+                - generic [ref=e88]: 批次列表
+              - generic [ref=e89]:
+                - textbox "搜索批次" [ref=e92]
+                - generic [ref=e96] [cursor=pointer]:
+                  - checkbox [ref=e100]
+                  - generic [ref=e103]:
+                    - generic [ref=e104]: test_import_new
+                    - generic [ref=e105]:
+                      - text: 2026-04-15 · 可选
+                      - strong [ref=e106]: "1"
+                      - text: 条
+            - generic [ref=e108]:
+              - generic [ref=e111]: 隐患列表
+              - generic [ref=e113]:
+                - img "暂无数据" [ref=e115]
+                - generic [ref=e127]: 请在左侧选择批次查看隐患
+  - generic [ref=e129]:
+    - img "check-circle" [ref=e130]:
+      - img [ref=e131]
+    - generic [ref=e133]: 登录成功

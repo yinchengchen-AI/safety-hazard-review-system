@@ -1,0 +1,260 @@
+[      29ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:21550
+[     114ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4435
+[     114ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4435
+[   43319ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[   43328ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[  990869ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[ 1004262ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[ 1011839ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[ 1018894ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[ 1029083ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[ 1210710ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:21550
+[ 1210794ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4435
+[ 1210794ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4435
+[ 1210806ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[ 1210820ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[ 1241774ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[ 1241788ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/v1/reports/e1232634-b97c-468e-934a-0b6c2846a9c8/status:0
+[ 1251037ms] [ERROR] Warning: [antd: Modal] `destroyOnClose` is deprecated. Please use `destroyOnHidden` instead. @ http://localhost:5173/node_modules/.vite/deps/chunk-SNYCCP7P.js?v=853a2307:1117
+[ 3029959ms] [ERROR] Warning: [antd: Card] `bodyStyle` is deprecated. Please use `styles.body` instead. @ http://localhost:5173/node_modules/.vite/deps/chunk-SNYCCP7P.js?v=853a2307:1117
+[ 3209554ms] ReferenceError: setSelectedHazardRows is not defined
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:111:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+    at commitRoot (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19277:13)
+[ 3209558ms] ReferenceError: setSelectedHazardRows is not defined
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:111:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at invokePassiveEffectMountInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18324:19)
+    at invokeEffectsInDev (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19701:19)
+    at commitDoubleInvokeEffectsInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19686:15)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19503:13)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+    at commitRoot (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19277:13)
+    at performSyncWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18895:11)
+[ 3209559ms] [ERROR] The above error occurred in the <HazardList> component:
+
+    at HazardList (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:47:33)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4131:5)
+    at Outlet (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4537:26)
+    at main
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:65901:16
+    at Content
+    at div
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:65920:16
+    at Layout
+    at div
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:65920:16
+    at Layout
+    at Layout (http://localhost:5173/src/components/Layout/index.tsx?t=1776191991608:31:20)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4131:5)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4601:5)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4544:15)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:5290:5)
+    at App (http://localhost:5173/src/App.tsx?t=1776190317968:31:31)
+    at LocaleProvider (http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:3607:13)
+    at MotionWrapper (http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:6141:32)
+    at ProviderChildren (http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:6249:5)
+    at ConfigProvider (http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:6540:27)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:14031
+[ 3209559ms] [ERROR] The above error occurred in the <HazardList> component:
+
+    at HazardList (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:47:33)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4131:5)
+    at Outlet (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4537:26)
+    at main
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:65901:16
+    at Content
+    at div
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:65920:16
+    at Layout
+    at div
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:65920:16
+    at Layout
+    at Layout (http://localhost:5173/src/components/Layout/index.tsx?t=1776191991608:31:20)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4131:5)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4601:5)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:4544:15)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=853a2307:5290:5)
+    at App (http://localhost:5173/src/App.tsx?t=1776190317968:31:31)
+    at LocaleProvider (http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:3607:13)
+    at MotionWrapper (http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:6141:32)
+    at ProviderChildren (http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:6249:5)
+    at ConfigProvider (http://localhost:5173/node_modules/.vite/deps/antd.js?v=853a2307:6540:27)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:14031
+[ 3209561ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:104:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+[ 3209561ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:107:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+[ 3209562ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:104:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at invokePassiveEffectMountInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18324:19)
+    at invokeEffectsInDev (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19701:19)
+    at commitDoubleInvokeEffectsInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19686:15)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19503:13)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+    at commitRoot (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19277:13)
+[ 3209562ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:107:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at invokePassiveEffectMountInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18324:19)
+    at invokeEffectsInDev (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19701:19)
+    at commitDoubleInvokeEffectsInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19686:15)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19503:13)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+    at commitRoot (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19277:13)
+[ 3209562ms] ReferenceError: setSelectedHazardRows is not defined
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192498429:111:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+    at commitRoot (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19277:13)
+[ 3213760ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192502607:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192502607:104:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+[ 3213760ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192502607:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192502607:107:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+[ 3213761ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192502607:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192502607:104:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at invokePassiveEffectMountInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18324:19)
+    at invokeEffectsInDev (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19701:19)
+    at commitDoubleInvokeEffectsInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19686:15)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19503:13)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+    at commitRoot (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19277:13)
+[ 3213761ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192502607:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192502607:107:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at invokePassiveEffectMountInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18324:19)
+    at invokeEffectsInDev (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19701:19)
+    at commitDoubleInvokeEffectsInDEV (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19686:15)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19503:13)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+    at commitRoot (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19277:13)
+[ 3217590ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192506488:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192506488:104:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+[ 3217590ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192506488:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192506488:107:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+[ 3221160ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192510058:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192510058:104:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+[ 3221161ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192510058:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192510058:107:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+[ 3224933ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192513822:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192513822:104:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)
+[ 3224933ms] ReferenceError: setSelectedHazardRows is not defined
+    at fetchHazards (http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192513822:85:7)
+    at http://localhost:5173/src/pages/Hazard/HazardList.tsx?t=1776192513822:107:5
+    at commitHookEffectListMount (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:16915:34)
+    at commitPassiveMountOnFiber (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18156:19)
+    at commitPassiveMountEffects_complete (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18129:17)
+    at commitPassiveMountEffects_begin (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18119:15)
+    at commitPassiveMountEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:18109:11)
+    at flushPassiveEffectsImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19490:11)
+    at flushPassiveEffects (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19447:22)
+    at commitRootImpl (http://localhost:5173/node_modules/.vite/deps/chunk-UXDD7MME.js?v=853a2307:19416:13)

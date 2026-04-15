@@ -1,0 +1,98 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e35]:
+    - banner [ref=e36]:
+      - generic [ref=e37]: 安全生产隐患复核系统
+      - button "退出登录" [ref=e38] [cursor=pointer]:
+        - generic [ref=e39]: 退出登录
+    - generic [ref=e40]:
+      - complementary [ref=e41]:
+        - menu [ref=e43]:
+          - menuitem "隐患管理" [ref=e44] [cursor=pointer]:
+            - generic [ref=e45]: 隐患管理
+          - menuitem "批量导入" [ref=e46] [cursor=pointer]:
+            - generic [ref=e47]: 批量导入
+          - menuitem "导入历史" [ref=e48] [cursor=pointer]:
+            - generic [ref=e49]: 导入历史
+          - menuitem "复核任务" [ref=e50] [cursor=pointer]:
+            - generic [ref=e51]: 复核任务
+          - menuitem "统计分析" [ref=e52] [cursor=pointer]:
+            - generic [ref=e53]: 统计分析
+          - menuitem "用户管理" [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: 用户管理
+      - main [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e60]:
+            - textbox "搜索企业名称" [ref=e63]
+            - generic [ref=e66] [cursor=pointer]:
+              - generic [ref=e68]:
+                - combobox [ref=e70]
+                - generic: 隐患分类
+              - generic:
+                - img:
+                  - img
+            - generic [ref=e72] [cursor=pointer]:
+              - generic [ref=e74]:
+                - combobox [ref=e76]
+                - generic: 是否整改
+              - generic:
+                - img:
+                  - img
+            - generic [ref=e78] [cursor=pointer]:
+              - generic [ref=e80]:
+                - combobox [ref=e82]
+                - generic: 检查方式
+              - generic:
+                - img:
+                  - img
+            - button "批量导入" [ref=e84] [cursor=pointer]:
+              - generic [ref=e85]: 批量导入
+          - generic [ref=e86]:
+            - generic [ref=e89]: 隐患列表 · 共 0 条
+            - generic [ref=e90]:
+              - table [ref=e97]:
+                - rowgroup [ref=e113]:
+                  - row "企业名称 隐患分类 隐患描述 位置 检查方式 检查时间 是否整改 整改完成时间 上报单位 批次 状态 复核次数 锁定 操作" [ref=e114]:
+                    - columnheader "企业名称" [ref=e115]
+                    - columnheader "隐患分类" [ref=e116]
+                    - columnheader "隐患描述" [ref=e117]
+                    - columnheader "位置" [ref=e118]
+                    - columnheader "检查方式" [ref=e119]
+                    - columnheader "检查时间" [ref=e120]
+                    - columnheader "是否整改" [ref=e121]
+                    - columnheader "整改完成时间" [ref=e122]
+                    - columnheader "上报单位" [ref=e123]
+                    - columnheader "批次" [ref=e124]
+                    - columnheader "状态" [ref=e125]
+                    - columnheader "复核次数" [ref=e126]
+                    - columnheader "锁定" [ref=e127]
+                    - columnheader "操作" [ref=e128]
+                - rowgroup [ref=e129]:
+                  - row "暂无数据 暂无隐患数据" [ref=e130]:
+                    - cell "暂无数据 暂无隐患数据" [ref=e131]:
+                      - generic [ref=e133]:
+                        - img "暂无数据" [ref=e135]
+                        - generic [ref=e147]: 暂无隐患数据
+              - list [ref=e148]:
+                - listitem [ref=e149]: 共 0 条
+                - listitem "上一页" [ref=e150]:
+                  - button "left" [disabled] [ref=e151]:
+                    - img "left" [ref=e152]:
+                      - img [ref=e153]
+                - listitem "1" [ref=e155] [cursor=pointer]:
+                  - generic [ref=e156]: "1"
+                - listitem "下一页" [ref=e157]:
+                  - button "right" [disabled] [ref=e158]:
+                    - img "right" [ref=e159]:
+                      - img [ref=e160]
+                - listitem [ref=e162]:
+                  - generic "页码" [ref=e163] [cursor=pointer]:
+                    - generic [ref=e165]:
+                      - combobox "页码" [ref=e167]
+                      - generic "20 条/页" [ref=e168]
+                    - generic:
+                      - img:
+                        - img
+  - generic [ref=e170]:
+    - img "check-circle" [ref=e171]:
+      - img [ref=e172]
+    - generic [ref=e174]: 登录成功
