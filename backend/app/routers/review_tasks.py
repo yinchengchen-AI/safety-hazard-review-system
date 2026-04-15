@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import selectinload
@@ -10,8 +10,21 @@ from app.core.database import get_db
 from app.schemas import ReviewTaskCreate, ReviewTaskResponse, ReviewTaskDetailResponse, TaskHazardReview, TaskHazardResponse, BatchReviewRequest
 from app.models import ReviewTask, Hazard, TaskHazard, HazardStatusHistory, User, Photo
 from app.dependencies.auth import get_current_active_user
+from app.services.report_orchestration_service import ReportOrchestrationService
 
 router = APIRouter()
+
+
+def _append_token_to_url(url: str, token: str) -> str:
+    sep = "&" if "?" in url else "?"
+    return f"{url}{sep}token={token}"
+
+
+def _extract_token_from_request(request: Request) -> str:
+    auth = request.headers.get("Authorization", "")
+    if auth.lower().startswith("bearer "):
+        return auth[7:]
+    return request.query_params.get("token", "")
 
 
 @router.post("", response_model=ReviewTaskResponse, status_code=status.HTTP_201_CREATED)
@@ -114,6 +127,7 @@ async def list_review_tasks(
 
 @router.get("/{task_id}", response_model=ReviewTaskDetailResponse)
 async def get_review_task(
+    request: Request,
     task_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -157,18 +171,29 @@ async def get_review_task(
 
     hazards_data = []
     for th in task_hazards:
+        # Temporarily detach photos so model_validate doesn't fail on dict coercion
+        original_photos = th.photos
+        th.photos = []
         th_resp = TaskHazardResponse.model_validate(th)
+        th.photos = original_photos
+        user_token = _extract_token_from_request(request)
         th_resp.reviewer_username = th.reviewer.username if th.reviewer else None
-        th_resp.photos = [
-            {
+        th_resp.photos = []
+        for p in th.photos:
+            if p.deleted_at is not None:
+                continue
+            original_url = f"/api/v1/photos/{p.id}/image?size=original"
+            thumbnail_url = f"/api/v1/photos/{p.id}/image?size=thumbnail"
+            if user_token:
+                original_url = _append_token_to_url(original_url, user_token)
+                thumbnail_url = _append_token_to_url(thumbnail_url, user_token)
+            th_resp.photos.append({
                 "id": str(p.id),
-                "original_url": p.original_path,
-                "thumbnail_url": p.thumbnail_path,
+                "original_url": original_url,
+                "thumbnail_url": thumbnail_url,
                 "width": p.width,
                 "height": p.height,
-            }
-            for p in th.photos
-        ]
+            })
         hazard_info = {
             "task_hazard": th_resp,
             "hazard_id": str(th.hazard.id),
@@ -195,6 +220,7 @@ async def get_review_task(
 
 @router.post("/{task_id}/hazards/{hazard_id}/review", response_model=TaskHazardResponse)
 async def review_hazard(
+    request: Request,
     task_id: UUID,
     hazard_id: UUID,
     data: TaskHazardReview,
@@ -270,6 +296,22 @@ async def review_hazard(
     )
     all_photos = all_photos_result.scalars().all()
 
+    user_token = _extract_token_from_request(request)
+    photos_out = []
+    for p in all_photos:
+        original_url = f"/api/v1/photos/{p.id}/image?size=original"
+        thumbnail_url = f"/api/v1/photos/{p.id}/image?size=thumbnail"
+        if user_token:
+            original_url = _append_token_to_url(original_url, user_token)
+            thumbnail_url = _append_token_to_url(thumbnail_url, user_token)
+        photos_out.append({
+            "id": str(p.id),
+            "original_url": original_url,
+            "thumbnail_url": thumbnail_url,
+            "width": p.width,
+            "height": p.height,
+        })
+
     resp = TaskHazardResponse(
         id=task_hazard.id,
         task_id=task_hazard.task_id,
@@ -279,16 +321,7 @@ async def review_hazard(
         reviewed_at=task_hazard.reviewed_at,
         reviewer_id=task_hazard.reviewer_id,
         reviewer_username=current_user.username,
-        photos=[
-            {
-                "id": str(p.id),
-                "original_url": p.original_path,
-                "thumbnail_url": p.thumbnail_path,
-                "width": p.width,
-                "height": p.height,
-            }
-            for p in all_photos
-        ],
+        photos=photos_out,
     )
     return resp
 
@@ -349,6 +382,7 @@ async def remove_hazard_from_task(
 
 @router.post("/{task_id}/batch-review", response_model=list[TaskHazardResponse])
 async def batch_review_hazards(
+    request: Request,
     task_id: UUID,
     data: BatchReviewRequest,
     db: AsyncSession = Depends(get_db),
@@ -419,6 +453,22 @@ async def batch_review_hazards(
         )
         all_photos = all_photos_result.scalars().all()
 
+        user_token = _extract_token_from_request(request)
+        photos_out = []
+        for p in all_photos:
+            original_url = f"/api/v1/photos/{p.id}/image?size=original"
+            thumbnail_url = f"/api/v1/photos/{p.id}/image?size=thumbnail"
+            if user_token:
+                original_url = _append_token_to_url(original_url, user_token)
+                thumbnail_url = _append_token_to_url(thumbnail_url, user_token)
+            photos_out.append({
+                "id": str(p.id),
+                "original_url": original_url,
+                "thumbnail_url": thumbnail_url,
+                "width": p.width,
+                "height": p.height,
+            })
+
         resp = TaskHazardResponse(
             id=task_hazard.id,
             task_id=task_hazard.task_id,
@@ -428,16 +478,7 @@ async def batch_review_hazards(
             reviewed_at=task_hazard.reviewed_at,
             reviewer_id=task_hazard.reviewer_id,
             reviewer_username=current_user.username,
-            photos=[
-                {
-                    "id": str(p.id),
-                    "original_url": p.original_path,
-                    "thumbnail_url": p.thumbnail_path,
-                    "width": p.width,
-                    "height": p.height,
-                }
-                for p in all_photos
-            ],
+            photos=photos_out,
         )
         responses.append(resp)
 
@@ -482,6 +523,13 @@ async def complete_task(
     task.completed_at = datetime.now(ZoneInfo("Asia/Shanghai"))
     await db.commit()
     await db.refresh(task)
+
+    try:
+        orchestrator = ReportOrchestrationService(db)
+        await orchestrator.create_and_enqueue(task.id)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).exception("Failed to enqueue report generation after task completion: %s", e)
 
     return ReviewTaskResponse.model_validate(task)
 

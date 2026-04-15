@@ -7,8 +7,7 @@ from app.core.database import get_db
 from app.schemas import ReportStatusResponse, ReportGenerateResponse
 from app.models import Report
 from app.dependencies.auth import get_current_active_user
-from app.services.report_service import ReportService
-from app.tasks.report_tasks import generate_report_task
+from app.services.report_orchestration_service import ReportOrchestrationService
 
 router = APIRouter()
 
@@ -19,18 +18,8 @@ async def generate_report(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_active_user),
 ):
-    # Create pending report record
-    result = await db.execute(select(Report).where(Report.task_id == task_id))
-    report = result.scalar_one_or_none()
-    if not report:
-        report = Report(task_id=task_id, status="pending")
-        db.add(report)
-        await db.commit()
-        await db.refresh(report)
-
-    # Trigger async task
-    generate_report_task.delay(str(task_id))
-
+    orchestrator = ReportOrchestrationService(db)
+    await orchestrator.create_and_enqueue(task_id)
     return ReportGenerateResponse(task_id=task_id)
 
 

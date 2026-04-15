@@ -11,7 +11,7 @@ class Report(Base):
     __tablename__ = "reports"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    task_id = Column(UUID(as_uuid=True), ForeignKey("review_tasks.id"), nullable=False)
+    task_id = Column(UUID(as_uuid=True), ForeignKey("review_tasks.id"), nullable=False, unique=True)
     word_path = Column(String(500), nullable=True)
     pdf_path = Column(String(500), nullable=True)
     status = Column(String(20), nullable=False, default="pending")

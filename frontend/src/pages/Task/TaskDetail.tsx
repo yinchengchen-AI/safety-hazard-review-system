@@ -46,7 +46,7 @@ function TaskDetail() {
   const [currentHazard, setCurrentHazard] = useState<any>(null)
   const [form] = Form.useForm()
   const [batchForm] = Form.useForm()
-  const [photoTokens, setPhotoTokens] = useState<string[]>([])
+  const [uploadedPhotos, setUploadedPhotos] = useState<{ temp_token: string; original_url: string; thumbnail_url: string }[]>([])
   const [reportStatus, setReportStatus] = useState<any>(null)
   const [selectedHazardIds, setSelectedHazardIds] = useState<string[]>([])
 
@@ -69,6 +69,12 @@ function TaskDetail() {
     if (id) checkReportStatus()
   }, [id])
 
+  useEffect(() => {
+    if (id && task?.status === 'completed') {
+      checkReportStatus()
+    }
+  }, [id, task?.status])
+
   const checkReportStatus = async () => {
     if (!id) return
     try {
@@ -82,7 +88,7 @@ function TaskDetail() {
     try {
       await reviewHazard(id, currentHazard.hazard_id, {
         ...values,
-        photo_tokens: photoTokens,
+        photo_tokens: uploadedPhotos.map((p) => p.temp_token),
       })
       message.success(currentHazard.task_hazard.status_in_task ? '复核修改成功' : '复核提交成功')
       closeReviewModal()
@@ -99,7 +105,7 @@ function TaskDetail() {
         items: selectedHazardIds.map((hazardId) => ({
           hazard_id: hazardId,
           ...values,
-          photo_tokens: photoTokens,
+          photo_tokens: uploadedPhotos.map((p) => p.temp_token),
         })),
       })
       message.success('批量复核成功')
@@ -113,19 +119,19 @@ function TaskDetail() {
   const closeReviewModal = () => {
     setReviewModalVisible(false)
     setCurrentHazard(null)
-    setPhotoTokens([])
+    setUploadedPhotos([])
     form.resetFields()
   }
 
   const closeBatchReviewModal = () => {
     setBatchReviewModalVisible(false)
-    setPhotoTokens([])
+    setUploadedPhotos([])
     batchForm.resetFields()
   }
 
   const openReviewModal = (item: any) => {
     setCurrentHazard(item)
-    setPhotoTokens([])
+    setUploadedPhotos([])
     form.setFieldsValue({
       conclusion: item.task_hazard.conclusion || '',
       status_in_task: item.task_hazard.status_in_task || undefined,
@@ -145,16 +151,44 @@ function TaskDetail() {
     }
   }
 
-  const handleUpload = async ({ file }: any) => {
+  const MAX_PHOTO_SIZE = 10 * 1024 * 1024
+  const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png']
+
+  const handleBeforeUpload = (file: File) => {
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      message.error('仅支持 JPG 和 PNG 格式的图片')
+      return Upload.LIST_IGNORE
+    }
+    if (file.size > MAX_PHOTO_SIZE) {
+      message.error('图片大小不能超过 10MB')
+      return Upload.LIST_IGNORE
+    }
+    return true
+  }
+
+  const handleUpload = async ({ file, onSuccess, onError }: any) => {
     const formData = new FormData()
     formData.append('file', file)
     try {
       const res: any = await uploadPhoto(formData)
-      setPhotoTokens((prev) => [...prev, res.temp_token])
+      setUploadedPhotos((prev) => [
+        ...prev,
+        {
+          temp_token: res.temp_token,
+          original_url: res.original_url,
+          thumbnail_url: res.thumbnail_url,
+        },
+      ])
+      onSuccess?.()
       message.success('照片上传成功')
     } catch (err: any) {
+      onError?.()
       message.error(err.detail || '上传失败')
     }
+  }
+
+  const handleRemoveUploadedPhoto = (index: number) => {
+    setUploadedPhotos((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleDeletePhoto = async (photoId: string) => {
@@ -306,29 +340,43 @@ function TaskDetail() {
               )}
               {item.task_hazard.photos && item.task_hazard.photos.length > 0 && (
                 <div style={{ marginTop: 8 }}>
-                  <Image.PreviewGroup>
+                  <Image.PreviewGroup
+                    items={item.task_hazard.photos.map((p: any) => ({
+                      src: p.original_url,
+                    }))}
+                  >
                     {item.task_hazard.photos.map((p: any) => (
                       <div key={p.id} style={{ display: 'inline-block', position: 'relative', marginRight: 8 }}>
                         <Image
                           src={p.thumbnail_url || p.original_url}
                           style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                          preview={{ src: p.original_url }}
                         />
                         {task.status === 'pending' && (
-                          <Button
-                            type="primary"
-                            danger
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            style={{
-                              position: 'absolute',
-                              top: 0,
-                              right: 0,
-                              minWidth: 24,
-                              height: 24,
-                              padding: 0,
+                          <Popconfirm
+                            title="确认删除？"
+                            description="删除后照片将无法恢复"
+                            onConfirm={(e) => {
+                              e?.stopPropagation()
+                              handleDeletePhoto(p.id)
                             }}
-                            onClick={() => handleDeletePhoto(p.id)}
-                          />
+                          >
+                            <Button
+                              type="primary"
+                              danger
+                              size="small"
+                              icon={<DeleteOutlined />}
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                right: 0,
+                                minWidth: 24,
+                                height: 24,
+                                padding: 0,
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </Popconfirm>
                         )}
                       </div>
                     ))}
@@ -389,8 +437,8 @@ function TaskDetail() {
                 <Button>完成任务</Button>
               </Popconfirm>
             )}
-            {task.status !== 'cancelled' && (
-              <Button onClick={handleGenerateReport}>生成报告</Button>
+            {reportStatus?.status !== 'completed' && task.status === 'completed' && (
+              <Button onClick={handleGenerateReport}>重新生成</Button>
             )}
             {reportStatus?.status === 'completed' && task.status !== 'cancelled' && (
               <>
@@ -428,10 +476,46 @@ function TaskDetail() {
             </Radio.Group>
           </Form.Item>
           <Form.Item label="上传照片">
-            <Upload customRequest={handleUpload} listType="picture" multiple>
+            <Upload
+              customRequest={handleUpload}
+              beforeUpload={handleBeforeUpload}
+              showUploadList={false}
+              multiple
+            >
               <Button icon={<UploadOutlined />}>上传照片</Button>
             </Upload>
-            <div style={{ marginTop: 8, color: '#888' }}>已上传 {photoTokens.length} 张照片</div>
+            {uploadedPhotos.length > 0 && (
+              <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {uploadedPhotos.map((p, idx) => (
+                  <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                    <Image
+                      src={p.thumbnail_url || p.original_url}
+                      style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                      preview={{ src: p.original_url }}
+                    />
+                    <Button
+                      type="primary"
+                      danger
+                      size="small"
+                      icon={<DeleteOutlined />}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        minWidth: 24,
+                        height: 24,
+                        padding: 0,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveUploadedPhoto(idx)
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ marginTop: 8, color: '#888' }}>已上传 {uploadedPhotos.length} 张照片</div>
           </Form.Item>
         </Form>
       </Modal>
@@ -453,10 +537,46 @@ function TaskDetail() {
             </Radio.Group>
           </Form.Item>
           <Form.Item label="上传照片">
-            <Upload customRequest={handleUpload} listType="picture" multiple>
+            <Upload
+              customRequest={handleUpload}
+              beforeUpload={handleBeforeUpload}
+              showUploadList={false}
+              multiple
+            >
               <Button icon={<UploadOutlined />}>上传照片</Button>
             </Upload>
-            <div style={{ marginTop: 8, color: '#888' }}>已上传 {photoTokens.length} 张照片</div>
+            {uploadedPhotos.length > 0 && (
+              <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {uploadedPhotos.map((p, idx) => (
+                  <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                    <Image
+                      src={p.thumbnail_url || p.original_url}
+                      style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                      preview={{ src: p.original_url }}
+                    />
+                    <Button
+                      type="primary"
+                      danger
+                      size="small"
+                      icon={<DeleteOutlined />}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        minWidth: 24,
+                        height: 24,
+                        padding: 0,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveUploadedPhoto(idx)
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ marginTop: 8, color: '#888' }}>已上传 {uploadedPhotos.length} 张照片</div>
           </Form.Item>
         </Form>
       </Modal>

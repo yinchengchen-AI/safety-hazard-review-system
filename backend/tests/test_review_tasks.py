@@ -199,3 +199,35 @@ async def test_complete_task_with_unreviewed_hazard_fails(client: AsyncClient):
     )
     assert complete.status_code == 400
     assert "未复核" in complete.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_complete_task_creates_report(client: AsyncClient):
+    token = await get_admin_token(client)
+    h1 = await create_enterprise_and_hazard(client, token, "企业Report")
+    create_res = await client.post(
+        "/api/v1/review-tasks",
+        json={"name": "报告任务", "hazard_ids": [h1]},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    task_id = create_res.json()["id"]
+
+    # Review the hazard first
+    await client.post(
+        f"/api/v1/review-tasks/{task_id}/hazards/{h1}/review",
+        json={"status_in_task": "passed", "conclusion": "ok"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    complete = await client.post(
+        f"/api/v1/review-tasks/{task_id}/complete",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert complete.status_code == 200
+
+    status_res = await client.get(
+        f"/api/v1/reports/{task_id}/status",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert status_res.status_code == 200
+    assert status_res.json()["status"] == "pending"
