@@ -55,13 +55,13 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/safety_hazard
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/safety_hazard
       - REDIS_URL=redis://redis:6379/0
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET=hazard-photos
-      - SECRET_KEY=your-secret-key-change-in-production
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,13 +75,13 @@ services:
     container_name: safety-celery
     command: celery -A app.tasks.celery_app worker --loglevel=info
     environment:
-      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/safety_hazard
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/safety_hazard
       - REDIS_URL=redis://redis:6379/0
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET=hazard-photos
-      - SECRET_KEY=your-secret-key-change-in-production
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
     depends_on:
       postgres:
         condition: service_healthy
@@ -95,13 +95,13 @@ services:
     container_name: safety-celery-beat
     command: celery -A app.tasks.celery_app beat --loglevel=info
     environment:
-      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/safety_hazard
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/safety_hazard
       - REDIS_URL=redis://redis:6379/0
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET=hazard-photos
-      - SECRET_KEY=your-secret-key-change-in-production
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
     depends_on:
       postgres:
         condition: service_healthy
