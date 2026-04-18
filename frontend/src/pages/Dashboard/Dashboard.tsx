@@ -409,9 +409,12 @@ export default function Dashboard() {
                         title={
                           <div className="hazard-title">
                             <Text style={{ maxWidth: 200 }}>
-                              {item.description.length > 20
-                                ? item.description.slice(0, 20) + '...'
-                                : item.description}
+                              {(() => {
+                                const chars = Array.from(item.description)
+                                return chars.length > 20
+                                  ? chars.slice(0, 20).join('') + '...'
+                                  : item.description
+                              })()}
                             </Text>
                             <StatusTag status={item.status} />
                           </div>
