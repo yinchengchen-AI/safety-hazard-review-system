@@ -108,7 +108,7 @@ done
 # 7. 数据库迁移和初始化
 echo "[7/8] 运行数据库迁移..."
 # 检查 alembic_version 表是否存在（判断是否首次部署）
-TABLES_EXIST=$(docker exec safety-postgres psql -U postgres -d safety_hazard_db -tAc \
+TABLES_EXIST=$(docker exec safety-postgres psql -U postgres -d safety_hazard -tAc \
     "SELECT COUNT(*) FROM information_schema.tables WHERE table_name='alembic_version';" 2>/dev/null || echo "0")
 
 if [ "$TABLES_EXIST" = "0" ] || [ "$TABLES_EXIST" = "" ]; then
@@ -135,7 +135,7 @@ else
 fi
 
 echo "  初始化管理员账号..."
-docker exec safety-backend python scripts/seed_admin.py
+docker exec safety-backend python scripts/seed_admin.py || echo "  警告：seed_admin 失败，可能需要手动初始化"
 
 # 8. 配置 Nginx
 echo "[8/8] 配置 Nginx..."
