@@ -1,7 +1,5 @@
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
-from datetime import datetime, timezone
-from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func

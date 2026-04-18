@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 import secrets
 
@@ -29,9 +29,7 @@ class Settings(BaseSettings):
     # In production, use Alembic migrations instead.
     AUTO_CREATE_TABLES: bool = False
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()

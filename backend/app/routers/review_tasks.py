@@ -123,29 +123,35 @@ async def list_review_tasks(
     )
     tasks = result.scalars().all()
 
+    # Batch query counts and report status to avoid N+1
+    task_ids = [task.id for task in tasks]
+
+    hazard_counts_result = await db.execute(
+        select(TaskHazard.task_id, func.count(TaskHazard.id))
+        .where(TaskHazard.task_id.in_(task_ids))
+        .group_by(TaskHazard.task_id)
+    )
+    hazard_counts_map = {task_id: count for task_id, count in hazard_counts_result.all()}
+
+    reviewed_counts_result = await db.execute(
+        select(TaskHazard.task_id, func.count(TaskHazard.id))
+        .where(TaskHazard.task_id.in_(task_ids), TaskHazard.status_in_task.isnot(None))
+        .group_by(TaskHazard.task_id)
+    )
+    reviewed_counts_map = {task_id: count for task_id, count in reviewed_counts_result.all()}
+
+    reports_result = await db.execute(
+        select(Report.task_id, Report.status).where(Report.task_id.in_(task_ids))
+    )
+    reports_map = {task_id: status for task_id, status in reports_result.all()}
+
     responses = []
     for task in tasks:
         resp = ReviewTaskResponse.model_validate(task)
         resp.creator_username = task.creator.username if task.creator else None
-        # Count hazards
-        count_result = await db.execute(
-            select(func.count()).select_from(TaskHazard).where(TaskHazard.task_id == task.id)
-        )
-        resp.hazard_count = count_result.scalar()
-        reviewed_result = await db.execute(
-            select(func.count()).select_from(TaskHazard).where(
-                TaskHazard.task_id == task.id, TaskHazard.status_in_task.isnot(None)
-            )
-        )
-        resp.reviewed_count = reviewed_result.scalar()
-
-        # Report status
-        report_result = await db.execute(
-            select(Report.status).where(Report.task_id == task.id)
-        )
-        report_status = report_result.scalar_one_or_none()
-        resp.report_status = report_status
-
+        resp.hazard_count = hazard_counts_map.get(task.id, 0)
+        resp.reviewed_count = reviewed_counts_map.get(task.id, 0)
+        resp.report_status = reports_map.get(task.id)
         responses.append(resp)
 
     return responses

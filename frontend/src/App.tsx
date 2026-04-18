@@ -1,17 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy } from 'react'
 import Login from './pages/Login'
 import Layout from './components/Layout'
-import HazardList from './pages/Hazard/HazardList'
-import HazardDetail from './pages/Hazard/HazardDetail'
-import BatchImport from './pages/Batch/BatchImport'
-import BatchHistory from './pages/Batch/BatchHistory'
-import TaskList from './pages/Task/TaskList'
-import TaskDetail from './pages/Task/TaskDetail'
-import Statistics from './pages/Statistics/Statistics'
-import UserList from './pages/User/UserList'
-import Dashboard from './pages/Dashboard/Dashboard'
-import AuditLogList from './pages/AuditLog/AuditLogList'
+
+const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'))
+const HazardList = lazy(() => import('./pages/Hazard/HazardList'))
+const HazardDetail = lazy(() => import('./pages/Hazard/HazardDetail'))
+const BatchImport = lazy(() => import('./pages/Batch/BatchImport'))
+const BatchHistory = lazy(() => import('./pages/Batch/BatchHistory'))
+const TaskList = lazy(() => import('./pages/Task/TaskList'))
+const TaskDetail = lazy(() => import('./pages/Task/TaskDetail'))
+const Statistics = lazy(() => import('./pages/Statistics/Statistics'))
+const UserList = lazy(() => import('./pages/User/UserList'))
+const AuditLogList = lazy(() => import('./pages/AuditLog/AuditLogList'))
 import { useUserStore } from './store/userStore'
 
 function App() {

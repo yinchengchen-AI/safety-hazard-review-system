@@ -1,5 +1,6 @@
-import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, Badge } from 'antd'
+import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, Badge, Spin } from 'antd'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { Suspense } from 'react'
 import {
   HomeOutlined,
   WarningOutlined,
@@ -129,7 +130,9 @@ function Layout() {
               padding: 24,
             }}
           >
-            <Outlet />
+            <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><Spin size="large" tip="页面加载中..." /></div>}>
+              <Outlet />
+            </Suspense>
           </div>
         </Content>
       </AntLayout>

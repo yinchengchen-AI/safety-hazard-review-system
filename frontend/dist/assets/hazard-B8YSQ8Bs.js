@@ -1,0 +1,1 @@
+import{r as t}from"./index-G0BWNymW.js";const r=a=>t.get("/hazards",{params:a}),d=a=>t.get(`/hazards/${a}`),z=a=>t.get(`/hazards/${a}/editable`),g=(a,s)=>t.put(`/hazards/${a}`,s);export{z as a,d as b,r as g,g as u};

@@ -37,20 +37,24 @@ async def list_batches(
     )
     result = await db.execute(stmt)
     rows = result.all()
+
+    # Batch query available hazard counts to avoid N+1
+    batch_ids = [batch.id for batch, _ in rows]
+    counts_result = await db.execute(
+        select(Hazard.batch_id, func.count(Hazard.id))
+        .where(
+            Hazard.batch_id.in_(batch_ids),
+            Hazard.deleted_at.is_(None),
+            Hazard.current_task_id.is_(None),
+        )
+        .group_by(Hazard.batch_id)
+    )
+    counts_map = {batch_id: count for batch_id, count in counts_result.all()}
+
     batches = []
     for batch, username in rows:
         batch.creator_username = username
-        # Count available hazards (not deleted and not locked in a task)
-        count_result = await db.execute(
-            select(func.count())
-            .select_from(Hazard)
-            .where(
-                Hazard.batch_id == batch.id,
-                Hazard.deleted_at.is_(None),
-                Hazard.current_task_id.is_(None),
-            )
-        )
-        batch.available_hazard_count = count_result.scalar() or 0
+        batch.available_hazard_count = counts_map.get(batch.id, 0)
         batches.append(batch)
     return batches
 

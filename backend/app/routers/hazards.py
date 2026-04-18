@@ -25,9 +25,8 @@ async def list_hazards(
 
     if params.enterprise_name:
         base_query = base_query.join(Hazard.enterprise).where(Enterprise.name.ilike(f"%{params.enterprise_name}%"))
-    else:
-        base_query = base_query.options(selectinload(Hazard.enterprise))
 
+    base_query = base_query.options(selectinload(Hazard.enterprise))
     base_query = base_query.options(selectinload(Hazard.batch))
 
     if params.enterprise_id:
