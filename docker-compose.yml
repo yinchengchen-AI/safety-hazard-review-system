@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: docker.m.daocloud.io/postgres:15-alpine
     container_name: safety-postgres
     environment:
       POSTGRES_USER: postgres
@@ -19,7 +19,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    image: docker.m.daocloud.io/redis:7-alpine
     container_name: safety-redis
     ports:
       - "6379:6379"
@@ -32,7 +32,7 @@ services:
       retries: 5
 
   minio:
-    image: minio/minio:latest
+    image: docker.m.daocloud.io/minio/minio:latest
     container_name: safety-minio
     command: server /data --console-address ":9001"
     environment:

@@ -25,7 +25,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import {
-  getEnterpriseStats,
+  getOverviewStats,
   getTrendStats,
 } from '../../api/statistics'
 import { getTasks } from '../../api/task'
@@ -142,12 +142,12 @@ export default function Dashboard() {
         const end = dayjs()
         const start = end.subtract(30, 'day')
         const [
-          enterpriseRes,
+          overviewRes,
           trendRes,
           tasksRes,
           hazardsRes,
         ] = await Promise.all([
-          getEnterpriseStats(),
+          getOverviewStats(),
           getTrendStats({
             start_date: start.format('YYYY-MM-DD'),
             end_date: end.format('YYYY-MM-DD'),
@@ -156,16 +156,16 @@ export default function Dashboard() {
           getHazards({ page: 1, page_size: 5 }),
         ])
 
-        const enterprises = (enterpriseRes as any) || []
-        const totalHazards = enterprises.reduce((sum: number, e: any) => sum + (e.total_hazards || 0), 0)
-        const pendingHazards = enterprises.reduce((sum: number, e: any) => sum + (e.pending_count || 0), 0)
-        const passRate = totalHazards
-          ? enterprises.reduce((sum: number, e: any) => sum + (e.passed_count || 0), 0) / totalHazards
-          : 0
+        const overview = (overviewRes as any) || {}
+        const totalHazards = overview.total_hazards || 0
+        const pendingHazards = overview.pending_count || 0
+        const passRate = overview.pass_rate || 0
 
         const tasksData = (tasksRes as any) || []
         const tasks = (tasksData.items || tasksData || []).slice(0, 5)
-        const pendingTasks = (tasksData.items || tasksData || []).filter((t: TaskItem) => t.status === 'pending').length
+        const pendingTasks = overview.task_count
+          ? (tasksData.items || tasksData || []).filter((t: TaskItem) => t.status === 'pending').length
+          : 0
         const completedTasks = (tasksData.items || tasksData || []).filter((t: TaskItem) => t.status === 'completed').length
 
         const trendData = (trendRes as any) || {}
