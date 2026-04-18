@@ -98,7 +98,30 @@ done
 
 # 7. 数据库迁移和初始化
 echo "[7/8] 运行数据库迁移..."
-docker exec safety-backend alembic upgrade head
+# 检查 alembic_version 表是否存在（判断是否首次部署）
+TABLES_EXIST=$(docker exec safety-postgres psql -U postgres -d safety_hazard_db -tAc \
+    "SELECT COUNT(*) FROM information_schema.tables WHERE table_name='alembic_version';" 2>/dev/null || echo "0")
+
+if [ "$TABLES_EXIST" = "0" ] || [ "$TABLES_EXIST" = "" ]; then
+    echo "  首次部署：通过 SQLAlchemy 创建所有表..."
+    docker exec safety-backend python -c "
+import asyncio
+from app.core.database import engine, Base
+import app.models  # 确保所有模型已注册
+
+async def create_all():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    print('  所有表创建成功')
+
+asyncio.run(create_all())
+"
+    echo "  标记 alembic 迁移状态为最新..."
+    docker exec safety-backend alembic stamp head
+else
+    echo "  已有数据库，运行增量迁移..."
+    docker exec safety-backend alembic upgrade head
+fi
 
 echo "  初始化管理员账号..."
 docker exec safety-backend python scripts/seed_admin.py
