@@ -115,11 +115,13 @@ if [ "$TABLES_EXIST" = "0" ] || [ "$TABLES_EXIST" = "" ]; then
     echo "  首次部署：通过 SQLAlchemy 创建所有表..."
     docker exec safety-backend python -c "
 import asyncio
+from sqlalchemy import text
 from app.core.database import engine, Base
 import app.models  # 确保所有模型已注册
 
 async def create_all():
     async with engine.begin() as conn:
+        await conn.execute(text('CREATE EXTENSION IF NOT EXISTS pgcrypto'))
         await conn.run_sync(Base.metadata.create_all)
     print('  所有表创建成功')
 
