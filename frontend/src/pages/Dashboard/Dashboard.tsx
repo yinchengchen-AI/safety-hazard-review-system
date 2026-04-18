@@ -170,9 +170,7 @@ export default function Dashboard() {
 
         const trendData = (trendRes as any) || {}
         const trendPointsData = (trendData.points || []).slice(-14)
-        const coverageRate = trendPointsData.length
-          ? trendPointsData[trendPointsData.length - 1]?.coverage_rate || 0
-          : 0
+        const coverageRate = overview.coverage_rate || 0
 
         const hazardsData = (hazardsRes as any) || {}
 
