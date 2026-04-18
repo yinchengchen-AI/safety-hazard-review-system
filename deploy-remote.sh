@@ -62,11 +62,20 @@ fi
 
 # 5. 配置环境变量
 echo "[5/8] 配置环境变量..."
+ENV_FILE="/etc/safety-hazard.env"
+
+# 先加载已有的环境变量（保留旧密码，防止 postgres 数据卷认证失败）
+if [ -f "$ENV_FILE" ]; then
+    echo "  加载已有环境变量..."
+    set -a
+    source "$ENV_FILE"
+    set +a
+fi
+
 export SECRET_KEY=${SECRET_KEY:-$(openssl rand -hex 32)}
 export POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-$(openssl rand -hex 16)}
 export MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-$(openssl rand -hex 16)}
 
-ENV_FILE="/etc/safety-hazard.env"
 cat > "$ENV_FILE" << EOF
 SECRET_KEY=$SECRET_KEY
 POSTGRES_PASSWORD=$POSTGRES_PASSWORD
