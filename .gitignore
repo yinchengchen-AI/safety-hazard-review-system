@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Logs
+*.log
+backend/*.log
+
+# Test artifacts
+backend/test_*.pdf
+backend/test_*.jpg
+backend/test_*.png
+backend/test_*.xlsx
+
+# OMC state
+.omc/
+backend/.omc/
+frontend/.omc/
+
+# Node.js
+node_modules/
+frontend/node_modules/
+
+# Build output (keep dist for deployment)
+# frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated test data
+generated_hazards_*/
+generate_hazards_*.py
