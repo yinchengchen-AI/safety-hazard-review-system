@@ -48,4 +48,11 @@ Thumbs.db
 
 # Generated test data
 generated_hazards_*/
+
+# 临时调试/修复脚本（不应提交，可能包含敏感信息）
+check*.py
+fix_*.py
+setup_db*.py
+seed_admin[2-9]*.py
+seed_admin_*.py
 generate_hazards_*.py

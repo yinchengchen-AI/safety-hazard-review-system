@@ -139,14 +139,47 @@ docker exec safety-backend python scripts/seed_admin.py || echo "  警告：seed
 
 # 8. 配置 Nginx
 echo "[8/8] 配置 Nginx..."
-cp "$PROJECT_DIR/nginx.conf" /etc/nginx/sites-available/safety-hazard
+
+# 内联生成 nginx 配置（项目1固定使用端口80，不影响其他项目的配置）
+cat > /etc/nginx/sites-available/safety-hazard << 'NGINXEOF'
+server {
+    listen 80;
+    server_name SERVER_IP_PLACEHOLDER;
+
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /api/ {
+        proxy_pass http://localhost:8000/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 50M;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    location /health {
+        proxy_pass http://localhost:8000/health;
+        access_log off;
+    }
+}
+NGINXEOF
+
+# 替换服务器IP占位符
+sed -i "s/SERVER_IP_PLACEHOLDER/$SERVER_IP/" /etc/nginx/sites-available/safety-hazard
+
 ln -sf /etc/nginx/sites-available/safety-hazard /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
+# 注意: 不删除其他项目的 sites-enabled 配置（如 project2 等）
 
-# 修改 Nginx 配置中的 server_name
-sed -i "s/server_name _;/server_name $SERVER_IP;/" /etc/nginx/sites-available/safety-hazard
-
-nginx -t && systemctl restart nginx
+nginx -t && systemctl reload nginx
 systemctl enable nginx
 
 # 健康检查
