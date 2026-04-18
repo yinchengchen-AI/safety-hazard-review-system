@@ -3,8 +3,8 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install system dependencies for Playwright, Pillow, and WeasyPrint
-# Overwrite debian sources to remove security repo (avoids intermittent 502 errors)
-RUN printf 'Types: deb\nURIs: http://deb.debian.org/debian\nSuites: trixie trixie-updates\nComponents: main\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\n' \
+# Use Aliyun mirror for stable downloads (avoids Fastly CDN 502 errors in China)
+RUN printf 'Types: deb\nURIs: http://mirrors.aliyun.com/debian/\nSuites: trixie trixie-updates\nComponents: main\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\n' \
     > /etc/apt/sources.list.d/debian.sources
 RUN apt-get update && apt-get install -y \
     gcc \
