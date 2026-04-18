@@ -16,6 +16,7 @@ class TaskHazard(Base):
     status_in_task = Column(String(20), nullable=True)
     reviewed_at = Column(DateTime(timezone=True), nullable=True)
     reviewer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     task = relationship("ReviewTask", back_populates="task_hazards")
     hazard = relationship("Hazard", back_populates="task_hazards")

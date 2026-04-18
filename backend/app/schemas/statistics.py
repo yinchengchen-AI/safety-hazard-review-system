@@ -43,5 +43,25 @@ class TrendPoint(BaseModel):
     pass_rate: float = 0.0
 
 
+class ReportingUnitStatistics(BaseModel):
+    reporting_unit: str
+    total_hazards: int
+    pending_count: int
+    passed_count: int
+    failed_count: int
+    review_count: int
+
+
+class OverviewStatistics(BaseModel):
+    total_hazards: int
+    pending_count: int
+    passed_count: int
+    failed_count: int
+    review_count: int
+    task_count: int
+    coverage_rate: float = 0.0
+    pass_rate: float = 0.0
+
+
 class TrendStatistics(BaseModel):
     points: list[TrendPoint]
