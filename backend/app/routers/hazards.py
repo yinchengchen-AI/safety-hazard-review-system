@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -6,9 +6,10 @@ from uuid import UUID
 
 from app.core.database import get_db
 from app.schemas import HazardResponse, HazardListParams, HazardUpdate, HazardEditableFields
-from app.models import Hazard, Enterprise, Batch, AuditLog
+from app.models import Hazard, Enterprise, Batch
 from app.dependencies.auth import get_current_active_user
 from app.dependencies.permissions import require_admin
+from app.services import audit_log_service
 
 router = APIRouter()
 
@@ -144,6 +145,7 @@ async def get_hazard_editable_fields(
 
 @router.put("/{hazard_id}", response_model=HazardResponse)
 async def update_hazard(
+    request: Request,
     hazard_id: UUID,
     data: HazardUpdate,
     db: AsyncSession = Depends(get_db),
@@ -189,22 +191,23 @@ async def update_hazard(
             updated_fields[field] = new_value
 
     if updated_fields:
-        await db.flush()
-        await db.commit()
-        await db.refresh(hazard)
-
-        audit = AuditLog(
+        await audit_log_service.record(
+            db=db,
             user_id=current_user.id,
             action="update_hazard",
             target_type="hazard",
             target_id=hazard.id,
-            detail={
-                "updated_fields": updated_fields,
-                "hazard_id": str(hazard.id),
+            detail={"updated_fields": updated_fields, "hazard_id": str(hazard.id)},
+            request_info={
+                "ip": request.client.host if request.client else None,
+                "user_agent": request.headers.get("user-agent"),
+                "method": request.method,
+                "path": str(request.url.path),
+                "status_code": 200,
             },
         )
-        db.add(audit)
         await db.commit()
+        await db.refresh(hazard)
 
     item = HazardResponse.model_validate(hazard)
     item.enterprise_name = hazard.enterprise.name if hazard.enterprise else None

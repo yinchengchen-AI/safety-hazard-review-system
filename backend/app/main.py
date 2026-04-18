@@ -3,13 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.core.database import engine, Base
-from app.routers import auth, users, enterprises, batches, hazards, review_tasks, photos, reports, statistics
+from app.core.config import settings
+from app.routers import auth, users, enterprises, batches, hazards, review_tasks, photos, reports, statistics, audit_logs
+from app.core.exception_handlers import AuditableHTTPException, audit_exception_handler
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    if settings.AUTO_CREATE_TABLES:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     yield
     await engine.dispose()
 
@@ -21,9 +24,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Parse allowed origins from comma-separated string
+_allowed_origins = [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,6 +44,10 @@ app.include_router(review_tasks.router, prefix="/api/v1/review-tasks", tags=["re
 app.include_router(photos.router, prefix="/api/v1/photos", tags=["photos"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
 app.include_router(statistics.router, prefix="/api/v1/statistics", tags=["statistics"])
+app.include_router(audit_logs.router, prefix="/api/v1/audit-logs", tags=["audit-logs"])
+
+# 注册自定义异常处理器
+app.add_exception_handler(AuditableHTTPException, audit_exception_handler)
 
 
 @app.get("/health")

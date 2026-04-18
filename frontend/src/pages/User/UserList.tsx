@@ -145,27 +145,51 @@ function UserList() {
   ]
 
   return (
-    <div>
-      <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
-        <Input
-          placeholder="搜索用户名"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onPressEnter={handleSearch}
-          style={{ width: 240 }}
-        />
-        <Button onClick={handleSearch}>搜索</Button>
-        <Button type="primary" onClick={openCreateModal}>新增用户</Button>
+    <div className="animate-fade-in">
+      <div
+        className="app-card"
+        style={{
+          marginBottom: 24,
+          padding: '20px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 16,
+        }}
+      >
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: 'var(--text-primary)' }}>
+            用户管理
+          </h2>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: 14 }}>
+            管理系统用户账号、角色及密码
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <Input
+            placeholder="搜索用户名"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onPressEnter={handleSearch}
+            style={{ width: 240, borderRadius: 'var(--radius-md)' }}
+          />
+          <Button onClick={handleSearch} style={{ borderRadius: 'var(--radius-md)' }}>搜索</Button>
+          <Button type="primary" onClick={openCreateModal} style={{ borderRadius: 'var(--radius-md)' }}>新增用户</Button>
+        </div>
       </div>
-      <Table rowKey="id" columns={columns} dataSource={data} loading={loading} pagination={false} />
-      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-        <Pagination
-          current={page}
-          pageSize={pageSize}
-          total={total}
-          onChange={handlePageChange}
-          showSizeChanger={false}
-        />
+
+      <div className="app-card app-table animate-fade-in-up delay-1" style={{ padding: 20 }}>
+        <Table rowKey="id" columns={columns} dataSource={data} loading={loading} pagination={false} />
+        <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+          <Pagination
+            current={page}
+            pageSize={pageSize}
+            total={total}
+            onChange={handlePageChange}
+            showSizeChanger={false}
+          />
+        </div>
       </div>
 
       <Modal
@@ -174,6 +198,7 @@ function UserList() {
         onOk={handleModalOk}
         onCancel={() => setModalVisible(false)}
         destroyOnClose
+        className="app-modal"
       >
         <Form form={form} layout="vertical">
           <Form.Item
@@ -221,6 +246,7 @@ function UserList() {
         onOk={handleResetOk}
         onCancel={() => setResetModalVisible(false)}
         destroyOnClose
+        className="app-modal"
       >
         <Form form={resetForm} layout="vertical">
           <Form.Item

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update, delete
@@ -15,6 +15,7 @@ from app.dependencies.auth import get_current_active_user
 from app.services.import_service import ImportService
 from app.services.storage_service import StorageService
 from app.services.template_service import TemplateService
+from app.services import audit_log_service
 
 router = APIRouter()
 
@@ -80,6 +81,7 @@ async def preview_import(
 
 @router.post("/import", response_model=BatchImportResult)
 async def import_hazards(
+    request: Request,
     temp_token: str = Form(...),
     name: str = Form(...),
     filename: str = Form(""),
@@ -93,6 +95,27 @@ async def import_hazards(
         batch_name=name,
         user_id=current_user.id,
     )
+
+    await audit_log_service.record(
+        db=db,
+        user_id=current_user.id,
+        action="import_batch",
+        target_type="batch",
+        target_id=result.batch_id if hasattr(result, 'batch_id') else None,
+        detail={
+            "batch_name": name,
+            "success_count": result.success_count if hasattr(result, 'success_count') else 0,
+            "error_count": result.error_count if hasattr(result, 'error_count') else 0,
+        },
+        request_info={
+            "ip": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+            "method": request.method,
+            "path": str(request.url.path),
+            "status_code": 200,
+        },
+    )
+
     return result
 
 
@@ -110,6 +133,7 @@ async def list_import_errors(
 
 @router.delete("/{batch_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_batch(
+    request: Request,
     batch_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_active_user),
@@ -119,6 +143,7 @@ async def delete_batch(
     if not batch:
         raise HTTPException(status_code=404, detail="批次不存在")
 
+    batch_name = batch.name
     now = datetime.now(ZoneInfo("Asia/Shanghai"))
     batch.deleted_at = now
 
@@ -135,6 +160,23 @@ async def delete_batch(
         storage.delete_file(batch.original_file_path)
 
     await db.commit()
+
+    await audit_log_service.record(
+        db=db,
+        user_id=current_user.id,
+        action="delete_batch",
+        target_type="batch",
+        target_id=batch_id,
+        detail={"name": batch_name},
+        request_info={
+            "ip": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+            "method": request.method,
+            "path": str(request.url.path),
+            "status_code": 204,
+        },
+    )
+
     return None
 
 

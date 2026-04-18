@@ -82,7 +82,6 @@ const STATUS_COLORS = {
   pending: '#fa8c16',
   passed: '#52c41a',
   failed: '#ff4d4f',
-  review: '#1677ff',
 }
 
 function OverviewCard({
@@ -202,7 +201,6 @@ export default function Statistics() {
       { status: '待复核', count: overview.pending_count, color: STATUS_COLORS.pending },
       { status: '已通过', count: overview.passed_count, color: STATUS_COLORS.passed },
       { status: '未通过', count: overview.failed_count, color: STATUS_COLORS.failed },
-      { status: '复核中', count: overview.review_count, color: STATUS_COLORS.review },
     ].filter((d) => d.count > 0)
   }, [overview])
 
@@ -246,7 +244,6 @@ export default function Statistics() {
         待复核: STATUS_COLORS.pending,
         已通过: STATUS_COLORS.passed,
         未通过: STATUS_COLORS.failed,
-        复核中: STATUS_COLORS.review,
       }
       return map[status] || '#999'
     },
@@ -287,6 +284,7 @@ export default function Statistics() {
     xField: 'reporting_unit',
     yField: 'count',
     colorField: 'status',
+    transform: [{ type: 'stackY' }],
     color: ({ status }: { status: string }) => {
       const map: Record<string, string> = {
         '待复核': STATUS_COLORS.pending,

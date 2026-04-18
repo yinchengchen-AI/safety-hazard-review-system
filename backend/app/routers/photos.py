@@ -164,10 +164,7 @@ async def get_photo_image(
     object_name = photo.original_path if size == "original" else photo.thumbnail_path
     storage = StorageService()
     try:
-        data = storage.get_file(object_name)
-        content = data.read()
-        data.close()
-        data.release_conn()
+        content = storage.get_file_content(object_name)
     except Exception:
         raise HTTPException(status_code=404, detail="Image file not found in storage")
 

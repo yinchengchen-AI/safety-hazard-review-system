@@ -10,6 +10,7 @@ from typing import Optional
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.section import WD_ORIENT
 from playwright.async_api import async_playwright
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -74,10 +75,7 @@ class ReportService:
                     if photo.deleted_at is not None:
                         continue
                     try:
-                        data = self.storage.get_file(photo.original_path)
-                        content = data.read()
-                        data.close()
-                        data.release_conn()
+                        content = self.storage.get_file_content(photo.original_path)
                         th._photo_data.append((photo.mime_type or "image/jpeg", content))
                     except Exception:
                         pass
@@ -129,6 +127,14 @@ class ReportService:
 
     async def _generate_word(self, task: ReviewTask, task_hazards: list) -> str:
         doc = Document()
+
+        # Set landscape orientation
+        section = doc.sections[0]
+        section.orientation = WD_ORIENT.LANDSCAPE
+        # Swap width and height for landscape
+        new_width, new_height = section.page_height, section.page_width
+        section.page_width = new_width
+        section.page_height = new_height
 
         # Title
         title = doc.add_heading("安全生产隐患复核报告", level=0)
@@ -220,9 +226,17 @@ class ReportService:
 
         async with async_playwright() as p:
             browser = await p.chromium.launch()
-            page = await browser.new_page()
+            # Set viewport to landscape A4 dimensions before loading content
+            page = await browser.new_page(viewport={"width": 1123, "height": 794})
             await page.set_content(html)
-            await page.pdf(path=tmp_path, format="A4", margin={"top": "1cm", "bottom": "1cm", "left": "1cm", "right": "1cm"})
+            await page.emulate_media(media="print")
+            await page.pdf(
+                path=tmp_path,
+                width="297mm",
+                height="210mm",
+                print_background=True,
+                margin={"top": "1cm", "bottom": "1cm", "left": "1cm", "right": "1cm"},
+            )
             await browser.close()
 
         with open(tmp_path, "rb") as f:
@@ -287,8 +301,14 @@ class ReportService:
         <head>
             <meta charset="UTF-8">
             <style>
-                body {{ font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; font-size: 12px; }}
-                h1 {{ text-align: center; }}
+                @page {{ size: A4 landscape; margin: 1cm; }}
+                body {{
+                    font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+                    font-size: 12px;
+                    margin: 0;
+                    padding: 0;
+                }}
+                h1 {{ text-align: center; margin-top: 0; }}
                 h2 {{ margin-top: 24px; }}
                 table {{ width: 100%; border-collapse: collapse; margin-top: 12px; }}
                 th, td {{ border: 1px solid #333; padding: 8px; text-align: left; vertical-align: top; }}

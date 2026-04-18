@@ -14,6 +14,8 @@ import {
   Form,
   DatePicker,
   Spin,
+  Row,
+  Col,
 } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { EditOutlined, EyeOutlined } from '@ant-design/icons'
@@ -248,7 +250,9 @@ function HazardList() {
       fixed: 'right',
       width: 70,
       render: (status: string) => (
-        <Tag color={statusMap[status]?.color}>{statusMap[status]?.text}</Tag>
+        <Tag color={statusMap[status]?.color} style={{ borderRadius: 999, fontWeight: 500 }}>
+          {statusMap[status]?.text}
+        </Tag>
       ),
     },
     {
@@ -264,7 +268,7 @@ function HazardList() {
       fixed: 'right',
       width: 60,
       render: (_: any, record: any) =>
-        record.current_task_id ? <Tag color="default">已锁定</Tag> : '-',
+        record.current_task_id ? <Tag color="default" style={{ borderRadius: 999, fontWeight: 500 }}>已锁定</Tag> : '-',
     },
     {
       title: '操作',
@@ -311,53 +315,66 @@ function HazardList() {
 
   return (
     <div>
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap size="middle">
-          <Input
-            placeholder="搜索企业名称"
-            value={enterpriseNameFilter}
-            onChange={(e) => setEnterpriseNameFilter(e.target.value)}
-            allowClear
-            style={{ width: 220 }}
-          />
-          <Select
-            placeholder="隐患分类"
-            allowClear
-            style={{ width: 120 }}
-            value={categoryFilter || undefined}
-            onChange={(v) => setCategoryFilter(v || '')}
-            options={[
-              { value: '管理不到位', label: '管理不到位' },
-            ]}
-          />
-          <Select
-            placeholder="是否整改"
-            allowClear
-            style={{ width: 120 }}
-            value={isRectifiedFilter || undefined}
-            onChange={(v) => setIsRectifiedFilter(v || '')}
-            options={[
-              { value: '已整改', label: '已整改' },
-              { value: '未整改', label: '未整改' },
-            ]}
-          />
-          <Select
-            placeholder="状态"
-            allowClear
-            style={{ width: 120 }}
-            value={statusFilter || undefined}
-            onChange={(v) => setStatusFilter(v || '')}
-            options={[
-              { value: 'pending', label: '待复核' },
-              { value: 'passed', label: '已通过' },
-              { value: 'failed', label: '未通过' },
-            ]}
-          />
-          <Button type="primary" onClick={() => navigate('/batches/import')}>批量导入</Button>
-        </Space>
+      <Card className="app-card animate-fade-in-up delay-0" style={{ marginBottom: 16 }}>
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} sm={12} md={8} lg={6} xl={5}>
+            <Input
+              placeholder="搜索企业名称"
+              value={enterpriseNameFilter}
+              onChange={(e) => setEnterpriseNameFilter(e.target.value)}
+              allowClear
+              style={{ width: '100%' }}
+            />
+          </Col>
+          <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+            <Select
+              placeholder="隐患分类"
+              allowClear
+              style={{ width: '100%' }}
+              value={categoryFilter || undefined}
+              onChange={(v) => setCategoryFilter(v || '')}
+              options={[
+                { value: '管理不到位', label: '管理不到位' },
+              ]}
+            />
+          </Col>
+          <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+            <Select
+              placeholder="是否整改"
+              allowClear
+              style={{ width: '100%' }}
+              value={isRectifiedFilter || undefined}
+              onChange={(v) => setIsRectifiedFilter(v || '')}
+              options={[
+                { value: '已整改', label: '已整改' },
+                { value: '未整改', label: '未整改' },
+              ]}
+            />
+          </Col>
+          <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+            <Select
+              placeholder="状态"
+              allowClear
+              style={{ width: '100%' }}
+              value={statusFilter || undefined}
+              onChange={(v) => setStatusFilter(v || '')}
+              options={[
+                { value: 'pending', label: '待复核' },
+                { value: 'passed', label: '已通过' },
+                { value: 'failed', label: '未通过' },
+              ]}
+            />
+          </Col>
+          <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+            <Button type="primary" onClick={() => navigate('/batches/import')} style={{ width: '100%' }}>
+              批量导入
+            </Button>
+          </Col>
+        </Row>
       </Card>
 
       <Card
+        className="app-card animate-fade-in-up delay-1 app-table"
         title={`隐患列表 · 共 ${hazardTotal} 条`}
         size="small"
         style={{ height: 'calc(100vh - 240px)', display: 'flex', flexDirection: 'column' }}
@@ -388,6 +405,7 @@ function HazardList() {
       </Card>
 
       <Modal
+        className="app-modal"
         title="编辑隐患"
         open={editModalVisible}
         onOk={handleEditSubmit}

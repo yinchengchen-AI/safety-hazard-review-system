@@ -11,6 +11,7 @@ from app.schemas import ReviewTaskCreate, ReviewTaskResponse, ReviewTaskDetailRe
 from app.models import ReviewTask, Hazard, TaskHazard, HazardStatusHistory, User, Photo, Report
 from app.dependencies.auth import get_current_active_user
 from app.services.report_orchestration_service import ReportOrchestrationService
+from app.services import audit_log_service
 
 router = APIRouter()
 
@@ -30,6 +31,7 @@ def _extract_token_from_request(request: Request) -> str:
 @router.post("", response_model=ReviewTaskResponse, status_code=status.HTTP_201_CREATED)
 async def create_review_task(
     data: ReviewTaskCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -85,6 +87,22 @@ async def create_review_task(
 
     await db.commit()
     await db.refresh(task)
+
+    await audit_log_service.record(
+        db=db,
+        user_id=current_user.id,
+        action="create_review_task",
+        target_type="review_task",
+        target_id=task.id,
+        detail={"name": task.name, "hazard_count": len(unique_hazard_ids)},
+        request_info={
+            "ip": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+            "method": request.method,
+            "path": str(request.url.path),
+            "status_code": 201,
+        },
+    )
 
     resp = ReviewTaskResponse.model_validate(task)
     resp.hazard_count = len(unique_hazard_ids)
@@ -295,6 +313,28 @@ async def review_hazard(
             photo.task_hazard_id = task_hazard.id
             photo.temp_token = None
 
+    await audit_log_service.record(
+        db=db,
+        user_id=current_user.id,
+        action="review_hazard",
+        target_type="review_task",
+        target_id=task_id,
+        detail={
+            "hazard_id": str(hazard_id),
+            "conclusion": data.conclusion,
+            "status_in_task": data.status_in_task,
+            "old_status": old_status,
+            "is_edit": is_edit,
+        },
+        request_info={
+            "ip": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+            "method": request.method,
+            "path": str(request.url.path),
+            "status_code": 200,
+        },
+    )
+
     await db.commit()
     await db.refresh(task_hazard)
 
@@ -338,6 +378,7 @@ async def review_hazard(
 async def remove_hazard_from_task(
     task_id: UUID,
     hazard_id: UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -385,6 +426,23 @@ async def remove_hazard_from_task(
         )
     )
     await db.commit()
+
+    await audit_log_service.record(
+        db=db,
+        user_id=current_user.id,
+        action="remove_hazard_from_task",
+        target_type="review_task",
+        target_id=task_id,
+        detail={"hazard_id": str(hazard_id), "reverted_status": task_hazard.status_in_task is not None},
+        request_info={
+            "ip": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+            "method": request.method,
+            "path": str(request.url.path),
+            "status_code": 204,
+        },
+    )
+
     return None
 
 
@@ -404,6 +462,20 @@ async def batch_review_hazards(
         raise HTTPException(status_code=404, detail="Review task not found")
     if task.status != "pending":
         raise HTTPException(status_code=400, detail="Only pending tasks can be reviewed")
+
+    # Preload existing photos for all task hazards in this task to avoid
+    # flushing inside the loop.
+    existing_photos_result = await db.execute(
+        select(Photo).where(
+            Photo.task_hazard_id.in_(
+                select(TaskHazard.id).where(TaskHazard.task_id == task_id)
+            ),
+            Photo.deleted_at.is_(None),
+        )
+    )
+    existing_photos_map: dict[UUID, list] = {}
+    for p in existing_photos_result.scalars().all():
+        existing_photos_map.setdefault(p.task_hazard_id, []).append(p)
 
     responses = []
     for item in data.items:
@@ -444,6 +516,7 @@ async def batch_review_hazards(
         )
         db.add(history)
 
+        photos = []
         if item.photo_tokens:
             photo_result = await db.execute(
                 select(Photo).where(Photo.temp_token.in_(item.photo_tokens))
@@ -453,17 +526,22 @@ async def batch_review_hazards(
                 photo.task_hazard_id = task_hazard.id
                 photo.temp_token = None
 
-        await db.flush()
-        await db.refresh(task_hazard)
-
-        all_photos_result = await db.execute(
-            select(Photo).where(Photo.task_hazard_id == task_hazard.id, Photo.deleted_at.is_(None))
-        )
-        all_photos = all_photos_result.scalars().all()
-
         user_token = _extract_token_from_request(request)
         photos_out = []
-        for p in all_photos:
+        for p in existing_photos_map.get(task_hazard.id, []):
+            original_url = f"/api/v1/photos/{p.id}/image?size=original"
+            thumbnail_url = f"/api/v1/photos/{p.id}/image?size=thumbnail"
+            if user_token:
+                original_url = _append_token_to_url(original_url, user_token)
+                thumbnail_url = _append_token_to_url(thumbnail_url, user_token)
+            photos_out.append({
+                "id": str(p.id),
+                "original_url": original_url,
+                "thumbnail_url": thumbnail_url,
+                "width": p.width,
+                "height": p.height,
+            })
+        for p in photos:
             original_url = f"/api/v1/photos/{p.id}/image?size=original"
             thumbnail_url = f"/api/v1/photos/{p.id}/image?size=thumbnail"
             if user_token:
@@ -497,6 +575,7 @@ async def batch_review_hazards(
 @router.post("/{task_id}/complete", response_model=ReviewTaskResponse)
 async def complete_task(
     task_id: UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -529,6 +608,31 @@ async def complete_task(
 
     task.status = "completed"
     task.completed_at = datetime.now(ZoneInfo("Asia/Shanghai"))
+
+    # 计算复核统计
+    hazard_count = len(hazards)
+    reviewed_count = sum(1 for h in hazards if h.status in ("passed", "failed"))
+
+    await audit_log_service.record(
+        db=db,
+        user_id=current_user.id,
+        action="complete_task",
+        target_type="review_task",
+        target_id=task_id,
+        detail={
+            "task_name": task.name,
+            "hazard_count": hazard_count,
+            "reviewed_count": reviewed_count,
+        },
+        request_info={
+            "ip": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+            "method": request.method,
+            "path": str(request.url.path),
+            "status_code": 200,
+        },
+    )
+
     await db.commit()
     await db.refresh(task)
 
@@ -563,6 +667,23 @@ async def cancel_task(
         h.current_task_id = None
 
     task.status = "cancelled"
+
+    await audit_log_service.record(
+        db=db,
+        user_id=current_user.id,
+        action="cancel_task",
+        target_type="review_task",
+        target_id=task_id,
+        detail={"task_name": task.name},
+        request_info={
+            "ip": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+            "method": request.method,
+            "path": str(request.url.path),
+            "status_code": 200,
+        },
+    )
+
     await db.commit()
     await db.refresh(task)
 

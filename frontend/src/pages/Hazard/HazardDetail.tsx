@@ -42,31 +42,70 @@ function HazardDetail() {
 
   if (!hazard) {
     return (
-      <Card>
+      <Card className="app-card animate-fade-in-up delay-0">
         <Empty description="隐患不存在或已删除" />
       </Card>
     )
   }
 
+  const statusTag = (
+    <Tag
+      color={statusMap[hazard.status]?.color}
+      style={{ borderRadius: 999, fontWeight: 500, paddingInline: 12 }}
+    >
+      {statusMap[hazard.status]?.text}
+    </Tag>
+  )
+
+  const lockedTag = hazard.current_task_id ? (
+    <Tag color="default" style={{ borderRadius: 999, fontWeight: 500, paddingInline: 12 }}>
+      已锁定
+    </Tag>
+  ) : (
+    <Tag color="success" style={{ borderRadius: 999, fontWeight: 500, paddingInline: 12 }}>
+      未锁定
+    </Tag>
+  )
+
   return (
     <div>
       <Card
-        title={
-          <Space>
+        className="app-card animate-fade-in-up delay-0"
+        style={{ marginBottom: 16 }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <Space size="middle">
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
               返回
             </Button>
-            <span>隐患详情</span>
+            <span
+              style={{
+                fontSize: 18,
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+              }}
+            >
+              隐患详情
+            </span>
           </Space>
-        }
-        extra={
-          <Tag color={statusMap[hazard.status]?.color}>
-            {statusMap[hazard.status]?.text}
-          </Tag>
-        }
+          <Space size="middle">{statusTag}</Space>
+        </div>
+      </Card>
+
+      <Card
+        className="app-card animate-fade-in-up delay-1"
+        title="企业信息"
         style={{ marginBottom: 16 }}
       >
-        <Descriptions title="企业信息" bordered column={2}>
+        <Descriptions bordered column={2}>
           <Descriptions.Item label="企业名称">
             {hazard.enterprise_name || '-'}
           </Descriptions.Item>
@@ -89,8 +128,14 @@ function HazardDetail() {
             {hazard.enterprise_enterprise_type || '-'}
           </Descriptions.Item>
         </Descriptions>
+      </Card>
 
-        <Descriptions title="隐患信息" bordered column={2} style={{ marginTop: 24 }}>
+      <Card
+        className="app-card animate-fade-in-up delay-2"
+        title="隐患信息"
+        style={{ marginBottom: 16 }}
+      >
+        <Descriptions bordered column={2}>
           <Descriptions.Item label="隐患描述">
             {hazard.description || '-'}
           </Descriptions.Item>
@@ -131,8 +176,14 @@ function HazardDetail() {
             {hazard.report_remarks || '-'}
           </Descriptions.Item>
         </Descriptions>
+      </Card>
 
-        <Descriptions title="批次信息" bordered column={2} style={{ marginTop: 24 }}>
+      <Card
+        className="app-card animate-fade-in-up delay-3"
+        title="批次信息"
+        style={{ marginBottom: 16 }}
+      >
+        <Descriptions bordered column={2}>
           <Descriptions.Item label="批次名称">
             {hazard.batch_name || '-'}
           </Descriptions.Item>
@@ -143,11 +194,7 @@ function HazardDetail() {
             {hazard.review_count ?? 0}
           </Descriptions.Item>
           <Descriptions.Item label="锁定状态">
-            {hazard.current_task_id ? (
-              <Tag color="default">已锁定</Tag>
-            ) : (
-              <Tag color="success">未锁定</Tag>
-            )}
+            {lockedTag}
           </Descriptions.Item>
         </Descriptions>
       </Card>

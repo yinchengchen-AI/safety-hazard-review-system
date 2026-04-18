@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
     libfontconfig1-dev \
     libpango1.0-dev \
     libcairo2-dev \
-    libgdk-pixbuf2.0-dev \
+    libgdk-pixbuf-2.0-dev \
     libffi-dev \
     shared-mime-info \
     wget \

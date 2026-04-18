@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
   Table,
-  Tag,
   Button,
   Space,
   message,
@@ -18,6 +17,7 @@ import {
 } from 'antd'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import { useNavigate } from 'react-router-dom'
+import { PlusOutlined } from '@ant-design/icons'
 import { getTasks, completeTask, cancelTask, createTask } from '../../api/task'
 import { getBatches } from '../../api/batch'
 import { getHazards } from '../../api/hazard'
@@ -97,7 +97,37 @@ function TaskList() {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Tag color={statusMap[status]?.color}>{statusMap[status]?.text}</Tag>
+        <span
+          className="status-pill"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '4px 12px',
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 500,
+            background:
+              status === 'completed'
+                ? 'var(--success-light)'
+                : status === 'cancelled'
+                ? 'var(--error-light)'
+                : 'var(--warning-light)',
+            color:
+              status === 'completed'
+                ? 'var(--success)'
+                : status === 'cancelled'
+                ? 'var(--error)'
+                : 'var(--warning)',
+            border:
+              status === 'completed'
+                ? '1px solid rgba(82, 196, 26, 0.3)'
+                : status === 'cancelled'
+                ? '1px solid rgba(245, 34, 45, 0.3)'
+                : '1px solid rgba(250, 173, 20, 0.3)',
+          }}
+        >
+          {statusMap[status]?.text}
+        </span>
       ),
     },
     {
@@ -106,9 +136,37 @@ function TaskList() {
       key: 'report_status',
       render: (report_status: string | undefined) =>
         report_status ? (
-          <Tag color={reportStatusMap[report_status]?.color}>
+          <span
+            className="status-pill"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '4px 12px',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 500,
+              background:
+                report_status === 'completed'
+                  ? 'var(--success-light)'
+                  : report_status === 'failed'
+                  ? 'var(--error-light)'
+                  : 'var(--primary-light)',
+              color:
+                report_status === 'completed'
+                  ? 'var(--success)'
+                  : report_status === 'failed'
+                  ? 'var(--error)'
+                  : 'var(--primary)',
+              border:
+                report_status === 'completed'
+                  ? '1px solid rgba(82, 196, 26, 0.3)'
+                  : report_status === 'failed'
+                  ? '1px solid rgba(245, 34, 45, 0.3)'
+                  : '1px solid rgba(22, 119, 255, 0.3)',
+            }}
+          >
             {reportStatusMap[report_status]?.text || report_status}
-          </Tag>
+          </span>
         ) : (
           <span>-</span>
         ),
@@ -218,33 +276,71 @@ function TaskList() {
   }
 
   return (
-    <div>
-      <div style={{ marginBottom: 16 }}>
-        <Button type="primary" onClick={openCreateModal}>
+    <div className="animate-fade-in">
+      <div
+        className="app-card animate-fade-in-up delay-0"
+        style={{
+          marginBottom: 20,
+          padding: '20px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div>
+          <Title level={4} style={{ margin: 0, fontWeight: 600 }}>
+            复核任务管理
+          </Title>
+          <Text type="secondary" style={{ fontSize: 14 }}>
+            创建、查看和管理安全隐患复核任务
+          </Text>
+        </div>
+        <Button
+          type="primary"
+          size="large"
+          icon={<PlusOutlined />}
+          onClick={openCreateModal}
+          style={{ borderRadius: 10, fontWeight: 500 }}
+        >
           创建复核任务
         </Button>
       </div>
-      <Table rowKey="id" columns={columns} dataSource={data} loading={loading} />
+
+      <Card
+        className="app-card app-table animate-fade-in-up delay-1"
+        title={<span style={{ fontWeight: 600, fontSize: 16 }}>复核任务列表</span>}
+        bodyStyle={{ padding: 0 }}
+      >
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={data}
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+          style={{ padding: '0 20px 20px' }}
+        />
+      </Card>
 
       <Modal
-        title="创建复核任务"
+        title={<span style={{ fontWeight: 600 }}>创建复核任务</span>}
         open={createModalVisible}
         onOk={handleCreateSubmit}
         onCancel={closeCreateModal}
         confirmLoading={createLoading}
-        width={720}
+        width={760}
         destroyOnClose
+        className="app-modal"
       >
         <Form form={createForm} layout="vertical">
           <Form.Item
             name="name"
-            label="任务名称"
+            label={<span style={{ fontWeight: 500 }}>任务名称</span>}
             rules={[{ required: true, message: '请输入任务名称' }]}
           >
-            <Input placeholder="请输入任务名称" />
+            <Input placeholder="请输入任务名称" style={{ borderRadius: 10 }} />
           </Form.Item>
 
-          <Form.Item label="选择批次">
+          <Form.Item label={<span style={{ fontWeight: 500 }}>选择批次</span>}>
             <Select
               mode="multiple"
               placeholder="请选择批次（可选）"
@@ -259,46 +355,91 @@ function TaskList() {
             />
           </Form.Item>
 
-          <Divider />
+          <Divider style={{ margin: '16px 0' }} />
 
-          <div style={{ marginBottom: 8 }}>
-            <Title level={5}>选择隐患</Title>
-            <Text type="secondary">已选 {selectedHazardIds.length} 条隐患</Text>
-          </div>
-
-          {hazards.length > 0 && (
-            <div style={{ marginBottom: 8 }}>
-              <Checkbox
-                indeterminate={isIndeterminate}
-                checked={isAllSelected}
-                onChange={handleSelectAll}
-              >
+          <div
+            style={{
+              marginBottom: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div>
+              <Title level={5} style={{ margin: 0, fontWeight: 600 }}>
+                选择隐患
+              </Title>
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                已选 {selectedHazardIds.length} 条隐患
+              </Text>
+            </div>
+            {hazards.length > 0 && (
+              <Checkbox indeterminate={isIndeterminate} checked={isAllSelected} onChange={handleSelectAll}>
                 全选
               </Checkbox>
-            </div>
-          )}
+            )}
+          </div>
 
-          <Card loading={hazardLoading} bodyStyle={{ maxHeight: 320, overflow: 'auto' }}>
+          <Card
+            loading={hazardLoading}
+            bodyStyle={{
+              maxHeight: 340,
+              overflow: 'auto',
+              padding: 12,
+              borderRadius: 12,
+              background: 'var(--bg-page)',
+            }}
+            style={{ borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-color)' }}
+          >
             {hazards.length === 0 ? (
-              <Empty description="请先选择批次" />
+              <Empty description="请先选择批次" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             ) : (
               <List
                 dataSource={hazards}
                 renderItem={(item: any) => {
                   const locked = !!item.current_task_id
                   return (
-                    <List.Item>
+                    <List.Item
+                      style={{
+                        padding: '12px 14px',
+                        marginBottom: 8,
+                        background: '#fff',
+                        borderRadius: 10,
+                        border: '1px solid var(--border-color)',
+                        transition: 'box-shadow 200ms ease',
+                      }}
+                    >
                       <Checkbox
                         checked={selectedHazardIds.includes(item.id)}
                         disabled={locked}
                         onChange={(e) => toggleHazard(item.id, e.target.checked)}
                       >
-                        <Space direction="vertical" size={0}>
+                        <Space direction="vertical" size={4} style={{ marginLeft: 6 }}>
                           <Space>
-                            <Text strong>{item.enterprise_name || '未分配企业'}</Text>
-                            {locked && <Tag color="default">已锁定</Tag>}
+                            <Text strong style={{ fontSize: 14 }}>
+                              {item.enterprise_name || '未分配企业'}
+                            </Text>
+                            {locked && (
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  padding: '2px 8px',
+                                  borderRadius: 999,
+                                  fontSize: 12,
+                                  fontWeight: 500,
+                                  background: 'var(--error-light)',
+                                  color: 'var(--error)',
+                                  border: '1px solid rgba(245, 34, 45, 0.3)',
+                                }}
+                              >
+                                已锁定
+                              </span>
+                            )}
                           </Space>
-                          <Text type="secondary">{item.description || item.content || '-'}</Text>
+                          <Text type="secondary" style={{ fontSize: 13 }}>
+                            {item.description || item.content || '-'}
+                          </Text>
                           <Text type="secondary" style={{ fontSize: 12 }}>
                             {item.location || '-'} | {item.category || '-'} | {item.inspection_method || '-'}
                           </Text>

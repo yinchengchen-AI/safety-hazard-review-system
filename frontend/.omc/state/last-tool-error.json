@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd /d/ClaudeCode/safety-hazard-review-system/backend && pytest tests/test_review_tasks.py -q -k \\\"cancel\\\"\",\"description\":\"Run review task tests related to cancel\"}",
-  "error": "Exit code 5\n\r\n============================== warnings summary ===============================\r\napp\\core\\config.py:5\r\n  D:\\ClaudeCode\\safety-hazard-review-system\\backend\\app\\core\\config.py:5: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/\r\n    class Settings(BaseSettings):\r\n\r\nC:\\Users\\35496\\AppData\\Local\\Programs\\Pyth...",
-  "timestamp": "2026-04-15T15:27:59.867Z",
-  "retry_count": 1
-}

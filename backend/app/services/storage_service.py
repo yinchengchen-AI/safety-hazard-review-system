@@ -72,6 +72,15 @@ class StorageService:
             object_name = object_name[len(f"/{self.bucket}/"):]
         return self.client.get_object(self.bucket, object_name)
 
+    def get_file_content(self, object_name: str) -> bytes:
+        """Fetch file content and ensure connection is released."""
+        data = self.get_file(object_name)
+        try:
+            return data.read()
+        finally:
+            data.close()
+            data.release_conn()
+
     def delete_file(self, path: str) -> None:
         object_name = path.lstrip("/")
         if object_name.startswith(f"{self.bucket}/"):

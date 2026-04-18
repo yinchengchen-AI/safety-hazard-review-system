@@ -1,5 +1,0 @@
-Total rows (excluding header): 20
-Header[0]: 上报单位
-Row2 enterprise: 测试企业01
-Row2 desc: 测试隐患描述01：燃气使用场所安装可燃气体报警装置未启用
-Last row enterprise: 测试企业20
