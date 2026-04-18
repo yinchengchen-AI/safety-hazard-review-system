@@ -8,6 +8,12 @@ env/
 venv/
 .venv/
 
+# Environment & secrets
+.env
+.env.*
+!.env.example
+backend/.env
+
 # Logs
 *.log
 backend/*.log

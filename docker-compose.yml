@@ -71,7 +71,9 @@ services:
         condition: service_healthy
 
   celery-worker:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.celery
     container_name: safety-celery
     command: celery -A app.tasks.celery_app worker --loglevel=info
     environment:

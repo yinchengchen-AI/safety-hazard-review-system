@@ -2,8 +2,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies for Playwright, Pillow, and WeasyPrint fallback
-# Overwrite debian sources to remove security repo (avoids intermittent 502 errors on trixie)
+# Install system dependencies for Playwright, Pillow, and WeasyPrint
+# Overwrite debian sources to remove security repo (avoids intermittent 502 errors)
 RUN printf 'Types: deb\nURIs: http://deb.debian.org/debian\nSuites: trixie trixie-updates\nComponents: main\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\n' \
     > /etc/apt/sources.list.d/debian.sources
 RUN apt-get update && apt-get install -y \
@@ -36,12 +36,11 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers
+# Install Playwright browsers (needed for PDF report generation)
 RUN playwright install chromium
 RUN playwright install-deps chromium
 
 COPY . .
 
-EXPOSE 8000
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Celery worker does not expose any port
+CMD ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=info"]

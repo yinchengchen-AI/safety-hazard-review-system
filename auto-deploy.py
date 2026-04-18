@@ -11,7 +11,7 @@ import time
 from getpass import getpass
 
 HOST = "43.133.14.168"
-USER = "root"
+USER = "ubuntu"
 REMOTE_SCRIPT_PATH = "/tmp/deploy-remote.sh"
 LOCAL_SCRIPT_PATH = "deploy-remote.sh"
 
