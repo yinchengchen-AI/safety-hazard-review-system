@@ -408,8 +408,10 @@ export default function Dashboard() {
                       <List.Item.Meta
                         title={
                           <div className="hazard-title">
-                            <Text ellipsis style={{ maxWidth: 160 }}>
-                              {item.description}
+                            <Text style={{ maxWidth: 200 }}>
+                              {item.description.length > 20
+                                ? item.description.slice(0, 20) + '...'
+                                : item.description}
                             </Text>
                             <StatusTag status={item.status} />
                           </div>

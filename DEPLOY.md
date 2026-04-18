@@ -83,18 +83,53 @@ docker exec safety-postgres pg_dump -U postgres safety_hazard > backup_$(date +%
 ```
 
 ### 更新部署
+
+> ⚠️ **重要**：必须带 `--env-file` 加载保存的密码，否则容器会使用默认密码 `postgres`，导致数据库认证失败、无法登录。
+
 ```bash
 cd /opt/safety-hazard-review-system
 git pull
-docker-compose -f docker-compose.prod.yml up -d --build
+
+# 只重建前端（推荐，速度快，不影响后端）
+sudo docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -d --build frontend
+
+# 重建全部服务
+sudo docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -d --build
 ```
 
 ## 故障排查
 
 | 问题 | 排查命令 |
 |------|----------|
-| 服务无法启动 | `docker-compose ps` |
-| 数据库连接失败 | `docker-compose logs postgres` |
-| 后端报错 | `docker-compose logs backend` |
+| 服务无法启动 | `docker compose ps` |
+| 数据库连接失败 | `docker compose logs postgres` |
+| 后端报错 | `docker compose logs backend` |
 | Nginx 502 | `sudo tail -f /var/log/nginx/error.log` |
 | 磁盘空间不足 | `df -h` 和 `docker system prune` |
+
+### 登录失败 / Internal Server Error
+
+**症状**：前端可以打开，但登录时报错或提示服务器错误。
+
+**排查**：
+```bash
+# 1. 查看后端日志，若出现 InvalidPasswordError 则是密码问题
+sudo docker logs safety-backend --tail 30
+
+# 2. 确认后端容器实际使用的数据库 URL
+sudo docker exec safety-backend env | grep DATABASE_URL
+```
+
+**根因**：使用 `docker compose up --build` 时若未指定 `--env-file`，`POSTGRES_PASSWORD` 会回退为默认值 `postgres`，而数据库卷中存储的是首次部署时随机生成的密码，导致认证失败。
+
+**修复**：
+```bash
+# 用保存的环境变量文件重启后端
+sudo docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -d backend
+
+# 验证登录接口是否正常
+curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin&password=admin123"
+# 正常应返回 {"access_token": "...", "token_type": "bearer"}
+```
