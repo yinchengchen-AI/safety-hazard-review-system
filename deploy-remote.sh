@@ -37,13 +37,16 @@ if ! command -v docker &> /dev/null; then
     systemctl start docker
 fi
 
-# 安装 Docker Compose
-if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+# 安装 Docker Compose plugin（现代方式）
+if ! docker compose version &> /dev/null; then
     apt install -y docker-compose-plugin
 fi
 
+# 定义统一的 compose 调用函数
+dc() { docker compose "$@"; }
+
 echo "  Docker: $(docker --version)"
-echo "  Docker Compose: $(docker compose version 2>/dev/null || docker-compose --version 2>/dev/null || echo '未安装')"
+echo "  Docker Compose: $(docker compose version 2>/dev/null || echo '未安装')"
 
 # 4. 克隆/更新代码
 echo "[4/8] 获取代码..."
@@ -83,8 +86,7 @@ source "$ENV_FILE"
 set +a
 
 # 使用生产配置启动
-docker compose -f docker-compose.prod.yml up -d --build 2>/dev/null || \
-docker-compose -f docker-compose.prod.yml up -d --build
+dc -f docker-compose.prod.yml up -d --build
 
 # 等待数据库就绪
 echo "  等待数据库就绪..."
