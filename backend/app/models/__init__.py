@@ -11,6 +11,7 @@ from .import_error import ImportError
 from .audit_log import AuditLog
 from .statistics_daily import StatisticsDaily
 from .statistics_monthly import StatisticsMonthly
+from .notification import Notification
 
 __all__ = [
     "User",
@@ -26,4 +27,5 @@ __all__ = [
     "AuditLog",
     "StatisticsDaily",
     "StatisticsMonthly",
+    "Notification",
 ]

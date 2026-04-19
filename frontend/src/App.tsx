@@ -13,6 +13,7 @@ const TaskDetail = lazy(() => import('./pages/Task/TaskDetail'))
 const Statistics = lazy(() => import('./pages/Statistics/Statistics'))
 const UserList = lazy(() => import('./pages/User/UserList'))
 const AuditLogList = lazy(() => import('./pages/AuditLog/AuditLogList'))
+const NotificationList = lazy(() => import('./pages/Notification/NotificationList'))
 import { useUserStore } from './store/userStore'
 
 function App() {
@@ -67,6 +68,7 @@ function App() {
           <Route path="statistics" element={<Statistics />} />
           <Route path="users" element={<UserList />} />
           <Route path="audit-logs" element={<AuditLogList />} />
+          <Route path="notifications" element={<NotificationList />} />
         </Route>
       </Routes>
     </BrowserRouter>

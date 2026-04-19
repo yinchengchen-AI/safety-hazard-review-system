@@ -1,0 +1,1 @@
+import{r as t}from"./index-c4Bg_fxz.js";const a=()=>t.get("/statistics/overview"),i=()=>t.get("/statistics/reporting-unit"),c=()=>t.get("/statistics/batch"),r=()=>t.get("/statistics/inspector"),g=s=>t.get("/statistics/trend",{params:s});export{g as a,i as b,c,r as d,a as g};

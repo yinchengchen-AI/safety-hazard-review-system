@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.core.database import engine, Base
 from app.core.config import settings
-from app.routers import auth, users, enterprises, batches, hazards, review_tasks, photos, reports, statistics, audit_logs
+from app.routers import auth, users, enterprises, batches, hazards, review_tasks, photos, reports, statistics, audit_logs, notifications
 from app.core.exception_handlers import AuditableHTTPException, audit_exception_handler
 
 
@@ -45,6 +45,7 @@ app.include_router(photos.router, prefix="/api/v1/photos", tags=["photos"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
 app.include_router(statistics.router, prefix="/api/v1/statistics", tags=["statistics"])
 app.include_router(audit_logs.router, prefix="/api/v1/audit-logs", tags=["audit-logs"])
+app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
 
 # 注册自定义异常处理器
 app.add_exception_handler(AuditableHTTPException, audit_exception_handler)

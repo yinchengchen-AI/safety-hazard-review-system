@@ -96,6 +96,16 @@ class ReportService:
 
         await self.db.commit()
         await self.db.refresh(report)
+
+        if report.status == "completed":
+            try:
+                from app.services import notification_service
+                await notification_service.notify_report_completed(self.db, task)
+                await self.db.commit()
+            except Exception:
+                import logging
+                logging.getLogger(__name__).warning("Failed to create report_completed notification", exc_info=True)
+
         return report
 
     def _compress_photo_if_needed(self, content: bytes, mime_type: str) -> bytes:

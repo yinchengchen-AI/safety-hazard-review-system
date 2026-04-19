@@ -11,7 +11,7 @@ from app.schemas import ReviewTaskCreate, ReviewTaskResponse, ReviewTaskDetailRe
 from app.models import ReviewTask, Hazard, TaskHazard, HazardStatusHistory, User, Photo, Report
 from app.dependencies.auth import get_current_active_user
 from app.services.report_orchestration_service import ReportOrchestrationService
-from app.services import audit_log_service
+from app.services import audit_log_service, notification_service
 
 router = APIRouter()
 
@@ -85,9 +85,6 @@ async def create_review_task(
         task_hazard = TaskHazard(task_id=task.id, hazard_id=h.id)
         db.add(task_hazard)
 
-    await db.commit()
-    await db.refresh(task)
-
     await audit_log_service.record(
         db=db,
         user_id=current_user.id,
@@ -103,6 +100,15 @@ async def create_review_task(
             "status_code": 201,
         },
     )
+
+    try:
+        await notification_service.notify_task_created(db, task, actor_id=current_user.id)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Failed to create task_created notifications", exc_info=True)
+
+    await db.commit()
+    await db.refresh(task)
 
     resp = ReviewTaskResponse.model_validate(task)
     resp.hazard_count = len(unique_hazard_ids)
@@ -287,8 +293,10 @@ async def review_hazard(
     task_hazard.reviewed_at = datetime.now(ZoneInfo("Asia/Shanghai"))
     task_hazard.reviewer_id = current_user.id
 
-    # Update hazard status and history
-    hazard_result = await db.execute(select(Hazard).where(Hazard.id == hazard_id))
+    # Update hazard status and history (load with batch for notification)
+    hazard_result = await db.execute(
+        select(Hazard).where(Hazard.id == hazard_id).options(selectinload(Hazard.batch))
+    )
     hazard = hazard_result.scalar_one()
 
     old_status = hazard.status
@@ -340,6 +348,12 @@ async def review_hazard(
             "status_code": 200,
         },
     )
+
+    try:
+        await notification_service.notify_hazard_reviewed(db, hazard, task_id, actor_id=current_user.id)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Failed to create hazard_reviewed notification", exc_info=True)
 
     await db.commit()
     await db.refresh(task_hazard)
@@ -574,6 +588,34 @@ async def batch_review_hazards(
         )
         responses.append(resp)
 
+    # Pre-load hazards with batches for notification deduplication
+    try:
+        hazard_ids = [item.hazard_id for item in data.items]
+        hazards_result = await db.execute(
+            select(Hazard)
+            .where(Hazard.id.in_(hazard_ids))
+            .options(selectinload(Hazard.batch))
+        )
+        hazards_map = {h.id: h for h in hazards_result.scalars().all()}
+
+        notified_users = set()
+        for item in data.items:
+            hazard = hazards_map.get(item.hazard_id)
+            if hazard and hazard.batch and hazard.batch.creator_id:
+                creator_id = hazard.batch.creator_id
+                if creator_id not in notified_users and creator_id != current_user.id:
+                    try:
+                        await notification_service.notify_hazard_reviewed(
+                            db, hazard, task_id, actor_id=current_user.id
+                        )
+                        notified_users.add(creator_id)
+                    except Exception:
+                        import logging
+                        logging.getLogger(__name__).warning("Failed to create hazard_reviewed notification", exc_info=True)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Failed to process batch notifications", exc_info=True)
+
     await db.commit()
     return responses
 
@@ -639,6 +681,12 @@ async def complete_task(
         },
     )
 
+    try:
+        await notification_service.notify_task_completed(db, task, actor_id=current_user.id)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Failed to create task_completed notifications", exc_info=True)
+
     await db.commit()
     await db.refresh(task)
 
@@ -655,6 +703,7 @@ async def complete_task(
 @router.post("/{task_id}/cancel", response_model=ReviewTaskResponse)
 async def cancel_task(
     task_id: UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -689,6 +738,12 @@ async def cancel_task(
             "status_code": 200,
         },
     )
+
+    try:
+        await notification_service.notify_task_cancelled(db, task, actor_id=current_user.id)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Failed to create task_cancelled notifications", exc_info=True)
 
     await db.commit()
     await db.refresh(task)
