@@ -52,27 +52,36 @@ def upload_script(client):
         print(f"[ERROR] 上传失败: {e}")
         sys.exit(1)
 
-def run_deploy(client):
+def run_deploy(client, password):
     """在服务器上执行部署脚本"""
     print(f"[3/4] 在服务器上执行部署脚本 ...")
     print("      这可能需要 5-10 分钟，请耐心等待...")
     print("-" * 50)
 
-    stdin, stdout, stderr = client.exec_command(
-        f"sudo bash {REMOTE_SCRIPT_PATH}",
-        get_pty=True
-    )
+    # 使用 sudo -S 传递密码，避免交互式挂起
+    cmd = f"echo '{password}' | sudo -S bash {REMOTE_SCRIPT_PATH}"
+    stdin, stdout, stderr = client.exec_command(cmd)
 
-    # 实时输出
-    for line in iter(stdout.readline, ""):
-        print(line, end="")
+    # 实时输出（get_pty=False 时 stdout/stderr 分离，但统一读取避免阻塞）
+    while not stdout.channel.exit_status_ready():
+        if stdout.channel.recv_ready():
+            chunk = stdout.channel.recv(1024).decode('utf-8', errors='replace')
+            sys.stdout.buffer.write(chunk.encode('utf-8', errors='replace'))
+            sys.stdout.flush()
+        if stdout.channel.recv_stderr_ready():
+            chunk = stderr.channel.recv_stderr(1024).decode('utf-8', errors='replace')
+            sys.stderr.buffer.write(chunk.encode('utf-8', errors='replace'))
+            sys.stderr.flush()
+        time.sleep(0.1)
 
-    # 检查错误输出
-    err = stderr.read().decode()
-    if err:
-        print("-" * 50)
-        print("[WARN] 错误输出:")
-        print(err)
+    # 读取剩余输出
+    chunk = stdout.read().decode('utf-8', errors='replace')
+    sys.stdout.buffer.write(chunk.encode('utf-8', errors='replace'))
+    sys.stdout.flush()
+    err_remain = stderr.read().decode('utf-8', errors='replace')
+    if err_remain:
+        sys.stderr.buffer.write(err_remain.encode('utf-8', errors='replace'))
+        sys.stderr.flush()
 
     exit_code = stdout.channel.recv_exit_status()
     return exit_code
@@ -94,8 +103,12 @@ def main():
         print(f"[ERROR] 本地脚本 {LOCAL_SCRIPT_PATH} 不存在")
         sys.exit(1)
 
-    # 获取密码
-    password = getpass(f"请输入 {USER}@{HOST} 的密码: ")
+    # 获取密码（支持环境变量或命令行参数，避免交互式输入问题）
+    password = os.environ.get('DEPLOY_PASSWORD')
+    if not password and len(sys.argv) > 1:
+        password = sys.argv[1]
+    if not password:
+        password = getpass(f"请输入 {USER}@{HOST} 的密码: ")
     if not password:
         print("[ERROR] 密码不能为空")
         sys.exit(1)
@@ -107,7 +120,7 @@ def main():
     try:
         client = ssh_connect(password)
         upload_script(client)
-        exit_code = run_deploy(client)
+        exit_code = run_deploy(client, password)
         cleanup(client)
 
         print()
