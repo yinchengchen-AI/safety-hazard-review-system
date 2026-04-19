@@ -17,6 +17,7 @@ import {
 } from 'antd'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import { useNavigate } from 'react-router-dom'
+import dayjs from 'dayjs'
 import { PlusOutlined } from '@ant-design/icons'
 import { getTasks, completeTask, cancelTask, createTask } from '../../api/task'
 import { getBatches } from '../../api/batch'
@@ -355,7 +356,7 @@ function TaskList() {
               onChange={handleBatchSelect}
               options={batches.map((b) => ({
                 value: b.id,
-                label: `${b.name}（可用隐患 ${b.available_hazard_count || 0}）- ${new Date(b.created_at).toLocaleString()}`,
+                label: `${b.name}（可用隐患 ${b.available_hazard_count || 0}）- ${dayjs(b.created_at).format('YYYY-MM-DD HH:mm:ss')}`,
               }))}
             />
           </Form.Item>

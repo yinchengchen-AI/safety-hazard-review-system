@@ -184,6 +184,7 @@ function UserList() {
         <Table rowKey="id" columns={columns} dataSource={data} loading={loading} pagination={false} />
         <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
           <Pagination
+            style={{ marginTop: 16, textAlign: 'right' }}
             current={page}
             pageSize={pageSize}
             total={total}

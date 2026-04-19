@@ -9,6 +9,7 @@ import {
   Typography,
 } from 'antd'
 import { useNavigate } from 'react-router-dom'
+import dayjs from 'dayjs'
 import { CheckOutlined } from '@ant-design/icons'
 import {
   useNotificationStore,
@@ -26,14 +27,7 @@ const typeMap: Record<string, string> = {
 }
 
 function formatTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return dayjs(dateStr).format('YYYY-MM-DD HH:mm')
 }
 
 function NotificationList() {

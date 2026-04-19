@@ -109,14 +109,16 @@ function BatchHistory() {
       key: 'action',
       render: (_: any, record: Batch) => (
         <Space>
-          <Button
-            type="link"
-            icon={<FileExcelOutlined />}
-            onClick={() => handleDownloadErrors(record)}
-            style={{ color: 'var(--primary)' }}
-          >
-            下载失败明细
-          </Button>
+          {record.fail_count > 0 && (
+            <Button
+              type="link"
+              icon={<FileExcelOutlined />}
+              onClick={() => handleDownloadErrors(record)}
+              style={{ color: 'var(--primary)' }}
+            >
+              下载失败明细
+            </Button>
+          )}
           <Button
             type="link"
             icon={<DownloadOutlined />}
@@ -179,19 +181,20 @@ function BatchHistory() {
               pagination={false}
             />
           </div>
-          <Pagination
-            style={{ marginTop: 20, textAlign: 'right' }}
-            current={page}
-            pageSize={pageSize}
-            total={total}
-            showSizeChanger
-            showTotal={(t) => `共 ${t} 条`}
-            pageSizeOptions={[10, 20, 50]}
-            onChange={(p, ps) => {
-              setPage(p)
-              if (ps) setPageSize(ps)
-            }}
-          />
+          <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+            <Pagination
+              current={page}
+              pageSize={pageSize}
+              total={total}
+              showSizeChanger
+              showTotal={(t) => `共 ${t} 条`}
+              pageSizeOptions={[10, 20, 50]}
+              onChange={(p, ps) => {
+                setPage(p)
+                if (ps) setPageSize(ps)
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

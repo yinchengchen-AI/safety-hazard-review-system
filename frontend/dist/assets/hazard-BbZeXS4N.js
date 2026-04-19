@@ -1,1 +1,0 @@
-import{r as s}from"./index-DRKtzU5a.js";const d=a=>s.get("/hazards",{params:a}).then(t=>t.data||t),r=a=>s.get(`/hazards/${a}`),z=a=>s.get(`/hazards/${a}/editable`),g=(a,t)=>s.put(`/hazards/${a}`,t);export{z as a,r as b,d as g,g as u};

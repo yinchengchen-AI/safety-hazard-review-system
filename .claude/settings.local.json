@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf ~/.claude/teams/notification-system/)",
+      "Bash(rm -rf ~/.claude/tasks/notification-system/)"
+    ]
+  }
+}

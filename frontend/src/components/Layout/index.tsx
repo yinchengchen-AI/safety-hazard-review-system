@@ -9,6 +9,7 @@ import {
   Spin,
   List,
   Empty,
+  Breadcrumb,
 } from 'antd'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Suspense } from 'react'
@@ -16,13 +17,18 @@ import {
   HomeOutlined,
   WarningOutlined,
   ImportOutlined,
+  UploadOutlined,
   HistoryOutlined,
   FileSearchOutlined,
   BarChartOutlined,
-  TeamOutlined,
   LogoutOutlined,
   BellOutlined,
+  SettingOutlined,
+  TeamOutlined,
+  ShopOutlined,
   FileTextOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
 } from '@ant-design/icons'
 import { useUserStore } from '../../store/userStore'
 import { useNotificationStore } from '../../store/notificationStore'
@@ -30,16 +36,90 @@ import type { Notification } from '../../store/notificationStore'
 
 const { Header, Sider, Content } = AntLayout
 
-const menuItems = [
+function getBreadcrumbItems(pathname: string) {
+  const items: { title: string; href?: string }[] = []
+
+  if (pathname === '/') {
+    items.push({ title: '首页' })
+    return items
+  }
+
+  const segments = pathname.split('/').filter(Boolean)
+  const first = segments[0]
+
+  switch (first) {
+    case 'hazards':
+      items.push({ title: '隐患管理', href: '/hazards' })
+      if (segments[1]) items.push({ title: '隐患详情' })
+      break
+    case 'batches':
+      items.push({ title: '批量管理' })
+      if (segments[1] === 'import') items.push({ title: '批量导入', href: '/batches/import' })
+      if (segments[1] === 'history') items.push({ title: '导入历史', href: '/batches/history' })
+      break
+    case 'tasks':
+      items.push({ title: '复核任务', href: '/tasks' })
+      if (segments[1]) items.push({ title: '任务详情' })
+      break
+    case 'statistics':
+      items.push({ title: '统计分析' })
+      break
+    case 'users':
+      items.push({ title: '系统管理' })
+      items.push({ title: '用户管理' })
+      break
+    case 'enterprises':
+      items.push({ title: '系统管理' })
+      items.push({ title: '企业管理', href: '/enterprises' })
+      if (segments[1]) items.push({ title: '企业详情' })
+      break
+    case 'audit-logs':
+      items.push({ title: '系统管理' })
+      items.push({ title: '操作日志' })
+      break
+    case 'notifications':
+      items.push({ title: '通知中心' })
+      break
+    default:
+      items.push({ title: first })
+  }
+
+  return items
+}
+
+interface MenuItem {
+  key: string
+  icon?: React.ReactNode
+  label: string
+  adminOnly?: boolean
+  children?: MenuItem[]
+}
+
+const menuItems: MenuItem[] = [
   { key: '/', icon: <HomeOutlined />, label: '首页' },
   { key: '/hazards', icon: <WarningOutlined />, label: '隐患管理' },
-  { key: '/batches/import', icon: <ImportOutlined />, label: '批量导入' },
-  { key: '/batches/history', icon: <HistoryOutlined />, label: '导入历史' },
+  {
+    key: 'batches',
+    icon: <ImportOutlined />,
+    label: '批量管理',
+    children: [
+      { key: '/batches/import', icon: <UploadOutlined />, label: '批量导入' },
+      { key: '/batches/history', icon: <HistoryOutlined />, label: '导入历史' },
+    ],
+  },
   { key: '/tasks', icon: <FileSearchOutlined />, label: '复核任务' },
   { key: '/statistics', icon: <BarChartOutlined />, label: '统计分析' },
-  { key: '/users', icon: <TeamOutlined />, label: '用户管理' },
-  { key: '/audit-logs', icon: <FileTextOutlined />, label: '操作日志', adminOnly: true },
-  { key: '/enterprises', icon: <TeamOutlined />, label: '企业管理', adminOnly: true },
+  {
+    key: 'system',
+    icon: <SettingOutlined />,
+    label: '系统管理',
+    adminOnly: true,
+    children: [
+      { key: '/users', icon: <TeamOutlined />, label: '用户管理' },
+      { key: '/enterprises', icon: <ShopOutlined />, label: '企业管理' },
+      { key: '/audit-logs', icon: <FileTextOutlined />, label: '操作日志' },
+    ],
+  },
 ]
 
 function formatRelativeTime(dateStr: string): string {
@@ -60,6 +140,8 @@ function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useUserStore()
+  const [openKeys, setOpenKeys] = useState<string[]>([])
+  const [collapsed, setCollapsed] = useState(false)
 
   const unreadCount = useNotificationStore((state) => state.unreadCount)
   const notifications = useNotificationStore((state) => state.notifications)
@@ -67,6 +149,23 @@ function Layout() {
   const fetchNotifications = useNotificationStore((state) => state.fetchNotifications)
   const markRead = useNotificationStore((state) => state.markRead)
   const markAllRead = useNotificationStore((state) => state.markAllRead)
+
+  // 根据当前路径自动展开父菜单
+  useEffect(() => {
+    setOpenKeys((prev) => {
+      const next = [...prev]
+      if (location.pathname.startsWith('/batches/') && !next.includes('batches')) {
+        next.push('batches')
+      }
+      if (
+        ['/users', '/enterprises', '/audit-logs'].includes(location.pathname) &&
+        !next.includes('system')
+      ) {
+        next.push('system')
+      }
+      return next.length === prev.length ? prev : next
+    })
+  }, [location.pathname])
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
@@ -214,31 +313,33 @@ function Layout() {
           padding: '0 24px',
           position: 'sticky',
           top: 0,
+          zIndex: 200,
+          marginLeft: collapsed ? 100 : 220,
+          marginRight: 20,
+          width: 'auto',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: 'linear-gradient(135deg, #1677ff 0%, #0958d9 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontSize: 18,
-              fontWeight: 'bold',
-            }}
-          >
-            安
-          </div>
-          <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>
-            安全生产隐患复核系统
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
+          <Button
+            type="text"
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => setCollapsed(!collapsed)}
+            style={{ fontSize: 16, width: 36, height: 36, flexShrink: 0 }}
+          />
+          <Breadcrumb
+            items={getBreadcrumbItems(location.pathname).map((item) => ({
+              title: item.href ? (
+                <a onClick={() => navigate(item.href!)} style={{ cursor: 'pointer' }}>
+                  {item.title}
+                </a>
+              ) : (
+                item.title
+              ),
+            }))}
+            style={{ marginLeft: 8 }}
+          />
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
           <Dropdown
             open={dropdownOpen}
             onOpenChange={handleDropdownOpen}
@@ -264,25 +365,104 @@ function Layout() {
       </Header>
 
       <AntLayout>
-        <Sider width={200} theme="light">
+        <Sider
+          collapsible
+          collapsed={collapsed}
+          trigger={null}
+          theme="light"
+          width={200}
+          collapsedWidth={80}
+          style={{
+            overflow: 'auto',
+            height: '100vh',
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            zIndex: 10,
+          }}
+        >
+          <div
+            style={{
+              height: 64,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              gap: collapsed ? 0 : 10,
+              padding: collapsed ? 0 : '0 16px',
+              borderBottom: '1px solid rgba(0,0,0,0.06)',
+            }}
+          >
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: 'linear-gradient(135deg, #1677ff 0%, #0958d9 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: 16,
+                fontWeight: 'bold',
+                flexShrink: 0,
+              }}
+            >
+              安
+            </div>
+            {!collapsed && (
+              <div
+                style={{
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                }}
+              >
+                隐患复核系
+              </div>
+            )}
+          </div>
           <div style={{ padding: '12px 0' }}>
             <Menu
               mode="inline"
               selectedKeys={[location.pathname]}
+              openKeys={openKeys}
+              onOpenChange={setOpenKeys}
               items={menuItems
                 .filter((item) => !item.adminOnly || user?.role === 'admin')
-                .map((item) => ({
-                  key: item.key,
-                  icon: item.icon,
-                  label: item.label,
-                  onClick: () => navigate(item.key),
-                }))}
+                .map((item) =>
+                  item.children
+                    ? {
+                        key: item.key,
+                        icon: item.icon,
+                        label: item.label,
+                        children: item.children.map((child) => ({
+                          key: child.key,
+                          icon: child.icon,
+                          label: child.label,
+                          onClick: () => navigate(child.key),
+                        })),
+                      }
+                    : {
+                        key: item.key,
+                        icon: item.icon,
+                        label: item.label,
+                        onClick: () => navigate(item.key),
+                      }
+                )}
               style={{ borderRight: 'none' }}
             />
           </div>
         </Sider>
 
-        <Content style={{ margin: 20, minHeight: 'calc(100vh - 104px)' }}>
+        <Content
+          style={{
+            margin: 20,
+            marginLeft: collapsed ? 100 : 220,
+            minHeight: 'calc(100vh - 104px)',
+          }}
+        >
           <div
             className="animate-fade-in-up delay-0"
             style={{

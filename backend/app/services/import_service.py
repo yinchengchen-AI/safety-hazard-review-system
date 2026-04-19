@@ -33,7 +33,7 @@ class ImportService:
             row_index = int(idx) + 2
             cols = {str(k).strip(): str(k).strip() for k in row.index}
             enterprise_name = self._get_value(row, cols, ["企业名称", "enterprise_name", "企业", "enterprise"])
-            description = self._get_value(row, cols, ["重大隐患描述", "举报问题描述", "隐患描述", "description", "描述", "hazard_description"])
+            description = self._get_value(row, cols, ["隐患描述", "重大隐患描述", "举报问题描述", "description", "描述", "hazard_description"])
             location = self._get_value(row, cols, ["隐患位置", "location", "位置", "hazard_location"])
             credit_code = self._get_value(row, cols, ["统一社会信用代码", "credit_code", "信用代码"])
             region = self._get_value(row, cols, ["属地", "region", "所在地区"])
@@ -57,7 +57,7 @@ class ImportService:
             if not enterprise_name:
                 errors.append("企业名称不能为空")
             if not description:
-                errors.append("重大隐患描述不能为空")
+                errors.append("隐患描述不能为空")
             items.append({
                 "row_index": row_index,
                 "enterprise_name": enterprise_name,
@@ -177,7 +177,7 @@ class ImportService:
         cols = {str(k).strip(): str(k).strip() for k in row.index}
 
         enterprise_name = self._get_value(row, cols, ["企业名称", "enterprise_name", "企业", "enterprise"])
-        description = self._get_value(row, cols, ["重大隐患描述", "举报问题描述", "隐患描述", "description", "描述", "hazard_description"])
+        description = self._get_value(row, cols, ["隐患描述", "重大隐患描述", "举报问题描述", "description", "描述", "hazard_description"])
         location = self._get_value(row, cols, ["隐患位置", "location", "位置", "hazard_location"])
         credit_code = self._get_value(row, cols, ["统一社会信用代码", "credit_code", "信用代码"])
         region = self._get_value(row, cols, ["属地", "region", "所在地区"])
@@ -201,7 +201,7 @@ class ImportService:
         if not enterprise_name:
             raise ValueError("企业名称不能为空")
         if not description:
-            raise ValueError("重大隐患描述不能为空")
+            raise ValueError("隐患描述不能为空")
 
         # Parse dates
         inspection_date = self._parse_date(inspection_date_str)

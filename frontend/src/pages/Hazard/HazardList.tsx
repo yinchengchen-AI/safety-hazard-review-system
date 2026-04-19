@@ -30,7 +30,7 @@ const statusMap: Record<string, { color: string; text: string }> = {
 }
 
 const fieldLabels: Record<string, string> = {
-  description: '重大隐患描述',
+  description: '隐患描述',
   location: '隐患位置',
   category: '隐患分类',
   inspection_method: '检查方式',
@@ -196,7 +196,7 @@ function HazardList() {
       render: (v: string) => v || '-',
     },
     {
-      title: '重大隐患描述',
+      title: '隐患描述',
       dataIndex: 'description',
       key: 'description',
       render: (v: string) => v || '-',
@@ -334,7 +334,8 @@ function HazardList() {
               value={categoryFilter || undefined}
               onChange={(v) => setCategoryFilter(v || '')}
               options={[
-                { value: '管理不到位', label: '管理不到位' },
+                { value: '一般隐患', label: '一般隐患' },
+                { value: '重大隐患', label: '重大隐患' },
               ]}
             />
           </Col>
@@ -390,19 +391,20 @@ function HazardList() {
           scroll={{ x: 'max-content' }}
           locale={{ emptyText: <Empty description="暂无隐患数据" /> }}
         />
-        <Pagination
-          style={{ marginTop: 16, textAlign: 'right' }}
-          current={hazardPage}
-          pageSize={hazardPageSize}
-          total={hazardTotal}
-          showSizeChanger
-          showTotal={(t) => `共 ${t} 条`}
-          pageSizeOptions={[10, 20, 50]}
-          onChange={(p, ps) => {
-            setHazardPage(p)
-            if (ps) setHazardPageSize(ps)
-          }}
-        />
+        <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+          <Pagination
+            current={hazardPage}
+            pageSize={hazardPageSize}
+            total={hazardTotal}
+            showSizeChanger
+            showTotal={(t) => `共 ${t} 条`}
+            pageSizeOptions={[10, 20, 50]}
+            onChange={(p, ps) => {
+              setHazardPage(p)
+              if (ps) setHazardPageSize(ps)
+            }}
+          />
+        </div>
       </Card>
 
       <Modal

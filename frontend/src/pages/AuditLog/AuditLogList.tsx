@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Table, Tag, Input, Select, DatePicker, Button, Pagination, Space, Typography } from 'antd'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
-import type { Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import { getAuditLogs } from '../../api/auditLog'
 import { useUserStore } from '../../store/userStore'
 
@@ -121,7 +121,7 @@ function AuditLogList() {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 180,
-      render: (val: string) => new Date(val).toLocaleString('zh-CN'),
+      render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss'),
     },
     {
       title: '操作人',
@@ -288,6 +288,7 @@ function AuditLogList() {
         />
         <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
           <Pagination
+            style={{ marginTop: 16, textAlign: 'right' }}
             current={page}
             pageSize={pageSize}
             total={total}

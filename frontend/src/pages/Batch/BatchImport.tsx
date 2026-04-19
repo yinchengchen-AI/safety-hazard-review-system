@@ -111,7 +111,7 @@ function BatchImport() {
   const previewColumns = [
     { title: '行号', dataIndex: 'row_index', key: 'row_index', width: 60, fixed: 'left' as const },
     { title: '企业名称', dataIndex: 'enterprise_name', key: 'enterprise_name', width: 160 },
-    { title: '重大隐患描述', dataIndex: 'description', key: 'description', width: 260 },
+    { title: '隐患描述', dataIndex: 'description', key: 'description', width: 260 },
     { title: '隐患位置', dataIndex: 'location', key: 'location', width: 100 },
     { title: '隐患分类', dataIndex: 'category', key: 'category', width: 100 },
     { title: '检查方式', dataIndex: 'inspection_method', key: 'inspection_method', width: 100 },
@@ -244,7 +244,7 @@ function BatchImport() {
                         <span>• 行业领域 / industry_sector</span>
                         <span>• 企业类型 / enterprise_type</span>
                         <span>• 上报单位 / reporting_unit</span>
-                        <span>• 重大隐患描述 / description</span>
+                        <span>• 隐患描述 / description</span>
                         <span>• 隐患位置 / location</span>
                         <span>• 隐患分类 / category</span>
                         <span>• 检查方式 / inspection_method</span>
@@ -259,8 +259,8 @@ function BatchImport() {
                         <span>• 举报情况备注 / report_remarks</span>
                       </div>
                     </li>
-                    <li style={{ marginTop: 10 }}><strong>必填项：</strong>企业名称、重大隐患描述。若为空则该行数据无法导入。</li>
-                    <li>系统会自动检测最近 1 个月内是否已存在相同的企业 + 重大隐患描述 + 隐患位置，重复数据将被拒绝导入。</li>
+                    <li style={{ marginTop: 10 }}><strong>必填项：</strong>企业名称、隐患描述。若为空则该行数据无法导入。</li>
+                    <li>系统会自动检测最近 1 个月内是否已存在相同的企业 + 隐患描述 + 隐患位置，重复数据将被拒绝导入。</li>
                     <li>导入后，若某些字段在文件中为空，管理员可在“隐患管理”页面中对该隐患进行补充编辑；已有值的字段不可修改。</li>
                     <li>建议先下载模板，按模板格式整理数据后再上传。上传后点击“预览”查看校验结果，确认无误后再点击“确认导入”。</li>
                   </ul>

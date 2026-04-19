@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 from pydantic import BaseModel, Field
 from typing import Any
@@ -45,5 +45,5 @@ class AuditLogQueryParams(BaseModel):
     action: str | None = None
     target_type: str | None = None
     target_id: UUID | None = None
-    start_date: datetime | None = None
-    end_date: datetime | None = None
+    start_date: date | None = None
+    end_date: date | None = None

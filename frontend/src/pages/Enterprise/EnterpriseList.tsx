@@ -14,6 +14,7 @@ import {
 } from 'antd'
 import { UploadOutlined, DownloadOutlined, PlusOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import dayjs from 'dayjs'
 import {
   getEnterprises,
   createEnterprise,
@@ -196,7 +197,7 @@ function EnterpriseList() {
       title: '创建时间',
       dataIndex: 'created_at',
       key: 'created_at',
-      render: (v: string) => new Date(v).toLocaleString('zh-CN'),
+      render: (v: string) => dayjs(v).format('YYYY-MM-DD HH:mm:ss'),
     },
     {
       title: '操作',
@@ -262,6 +263,7 @@ function EnterpriseList() {
         />
         <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
           <Pagination
+            style={{ marginTop: 16, textAlign: 'right' }}
             current={page}
             pageSize={pageSize}
             total={total}

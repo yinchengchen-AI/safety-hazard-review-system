@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import dayjs from 'dayjs'
 import { Card, Descriptions, Table, Button, Tag, Spin, Empty, message, Typography, Statistic, Row, Col } from 'antd'
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import { getEnterprise, getEnterpriseStatistics, type Enterprise } from '../../api/enterprise'
@@ -80,7 +81,7 @@ function EnterpriseDetail() {
       title: '检查时间',
       dataIndex: 'inspection_date',
       key: 'inspection_date',
-      render: (v: string) => (v ? new Date(v).toLocaleDateString('zh-CN') : '-'),
+      render: (v: string) => (v ? dayjs(v).format('YYYY-MM-DD') : '-'),
     },
   ]
 
@@ -114,7 +115,7 @@ function EnterpriseDetail() {
           <Descriptions.Item label="行业领域">{enterprise.industry_sector || '-'}</Descriptions.Item>
           <Descriptions.Item label="企业类型">{enterprise.enterprise_type || '-'}</Descriptions.Item>
           <Descriptions.Item label="创建时间">
-            {new Date(enterprise.created_at).toLocaleString('zh-CN')}
+            {dayjs(enterprise.created_at).format('YYYY-MM-DD HH:mm:ss')}
           </Descriptions.Item>
         </Descriptions>
       </Card>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import dayjs from 'dayjs'
 import {
   Card,
   Descriptions,
@@ -640,7 +641,7 @@ function TaskDetail() {
                 key={log.id}
                 label={
                   <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                    {new Date(log.created_at).toLocaleString('zh-CN')}
+                    {dayjs(log.created_at).format('YYYY-MM-DD HH:mm:ss')}
                   </span>
                 }
               >

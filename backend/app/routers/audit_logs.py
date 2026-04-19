@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from uuid import UUID
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
 
 from app.core.database import get_db
 from app.schemas import AuditLogResponse, AuditLogListResponse, AuditLogQueryParams
@@ -31,9 +33,11 @@ async def list_audit_logs(
     if params.target_id:
         filters.append(AuditLog.target_id == params.target_id)
     if params.start_date:
-        filters.append(AuditLog.created_at >= params.start_date)
+        start_dt = datetime.combine(params.start_date, time.min).replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+        filters.append(AuditLog.created_at >= start_dt)
     if params.end_date:
-        filters.append(AuditLog.created_at <= params.end_date)
+        end_dt = datetime.combine(params.end_date, time.max).replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+        filters.append(AuditLog.created_at <= end_dt)
 
     if filters:
         where_clause = and_(*filters)
