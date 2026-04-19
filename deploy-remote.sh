@@ -189,7 +189,7 @@ echo "  健康检查"
 echo "=========================================="
 sleep 2
 
-curl -sf http://localhost/health > /dev/null 2>&1 && echo "  Frontend: OK" || echo "  Frontend: FAIL"
+curl -sf http://localhost/api/health > /dev/null 2>&1 && echo "  API:      OK" || echo "  API:      FAIL"
 curl -sf http://localhost:8000/health > /dev/null 2>&1 && echo "  Backend:  OK" || echo "  Backend:  FAIL"
 
 echo ""

@@ -69,6 +69,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    restart: unless-stopped
 
   celery-worker:
     build:
@@ -91,9 +92,12 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    restart: unless-stopped
 
   celery-beat:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.celery
     container_name: safety-celery-beat
     command: celery -A app.tasks.celery_app beat --loglevel=info
     environment:
@@ -111,6 +115,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    restart: unless-stopped
 
   frontend:
     build: ./frontend
@@ -119,6 +124,7 @@ services:
       - "80:80"
     depends_on:
       - backend
+    restart: unless-stopped
 
 volumes:
   postgres_data:
