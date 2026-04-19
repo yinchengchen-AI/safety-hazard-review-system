@@ -35,7 +35,7 @@ function EnterpriseList() {
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
-  const [pageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(20)
   const [keyword, setKeyword] = useState('')
 
   const [modalVisible, setModalVisible] = useState(false)
@@ -66,8 +66,9 @@ function EnterpriseList() {
     fetchData(1, keyword)
   }
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (newPage: number, newPageSize: number) => {
     setPage(newPage)
+    setPageSize(newPageSize)
     fetchData(newPage, keyword)
   }
 
@@ -265,7 +266,9 @@ function EnterpriseList() {
             pageSize={pageSize}
             total={total}
             onChange={handlePageChange}
-            showSizeChanger={false}
+            showSizeChanger
+            showTotal={(t) => `共 ${t} 条`}
+            pageSizeOptions={[10, 20, 50]}
           />
         </div>
       </Card>

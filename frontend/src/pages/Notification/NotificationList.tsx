@@ -39,7 +39,7 @@ function formatTime(dateStr: string): string {
 function NotificationList() {
   const navigate = useNavigate()
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(20)
 
   const notifications = useNotificationStore((state) => state.notifications)
   const total = useNotificationStore((state) => state.total)
@@ -159,7 +159,13 @@ function NotificationList() {
             current: currentPage,
             pageSize: pageSize,
             total: total,
-            onChange: (page) => setCurrentPage(page),
+            onChange: (page, size) => {
+              setCurrentPage(page)
+              if (size) setPageSize(size)
+            },
+            showSizeChanger: true,
+            showTotal: (t) => `共 ${t} 条`,
+            pageSizeOptions: [10, 20, 50],
           }}
           locale={{
             emptyText: <Empty description="暂无通知" />,

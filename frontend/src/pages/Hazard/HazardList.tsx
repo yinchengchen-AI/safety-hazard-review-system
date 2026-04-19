@@ -397,6 +397,7 @@ function HazardList() {
           total={hazardTotal}
           showSizeChanger
           showTotal={(t) => `共 ${t} 条`}
+          pageSizeOptions={[10, 20, 50]}
           onChange={(p, ps) => {
             setHazardPage(p)
             if (ps) setHazardPageSize(ps)

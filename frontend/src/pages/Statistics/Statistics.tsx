@@ -511,7 +511,12 @@ export default function Statistics() {
                 dataSource={batches}
                 columns={batchColumns}
                 rowKey="batch_id"
-                pagination={{ pageSize: 10 }}
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  showTotal: (t) => `共 ${t} 条`,
+                  pageSizeOptions: [10, 20, 50],
+                }}
                 locale={{ emptyText: <Empty description="暂无数据" /> }}
               />
             </ChartCard>

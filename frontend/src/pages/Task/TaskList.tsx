@@ -316,7 +316,12 @@ function TaskList() {
           columns={columns}
           dataSource={data}
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (t) => `共 ${t} 条`,
+            pageSizeOptions: [10, 20, 50],
+          }}
           style={{ padding: '0 20px 20px' }}
         />
       </Card>

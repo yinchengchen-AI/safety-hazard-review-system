@@ -186,6 +186,7 @@ function BatchHistory() {
             total={total}
             showSizeChanger
             showTotal={(t) => `共 ${t} 条`}
+            pageSizeOptions={[10, 20, 50]}
             onChange={(p, ps) => {
               setPage(p)
               if (ps) setPageSize(ps)
