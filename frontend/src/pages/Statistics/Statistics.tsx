@@ -13,6 +13,8 @@ import {
   FileSearchOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  TeamOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons'
 import { Pie, Line, Bar } from '@ant-design/charts'
 import dayjs from 'dayjs'
@@ -23,6 +25,7 @@ import {
   getInspectorStats,
   getTrendStats,
 } from '../../api/statistics'
+import './Statistics.css'
 
 type OverviewStatistics = {
   total_hazards: number
@@ -87,41 +90,36 @@ const STATUS_COLORS = {
 function OverviewCard({
   title,
   value,
+  suffix = '',
   icon,
-  color,
+  colorClass,
   delay,
 }: {
   title: string
   value: number
+  suffix?: string
   icon: React.ReactNode
-  color: string
+  colorClass: string
   delay: number
 }) {
   return (
     <Card
-      className="metric-card fade-in"
+      className={`statistics-card ${colorClass} fade-in`}
       style={{ animationDelay: `${delay}ms` }}
       bordered={false}
     >
-      <div className="metric-card__inner">
+      <div className="statistics-card__inner">
         <div>
-          <span
-            style={{
-              fontSize: 13,
-              color: 'rgba(0,0,0,0.45)',
-              display: 'block',
-              marginBottom: 4,
-            }}
-          >
-            {title}
-          </span>
-          <div className="metric-value" style={{ color }}>
-            {value}
+          <span className="statistics-card__label">{title}</span>
+          <div className="statistics-card__value">
+            {value}{suffix}
           </div>
         </div>
         <div
-          className="metric-icon"
-          style={{ background: `${color}14`, color }}
+          className="statistics-card__icon"
+          style={{
+            background: 'rgba(0,0,0,0.04)',
+          }}
         >
           {icon}
         </div>
@@ -142,7 +140,7 @@ function ChartCard({
   return (
     <Card
       title={title}
-      className="dashboard-card fade-in"
+      className="statistics-chart-card fade-in"
       style={{ animationDelay: `${delay}ms` }}
       bordered={false}
     >
@@ -376,17 +374,9 @@ export default function Statistics() {
   ]
 
   return (
-    <div style={{ padding: 8 }}>
+    <div className="statistics-container">
       <div
-        className="fade-in"
-        style={{
-          marginBottom: 20,
-          padding: '20px 24px',
-          background: 'linear-gradient(135deg, #ffffff 0%, #f6f9ff 100%)',
-          borderRadius: 16,
-          border: '1px solid rgba(22, 119, 255, 0.08)',
-          boxShadow: '0 2px 8px rgba(22, 119, 255, 0.04)',
-        }}
+        className="statistics-header fade-in"
       >
         <h2
           style={{
@@ -412,40 +402,59 @@ export default function Statistics() {
       <Spin spinning={loading} tip="加载中...">
         {/* Overview Cards */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} lg={4}>
             <OverviewCard
               title="隐患总数"
               value={overview?.total_hazards || 0}
               icon={<WarningOutlined />}
-              color="#0958d9"
+              colorClass="statistics-card--blue"
               delay={60}
             />
           </Col>
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} lg={4}>
             <OverviewCard
               title="待复核"
               value={overview?.pending_count || 0}
               icon={<FileSearchOutlined />}
-              color="#d46b08"
+              colorClass="statistics-card--amber"
               delay={120}
             />
           </Col>
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} lg={4}>
             <OverviewCard
               title="已通过"
               value={overview?.passed_count || 0}
               icon={<CheckCircleOutlined />}
-              color="#389e0d"
+              colorClass="statistics-card--green"
               delay={180}
             />
           </Col>
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} lg={4}>
             <OverviewCard
               title="未通过"
               value={overview?.failed_count || 0}
               icon={<CloseCircleOutlined />}
-              color="#cf1322"
+              colorClass="statistics-card--red"
               delay={240}
+            />
+          </Col>
+          <Col xs={24} sm={12} lg={4}>
+            <OverviewCard
+              title="复核率"
+              value={Math.round((overview?.coverage_rate || 0) * 100)}
+              suffix="%"
+              icon={<BarChartOutlined />}
+              colorClass="statistics-card--purple"
+              delay={300}
+            />
+          </Col>
+          <Col xs={24} sm={12} lg={4}>
+            <OverviewCard
+              title="任务数"
+              value={overview?.task_count || 0}
+              icon={<TeamOutlined />}
+              colorClass="statistics-card--cyan"
+              delay={360}
             />
           </Col>
         </Row>
