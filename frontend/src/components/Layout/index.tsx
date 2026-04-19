@@ -39,6 +39,7 @@ const menuItems = [
   { key: '/statistics', icon: <BarChartOutlined />, label: '统计分析' },
   { key: '/users', icon: <TeamOutlined />, label: '用户管理' },
   { key: '/audit-logs', icon: <FileTextOutlined />, label: '操作日志', adminOnly: true },
+  { key: '/enterprises', icon: <TeamOutlined />, label: '企业管理', adminOnly: true },
 ]
 
 function formatRelativeTime(dateStr: string): string {

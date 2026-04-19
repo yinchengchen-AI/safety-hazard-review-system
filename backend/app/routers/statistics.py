@@ -121,14 +121,23 @@ async def enterprise_statistics(
 
     stats = []
     for row in result.all():
+        total = row.total_hazards or 0
+        pending = row.pending_count or 0
+        passed = row.passed_count or 0
+        failed = row.failed_count or 0
+        reviewed = passed + failed
+        coverage_rate = round(reviewed / total * 100, 2) if total > 0 else 0.0
+        pass_rate = round(passed / reviewed * 100, 2) if reviewed > 0 else 0.0
         stats.append(EnterpriseStatistics(
             enterprise_id=row.id,
             enterprise_name=row.name,
-            total_hazards=row.total_hazards or 0,
-            pending_count=row.pending_count or 0,
-            passed_count=row.passed_count or 0,
-            failed_count=row.failed_count or 0,
+            total_hazards=total,
+            pending_count=pending,
+            passed_count=passed,
+            failed_count=failed,
             review_count=row.review_count or 0,
+            coverage_rate=coverage_rate,
+            pass_rate=pass_rate,
         ))
     return stats
 

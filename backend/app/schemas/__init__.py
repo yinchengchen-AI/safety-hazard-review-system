@@ -1,6 +1,6 @@
 from .auth import Token, LoginRequest
 from .user import UserCreate, UserUpdate, UserResetPassword, UserResponse, UserListResponse
-from .enterprise import EnterpriseCreate, EnterpriseResponse
+from .enterprise import EnterpriseCreate, EnterpriseUpdate, EnterpriseResponse, EnterpriseListResponse, EnterpriseImportResult
 from .batch import BatchCreate, BatchResponse, BatchImportResult, BatchPreviewItem, BatchPreviewResponse
 from .hazard import HazardCreate, HazardResponse, HazardUpdateStatus, HazardUpdate, HazardEditableFields, HazardListParams
 from .review_task import ReviewTaskCreate, ReviewTaskResponse, ReviewTaskDetailResponse, BatchReviewRequest, BatchReviewItem
@@ -27,7 +27,10 @@ __all__ = [
     "UserResponse",
     "UserListResponse",
     "EnterpriseCreate",
+    "EnterpriseUpdate",
     "EnterpriseResponse",
+    "EnterpriseListResponse",
+    "EnterpriseImportResult",
     "BatchCreate",
     "BatchResponse",
     "BatchImportResult",

@@ -11,6 +11,8 @@ class EnterpriseStatistics(BaseModel):
     passed_count: int
     failed_count: int
     review_count: int
+    coverage_rate: float = 0.0
+    pass_rate: float = 0.0
 
 
 class BatchStatistics(BaseModel):
