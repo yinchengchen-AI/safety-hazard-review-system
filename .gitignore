@@ -56,3 +56,11 @@ setup_db*.py
 seed_admin[2-9]*.py
 seed_admin_*.py
 generate_hazards_*.py
+
+# Tool / runtime caches
+.playwright-mcp/
+backend/.vite/
+frontend/.vite/
+
+# Local env templates (keep .example, ignore real .env)
+!.env.example
