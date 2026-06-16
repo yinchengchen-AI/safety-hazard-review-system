@@ -6,3 +6,344 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum UserRole {
+  INSPECTOR  // 监管员
+  CHIEF      // 科长
+  DIRECTOR   // 局长
+  ADMIN      // 系统管理员
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum CaseStatus {
+  PENDING_REVIEW     // 待复核
+  PENDING_AUDIT      // 待审核
+  IN_AUDIT           // 审核中
+  CLOSED             // 已销案
+}
+
+enum CaseSeverity {
+  MAJOR
+  MODERATE
+  MINOR
+}
+
+enum ReviewStatus {
+  IN_PROGRESS
+  SUBMITTED
+  RETURNED
+}
+
+enum AuditDecision {
+  PASS
+  REJECT
+}
+
+enum ItemResult {
+  PASS
+  FAIL
+  NA
+}
+
+enum Conclusion {
+  PASS
+  FAIL
+  PARTIAL
+}
+
+enum PhotoType {
+  PRE_RECTIFICATION
+  POST_RECTIFICATION
+  OTHER
+}
+
+enum NotificationType {
+  DEADLINE_SOON       // 临期
+  DEADLINE_OVERDUE    // 超时
+  AUDIT_PENDING       // 待审核
+  AUDIT_RESULT        // 审核结果
+  RECLAIM_NOTICE      // 锁释放
+  SYNC_FAILED         // 同步失败
+}
+
+enum SyncStatus {
+  PENDING
+  SYNCED
+  FAILED
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         UserRole
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  registeredCases  Case[]            @relation("CaseRegistrar")
+  lockedCases      Case[]            @relation("CaseLocker")
+  reviews          Review[]          @relation("Reviewer")
+  claimedReviews   Review[]          @relation("ReviewClaimant")
+  auditSignatures  AuditSignature[]
+  uploadedPhotos   ReviewPhoto[]
+  uploadedAttach   CaseAttachment[]
+  notifications    Notification[]
+  importBatches    ImportBatch[]
+  auditLogs        AuditLog[]
+  offlineOps       OfflineSyncQueue[]
+}
+
+model Enterprise {
+  id                    String   @id @default(cuid())
+  name                  String
+  unifiedSocialCreditId String   @unique
+  industry              String?
+  address               String?
+  contactName           String?
+  contactPhone          String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  cases Case[]
+}
+
+model HazardType {
+  id         String     @id @default(cuid())
+  code       String     @unique
+  name       String
+  category   String     // 消防/特种设备/危化品/电气 etc.
+  parentId   String?
+  parent     HazardType? @relation("HazardTree", fields: [parentId], references: [id])
+  children   HazardType[] @relation("HazardTree")
+  sortOrder  Int        @default(0)
+  active     Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+
+  templates ChecklistTemplate[]
+  cases     Case[]
+}
+
+model ChecklistTemplate {
+  id           String   @id @default(cuid())
+  hazardTypeId String
+  name         String
+  version      Int      @default(1)
+  active       Boolean  @default(true)
+  createdById  String
+  createdAt    DateTime @default(now())
+
+  hazardType  HazardType      @relation(fields: [hazardTypeId], references: [id])
+  items       ChecklistItem[]
+  reviews     Review[]
+}
+
+model ChecklistItem {
+  id              String  @id @default(cuid())
+  templateId      String
+  content         String
+  sortOrder       Int     @default(0)
+  required        Boolean @default(true)
+  evidenceRequired Boolean @default(false)
+
+  template ChecklistTemplate @relation(fields: [templateId], references: [id])
+  results ReviewItemResult[]
+}
+
+model Case {
+  id             String       @id @default(cuid())
+  code           String       @unique
+  enterpriseId   String
+  hazardTypeId   String
+  severity       CaseSeverity
+  source         String       // 来源: 监管检查/举报/上级交办 etc.
+  description    String
+  address        String?
+  gpsLat         Float?
+  gpsLng         Float?
+  deadline       DateTime
+  status         CaseStatus   @default(PENDING_REVIEW)
+  registeredById String
+  registeredAt   DateTime     @default(now())
+  closedAt       DateTime?
+  lockedById     String?
+  lockedAt       DateTime?
+
+  registeredBy User            @relation("CaseRegistrar", fields: [registeredById], references: [id])
+  lockedBy     User?           @relation("CaseLocker", fields: [lockedById], references: [id])
+  enterprise   Enterprise      @relation(fields: [enterpriseId], references: [id])
+  hazardType   HazardType      @relation(fields: [hazardTypeId], references: [id])
+  attachments  CaseAttachment[]
+  reviews      Review[]
+  auditSignatures AuditSignature[]
+
+  @@index([status])
+  @@index([deadline])
+  @@index([enterpriseId])
+  @@index([hazardTypeId])
+  @@index([lockedById])
+}
+
+model CaseAttachment {
+  id           String    @id @default(cuid())
+  caseId       String
+  type         PhotoType
+  storageKey   String
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  uploadedById String
+  uploadedAt   DateTime  @default(now())
+
+  case       Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+}
+
+model Review {
+  id           String       @id @default(cuid())
+  caseId       String
+  reviewerId   String
+  status       ReviewStatus @default(IN_PROGRESS)
+  startedAt    DateTime     @default(now())
+  submittedAt  DateTime?
+  conclusion   Conclusion?
+  summary      String?
+  score        Int?
+  claimedById  String?
+  claimedAt    DateTime?
+  lastActiveAt DateTime     @default(now())
+
+  case        Case              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  reviewer    User              @relation("Reviewer", fields: [reviewerId], references: [id])
+  claimedBy   User?             @relation("ReviewClaimant", fields: [claimedById], references: [id])
+  template    ChecklistTemplate @relation(fields: [templateId], references: [id])
+  templateId  String
+  items       ReviewItemResult[]
+  photos      ReviewPhoto[]
+
+  @@index([caseId])
+  @@index([status])
+  @@index([claimedById])
+  @@index([lastActiveAt])
+}
+
+model ReviewItemResult {
+  id       String     @id @default(cuid())
+  reviewId String
+  itemId   String
+  result   ItemResult
+  note     String?
+
+  review Review        @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  item   ChecklistItem @relation(fields: [itemId], references: [id])
+
+  @@unique([reviewId, itemId])
+}
+
+model ReviewPhoto {
+  id           String     @id @default(cuid())
+  reviewId     String
+  storageKey   String
+  takenAt      DateTime
+  gpsLat       Float?
+  gpsLng       Float?
+  capturedById String
+  syncStatus   SyncStatus @default(SYNCED)
+  createdAt    DateTime   @default(now())
+
+  review     Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  capturedBy User   @relation(fields: [capturedById], references: [id])
+}
+
+model AuditSignature {
+  id           String         @id @default(cuid())
+  caseId       String
+  auditorId    String
+  decision     AuditDecision
+  comment      String?
+  signatureUrl String
+  signedAt     DateTime       @default(now())
+
+  case    Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  auditor User @relation(fields: [auditorId], references: [id])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  refType   String?          // Case | Review | etc.
+  refId     String?
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, readAt])
+}
+
+model ImportBatch {
+  id           String   @id @default(cuid())
+  filename     String
+  uploadedById String
+  totalRows    Int
+  successCount Int      @default(0)
+  failedCount  Int      @default(0)
+  status       String   // pending/completed/failed
+  createdAt    DateTime @default(now())
+
+  uploadedBy User         @relation(fields: [uploadedById], references: [id])
+  errors     ImportError[]
+}
+
+model ImportError {
+  id        String   @id @default(cuid())
+  batchId   String
+  rowNumber Int
+  field     String
+  value     String?
+  message   String
+
+  batch ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String   // login/register/submit/sign/reject/import/takeover/reclaim etc.
+  targetType String?
+  targetId   String?
+  payload    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([targetType, targetId])
+}
+
+model OfflineSyncQueue {
+  id         String     @id @default(cuid())
+  userId     String
+  clientId   String     // UUID from client for idempotency
+  opType     String     // submit_review / upload_photo etc.
+  payload    Json
+  status     SyncStatus @default(PENDING)
+  retryCount Int        @default(0)
+  errorMsg   String?
+  createdAt  DateTime   @default(now())
+  syncedAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, clientId])
+  @@index([status])
+}
