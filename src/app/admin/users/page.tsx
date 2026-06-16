@@ -3,6 +3,7 @@ import { assertCan } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { UsersTable } from '@/components/admin/users-table';
+import { PageShell } from '@/components/layout/page-shell';
 
 export default async function AdminUsersPage() {
   const session = await auth();
@@ -14,9 +15,8 @@ export default async function AdminUsersPage() {
   }
   const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-semibold mb-4">用户管理</h1>
+    <PageShell title="用户管理">
       <UsersTable users={users} />
-    </main>
+    </PageShell>
   );
 }
