@@ -1,3 +1,4 @@
+import { NotificationService } from './notification';
 import { prisma } from '@/lib/prisma';
 import { BusinessError } from '@/lib/errors';
 import { CaseService } from './case';
@@ -118,6 +119,12 @@ export const ReviewService = {
           targetId: r.id,
           payload: { conclusion },
         },
+      });
+      await NotificationService.broadcastToChiefs('AUDIT_PENDING', {
+        refType: 'Case',
+        refId: caseId,
+        title: `案件待审核`,
+        body: `监管员 ${userId} 提交了复核，请审核。`,
       });
       return r;
     });
