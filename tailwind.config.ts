@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     container: {
       center: true,
-      padding: '2rem',
+      padding: '1rem',
       screens: { '2xl': '1400px' },
     },
     extend: {
@@ -47,6 +47,20 @@ const config: Config = {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
+        },
+        gov: {
+          blue: '#1e40af',
+          'blue-light': '#3b82f6',
+          'blue-soft': '#dbeafe',
+        },
+        status: {
+          pending: { bg: '#fef3c7', text: '#92400e' },
+          audit: { bg: '#dbeafe', text: '#1e40af' },
+          reviewing: { bg: '#ede9fe', text: '#6d28d9' },
+          closed: { bg: '#dcfce7', text: '#166534' },
+          major: { bg: '#fee2e2', text: '#991b1b' },
+          moderate: { bg: '#ffedd5', text: '#9a3412' },
+          minor: { bg: '#dcfce7', text: '#166534' },
         },
       },
       borderRadius: {
