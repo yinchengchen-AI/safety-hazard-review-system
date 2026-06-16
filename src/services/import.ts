@@ -17,12 +17,12 @@ const RowSchema = z.object({
 export type ImportRow = z.infer<typeof RowSchema>;
 
 export const ImportService = {
-  async parseExcel(buffer: Buffer): Promise<{
+  async parseExcel(buffer: Buffer | ArrayBuffer | Uint8Array): Promise<{
     rows: ImportRow[];
     errors: { rowNumber: number; field: string; value?: string; message: string }[];
   }> {
     const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(buffer);
+    const buf = (Buffer.isBuffer(buffer) ? buffer : Buffer.from(new Uint8Array(buffer as ArrayBuffer))); await wb.xlsx.load(buf as never);
     const ws = wb.worksheets[0];
     if (!ws) {
       return { rows: [], errors: [{ rowNumber: 0, field: 'sheet', message: 'No worksheet' }] };

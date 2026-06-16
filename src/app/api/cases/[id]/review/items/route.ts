@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { handleError, problem } from '../../../../../_lib/error';
+import { handleError, problem } from '../../../../_lib/error';
 
 const Schema = z.object({
   reviewId: z.string(),

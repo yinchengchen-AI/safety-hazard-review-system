@@ -9,7 +9,7 @@ export const SyncService = {
   async enqueue(userId: string, clientId: string, opType: string, payload: Record<string, unknown>) {
     return prisma.offlineSyncQueue.upsert({
       where: { userId_clientId: { userId, clientId } },
-      create: { userId, clientId, opType, payload, status: 'PENDING' },
+      create: { userId, clientId, opType, payload: payload as never, status: 'PENDING' },
       update: {},
     });
   },
@@ -23,14 +23,16 @@ export const SyncService = {
       if (!q || q.status !== 'PENDING') return null;
       try {
         switch (q.opType) {
-          case 'submit_review':
+          case 'submit_review': {
+            const p = (q.payload ?? {}) as Record<string, unknown>;
             await ReviewService.submit(
-              q.payload['caseId'] as string,
-              q.payload['conclusion'] as 'PASS' | 'FAIL' | 'PARTIAL',
-              (q.payload['summary'] as string) ?? '',
+              p['caseId'] as string,
+              p['conclusion'] as 'PASS' | 'FAIL' | 'PARTIAL',
+              (p['summary'] as string) ?? '',
               q.userId,
             );
             break;
+          }
           default:
             throw new BusinessError('unknown_op', `Unknown opType: ${q.opType}`, 400);
         }

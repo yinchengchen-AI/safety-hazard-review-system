@@ -83,7 +83,7 @@ export const ReviewService = {
           items: {
             upsert: {
               where: { reviewId_itemId: { reviewId, itemId } },
-              create: { reviewId, itemId, result, note },
+              create: { itemId, result, note },
               update: { result, note },
             },
           },

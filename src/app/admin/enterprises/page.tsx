@@ -29,7 +29,7 @@ export default async function AdminEnterprisesPage() {
           {list.map((e) => (
             <TableRow key={e.id}>
               <TableCell>{e.name}</TableCell>
-              <TableCell className="font-mono text-xs">{e.uscc}</TableCell>
+              <TableCell className="font-mono text-xs">{e.unifiedSocialCreditId}</TableCell>
               <TableCell>{e.industry}</TableCell>
               <TableCell>{e.address}</TableCell>
             </TableRow>

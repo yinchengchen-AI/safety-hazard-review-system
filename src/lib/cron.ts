@@ -1,7 +1,8 @@
 import cron from 'node-cron';
+import type { ScheduledTask } from 'node-cron';
 import { log } from './log';
 
-const jobs: cron.ScheduledTask[] = [];
+const jobs: ScheduledTask[] = [];
 
 export function registerCron(name: string, schedule: string, fn: () => Promise<void>) {
   if (!cron.validate(schedule)) throw new Error(`Invalid cron schedule: ${schedule}`);

@@ -74,7 +74,7 @@ export const AuditService = {
         });
       }
       await tx.auditSignature.create({
-        data: { caseId, auditorId: userId, decision: 'REJECT', comment: reason },
+        data: { caseId, auditorId: userId, decision: 'REJECT', comment: reason, signatureUrl: '' },
       });
       await CaseService.transitionStatus(caseId, 'reject', userId);
       await tx.auditLog.create({
