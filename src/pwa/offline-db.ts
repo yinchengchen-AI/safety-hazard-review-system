@@ -54,6 +54,10 @@ export const offlineDB = {
     const db = await getDB();
     return db.getAllFromIndex('photos', 'reviewId', reviewId);
   },
+  async getPhoto(id: string): Promise<DraftPhoto | undefined> {
+    const db = await getDB();
+    return db.get('photos', id);
+  },
   async deletePhoto(id: string) {
     const db = await getDB();
     await db.delete('photos', id);
