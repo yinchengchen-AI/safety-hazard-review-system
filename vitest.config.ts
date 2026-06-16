@@ -4,6 +4,7 @@ import path from 'path';
 export default defineConfig({
   test: {
     environment: 'jsdom',
+    globals: true,
     setupFiles: ['./tests/setup.ts'],
     testTimeout: 60000,
     hookTimeout: 60000,
