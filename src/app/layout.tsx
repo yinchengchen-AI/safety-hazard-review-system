@@ -2,14 +2,15 @@ import './globals.css';
 import { auth, signOut } from '@/lib/auth';
 import Link from 'next/link';
 import { SyncBootstrap } from '@/components/sync-bootstrap';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata = { title: '安全生产隐患复核系统' };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   return (
-    <html lang="zh-CN">
-      <body>
+    <html lang="zh-CN" suppressHydrationWarning>
+      <body className="min-h-screen bg-background">
         {session ? (
           <header className="border-b px-6 py-3 flex items-center gap-6">
             <Link href="/" className="font-semibold">安全生产隐患复核</Link>
@@ -35,8 +36,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
           </header>
         ) : null}
-        <SyncBootstrap />
-        {children}
+        <ThemeProvider>
+          <SyncBootstrap />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
