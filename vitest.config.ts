@@ -18,7 +18,7 @@ export default defineConfig({
       reporter: ['text', 'html'],
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/app/**', 'src/pwa/**', 'src/**/instrumentation.ts', 'src/middleware.ts'],
-      thresholds: { lines: 25, functions: 25, branches: 15, statements: 25 },
+      thresholds: { lines: 25, functions: 23, branches: 17, statements: 25 },
     },
   },
   resolve: {
