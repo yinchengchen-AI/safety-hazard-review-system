@@ -7,11 +7,12 @@ import Link from 'next/link';
 export default async function CasesListPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
+  const sp = await searchParams;
   const session = await auth();
   if (!session) return null;
-  const where = searchParams.status ? { status: searchParams.status as never } : {};
+  const where = sp.status ? { status: sp.status as never } : {};
   const cases = await prisma.case.findMany({
     where,
     orderBy: { registeredAt: 'desc' },

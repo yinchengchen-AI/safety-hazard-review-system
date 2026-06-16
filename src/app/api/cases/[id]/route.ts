@@ -3,15 +3,16 @@ import { auth } from '@/lib/auth';
 import { assertCan } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 import { BusinessError } from '@/lib/errors';
-import { handleError, problem } from '../../_lib/error';
+import { handleError, problem } from '@/lib/api-error';
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session) return problem(401, 'unauthorized', 'Login required');
   try {
     assertCan(session.user.role, 'case:view');
     const c = await prisma.case.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         enterprise: true,
         hazardType: true,

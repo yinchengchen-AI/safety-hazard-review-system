@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { StatsService } from '@/services/stats';
-import { handleError, problem } from '../../_lib/error';
+import { handleError, problem } from '@/lib/api-error';
 
 export async function GET() {
   const session = await auth();

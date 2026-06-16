@@ -3,10 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { AuditForm } from './audit-form';
 import { notFound } from 'next/navigation';
 
-export default async function AuditPage({ params }: { params: { id: string } }) {
+export default async function AuditPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   const c = await prisma.case.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       reviews: {
         orderBy: { startedAt: 'desc' },

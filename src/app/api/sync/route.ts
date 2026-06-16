@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { SyncService } from '@/services/sync';
-import { handleError, problem } from '../_lib/error';
+import { handleError, problem } from '@/lib/api-error';
 
 const ItemSchema = z.object({
   clientId: z.string().uuid(),

@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { assertCan } from '@/lib/permissions';
 import { CaseService } from '@/services/case';
 import { prisma } from '@/lib/prisma';
-import { handleError, problem } from '../_lib/error';
+import { handleError, problem } from '@/lib/api-error';
 
 export async function GET(req: NextRequest) {
   const session = await auth();

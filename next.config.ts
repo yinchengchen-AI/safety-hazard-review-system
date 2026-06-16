@@ -21,11 +21,9 @@ const withPwa = withPwaInit({
   },
 });
 
+// `instrumentation.ts` is auto-detected in Next.js 15, no experimental flag needed.
 const nextConfig: NextConfig = {
   outputFileTracingRoot: process.cwd() + '/..',
-  // instrumentationHook was promoted out of experimental in Next 15
-  // @ts-expect-error - accepted at runtime; the TS type lags behind.
-  experimental: { instrumentationHook: true },
 };
 
 export default withPwa(nextConfig);

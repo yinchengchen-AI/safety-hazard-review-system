@@ -11,10 +11,11 @@ const STATUS_LABEL: Record<string, string> = {
   CLOSED: '已销案',
 };
 
-export default async function CaseDetail({ params }: { params: { id: string } }) {
+export default async function CaseDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   await auth();
   const c = await prisma.case.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       enterprise: true,
       hazardType: true,

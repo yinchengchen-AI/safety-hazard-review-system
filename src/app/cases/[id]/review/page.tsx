@@ -3,10 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { ReviewForm } from './review-form';
 import { notFound } from 'next/navigation';
 
-export default async function ReviewPage({ params }: { params: { id: string } }) {
+export default async function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   await auth();
   const c = await prisma.case.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       reviews: {
         orderBy: { startedAt: 'desc' },

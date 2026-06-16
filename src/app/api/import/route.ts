@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { assertCan } from '@/lib/permissions';
 import { ImportService } from '@/services/import';
 import { prisma } from '@/lib/prisma';
-import { handleError, problem } from '../_lib/error';
+import { handleError, problem } from '@/lib/api-error';
 
 export async function POST(req: NextRequest) {
   const session = await auth();
