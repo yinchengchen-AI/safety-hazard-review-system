@@ -1,10 +1,12 @@
 import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
 import path from 'path';
 
 // Coverage is measured on services + lib + workers (the unit-testable core).
 // src/app/** (API routes) is covered by E2E tests (tests/e2e/ via Playwright).
 // src/pwa/** (client-side) is covered by E2E + manual smoke tests.
 export default defineConfig({
+  plugins: [react()],
   test: {
     environment: 'jsdom',
     globals: true,
