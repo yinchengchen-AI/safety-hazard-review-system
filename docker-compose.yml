@@ -32,6 +32,26 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://shr:shr_dev_pwd@postgres:5432/shr?schema=public
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev_secret}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio_dev_pwd
+      MINIO_BUCKET: shr-photos
+      TZ: Asia/Shanghai
+    ports:
+      - "3000:3000"
+
 volumes:
   pgdata:
   miniodata:
