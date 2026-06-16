@@ -1,6 +1,7 @@
 import './globals.css';
 import { auth, signOut } from '@/lib/auth';
 import Link from 'next/link';
+import { SyncBootstrap } from '@/components/sync-bootstrap';
 
 export const metadata = { title: '安全生产隐患复核系统' };
 
@@ -34,6 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
           </header>
         ) : null}
+        <SyncBootstrap />
         {children}
       </body>
     </html>

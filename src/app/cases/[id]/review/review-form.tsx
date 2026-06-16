@@ -1,5 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
+import { offlineDB } from '@/pwa/offline-db';
+import { syncNow } from '@/pwa/sync-worker';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -60,26 +62,51 @@ export function ReviewForm({
   }
 
   async function uploadPhoto(file: File) {
-    const fd = new FormData();
-    fd.append('file', file);
-    const res = await fetch('/api/photos', { method: 'POST', body: fd });
-    if (res.ok) {
-      const { storageKey } = (await res.json()) as { storageKey: string };
-      setPhotos((p) => [...p, storageKey]);
+    if (!navigator.onLine) {
+      const draft = await offlineDB.addPhoto(file, reviewId);
+      setPhotos((p) => [...p, draft.id]);
+    } else {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/photos', { method: 'POST', body: fd });
+      if (res.ok) {
+        const { storageKey } = (await res.json()) as { storageKey: string };
+        setPhotos((p) => [...p, storageKey]);
+      }
     }
   }
 
   async function submit() {
-    const res = await fetch(`/api/cases/${caseId}/review`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conclusion, summary, photos }),
-    });
-    if (res.ok) {
+    if (!navigator.onLine) {
+      await offlineDB.saveDraft({
+        id: reviewId,
+        caseId,
+        reviewId,
+        items: Object.values(results),
+        conclusion,
+        summary,
+        updatedAt: 0,
+      });
+      await offlineDB.enqueue({
+        clientId: crypto.randomUUID(),
+        opType: 'submit_review',
+        payload: { caseId, reviewId, conclusion, summary, photos: photos.map((id) => ({ id })) },
+      });
+      void syncNow();
+      alert('已离线保存，联网后自动同步');
       router.push(`/cases/${caseId}`);
     } else {
-      const j = (await res.json().catch(() => ({}))) as { message?: string };
-      alert(j.message || '提交失败');
+      const res = await fetch(`/api/cases/${caseId}/review`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conclusion, summary, photos }),
+      });
+      if (res.ok) {
+        router.push(`/cases/${caseId}`);
+      } else {
+        const j = (await res.json().catch(() => ({}))) as { message?: string };
+        alert(j.message || '提交失败');
+      }
     }
   }
 
