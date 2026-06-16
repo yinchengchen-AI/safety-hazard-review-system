@@ -1,8 +1,9 @@
 import './globals.css';
-import { auth, signOut } from '@/lib/auth';
-import Link from 'next/link';
+import { auth } from '@/lib/auth';
 import { SyncBootstrap } from '@/components/sync-bootstrap';
 import { ThemeProvider } from '@/components/theme-provider';
+import { AppHeader } from '@/components/layout/app-header';
+import { MobileNav } from '@/components/layout/mobile-nav';
 
 export const metadata = { title: '安全生产隐患复核系统' };
 
@@ -11,34 +12,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="min-h-screen bg-background">
-        {session ? (
-          <header className="border-b px-6 py-3 flex items-center gap-6">
-            <Link href="/" className="font-semibold">安全生产隐患复核</Link>
-            <nav className="flex gap-4 text-sm">
-              <Link href="/cases">案件</Link>
-              <Link href="/stats">统计</Link>
-              <Link href="/me/notifications">通知</Link>
-              <Link href="/me/sync">同步</Link>
-              {session.user.role === 'ADMIN' && <Link href="/admin/users">管理</Link>}
-            </nav>
-            <div className="ml-auto flex items-center gap-3 text-sm">
-              <span>
-                {session.user.name} ({session.user.role})
-              </span>
-              <form
-                action={async () => {
-                  'use server';
-                  await signOut({ redirectTo: '/login' });
-                }}
-              >
-                <button className="text-blue-600">登出</button>
-              </form>
-            </div>
-          </header>
-        ) : null}
         <ThemeProvider>
+          <AppHeader />
+          <div className={session ? 'pb-16 md:pb-0' : ''}>{children}</div>
+          {session ? <MobileNav /> : null}
           <SyncBootstrap />
-          {children}
         </ThemeProvider>
       </body>
     </html>
