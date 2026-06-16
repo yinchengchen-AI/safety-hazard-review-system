@@ -4,7 +4,11 @@ import { prisma } from '@/lib/prisma';
 import { StatsService } from '@/services/stats';
 import { KpiCards } from '@/components/workbench/kpi-cards';
 import { TodoList } from '@/components/workbench/todo-list';
-import { Card } from '@/components/ui/card';
+import { QuickActions } from '@/components/workbench/quick-actions';
+import { PageShell } from '@/components/layout/page-shell';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Plus, Upload } from 'lucide-react';
 
 export default async function Dashboard() {
   const session = await auth();
@@ -30,13 +34,32 @@ export default async function Dashboard() {
   }
 
   return (
-    <main className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">工作台</h1>
+    <PageShell
+      title="工作台"
+      actions={
+        <>
+          <Button asChild variant="outline">
+            <Link href="/cases/import">
+              <Upload className="mr-2 h-4 w-4" /> 批量导入
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/cases/new">
+              <Plus className="mr-2 h-4 w-4" /> 登记案件
+            </Link>
+          </Button>
+        </>
+      }
+    >
       <KpiCards kpi={kpi} />
-      <Card className="p-4">
-        <h2 className="text-lg font-medium mb-3">待办</h2>
-        <TodoList items={todos} />
-      </Card>
-    </main>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <TodoList items={todos} />
+        </div>
+        <div className="lg:col-span-2">
+          <QuickActions />
+        </div>
+      </div>
+    </PageShell>
   );
 }
