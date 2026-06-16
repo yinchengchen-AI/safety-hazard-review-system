@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import type { CaseStatus } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { assertCan } from '@/lib/permissions';
 import { CaseService } from '@/services/case';
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
     assertCan(session.user.role, 'case:list');
     const sp = req.nextUrl.searchParams;
     const filter = {
-      status: (sp.get('status') as any) || undefined,
+      status: (sp.get('status') as CaseStatus | null) || undefined,
       hazardTypeId: sp.get('hazardTypeId') || undefined,
       enterpriseId: sp.get('enterpriseId') || undefined,
       page: Number(sp.get('page') || 1),

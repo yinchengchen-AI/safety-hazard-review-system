@@ -82,7 +82,7 @@ export function ReviewForm({
         id: reviewId,
         caseId,
         reviewId,
-        items: Object.values(results),
+        items: Object.entries(results).map(([itemId, v]) => ({ itemId, result: v.result, note: v.note })),
         conclusion,
         summary,
         updatedAt: 0,
