@@ -14,7 +14,7 @@ export default defineConfig({
     testTimeout: 60000,
     hookTimeout: 60000,
     include: ['tests/unit/**', 'tests/integration/**'],
-    exclude: ['tests/e2e/**', 'node_modules/**', '.next/**'],
+    exclude: ['tests/e2e/**', 'node_modules/**', '.next/**', '**/.gitkeep'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
