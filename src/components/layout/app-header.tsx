@@ -24,7 +24,11 @@ export async function AppHeader() {
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="transition-colors hover:text-white/80">
+            <Link
+              key={item.href}
+              href={item.href}
+              className="transition-colors hover:text-white/80"
+            >
               {item.label}
             </Link>
           ))}
@@ -39,7 +43,9 @@ export async function AppHeader() {
               await signOut({ redirectTo: '/login' });
             }}
           >
-            <button type="submit" className="text-white/90 hover:text-white">登出</button>
+            <button type="submit" className="text-white/90 hover:text-white">
+              登出
+            </button>
           </form>
         </div>
       </div>

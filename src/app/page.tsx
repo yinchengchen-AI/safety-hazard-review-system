@@ -19,7 +19,10 @@ export default async function Dashboard() {
   let todos: { id: string; title: string; href: string }[] = [];
   if (role === 'INSPECTOR') {
     const myCases = await prisma.case.findMany({
-      where: { registeredById: id, status: { in: ['PENDING_REVIEW', 'PENDING_AUDIT', 'IN_AUDIT'] } },
+      where: {
+        registeredById: id,
+        status: { in: ['PENDING_REVIEW', 'PENDING_AUDIT', 'IN_AUDIT'] },
+      },
       take: 10,
       orderBy: { registeredAt: 'desc' },
     });

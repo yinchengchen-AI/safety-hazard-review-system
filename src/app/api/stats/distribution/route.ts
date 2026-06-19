@@ -7,7 +7,10 @@ export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return problem(401, 'unauthorized', 'Login required');
   try {
-    const by = (req.nextUrl.searchParams.get('by') || 'hazardType') as 'hazardType' | 'enterprise' | 'severity';
+    const by = (req.nextUrl.searchParams.get('by') || 'hazardType') as
+      | 'hazardType'
+      | 'enterprise'
+      | 'severity';
     return NextResponse.json(await StatsService.distribution(by));
   } catch (e) {
     return handleError(e);

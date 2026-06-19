@@ -72,7 +72,9 @@ export function RegisterForm({
               </SelectTrigger>
               <SelectContent>
                 {enterprises.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -86,7 +88,9 @@ export function RegisterForm({
               </SelectTrigger>
               <SelectContent>
                 {hazardTypes.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                  <SelectItem key={h.id} value={h.id}>
+                    {h.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -144,9 +148,17 @@ export function RegisterForm({
       {err && <p className="text-sm text-destructive">{err}</p>}
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={() => router.back()}>取消</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>
+          取消
+        </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 提交中...</> : '登记案件'}
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 提交中...
+            </>
+          ) : (
+            '登记案件'
+          )}
         </Button>
       </div>
     </form>

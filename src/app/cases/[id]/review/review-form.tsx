@@ -82,7 +82,11 @@ export function ReviewForm({
         id: reviewId,
         caseId,
         reviewId,
-        items: Object.entries(results).map(([itemId, v]) => ({ itemId, result: v.result, note: v.note })),
+        items: Object.entries(results).map(([itemId, v]) => ({
+          itemId,
+          result: v.result,
+          note: v.note,
+        })),
         conclusion,
         summary,
         updatedAt: 0,
@@ -154,7 +158,12 @@ export function ReviewForm({
         />
         <div className="grid grid-cols-4 gap-2 mt-2">
           {photos.map((k) => (
-            <img key={k} src={`/api/photos/${k}`} alt="" className="w-full h-24 object-cover rounded" />
+            <img
+              key={k}
+              src={`/api/photos/${k}`}
+              alt=""
+              className="w-full h-24 object-cover rounded"
+            />
           ))}
         </div>
       </div>
@@ -171,7 +180,11 @@ export function ReviewForm({
           <option value="PARTIAL">部分通过</option>
         </select>
       </div>
-      <Textarea placeholder="总体说明" value={summary} onChange={(e) => setSummary(e.target.value)} />
+      <Textarea
+        placeholder="总体说明"
+        value={summary}
+        onChange={(e) => setSummary(e.target.value)}
+      />
       <Button onClick={submit} disabled={!conclusion || !summary}>
         提交复核
       </Button>

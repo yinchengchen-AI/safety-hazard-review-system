@@ -16,11 +16,11 @@ const statusData = [
 
 export default async function StatsPage() {
   await auth();
-  const [kpi, trend] = await Promise.all([
-    StatsService.kpi(),
-    StatsService.trend(30),
-  ]);
-  const dist = (await StatsService.distribution('hazardType')) as { hazardTypeId: string; _count: number }[];
+  const [kpi, trend] = await Promise.all([StatsService.kpi(), StatsService.trend(30)]);
+  const dist = (await StatsService.distribution('hazardType')) as {
+    hazardTypeId: string;
+    _count: number;
+  }[];
 
   const trendData = trend.map((t) => ({
     date: t.day.slice(5),

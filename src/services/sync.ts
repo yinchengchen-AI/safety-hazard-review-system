@@ -6,7 +6,12 @@ export const SyncService = {
   /**
    * 客户端联网后推送操作 — 用 clientId 做幂等
    */
-  async enqueue(userId: string, clientId: string, opType: string, payload: Record<string, unknown>) {
+  async enqueue(
+    userId: string,
+    clientId: string,
+    opType: string,
+    payload: Record<string, unknown>,
+  ) {
     return prisma.offlineSyncQueue.upsert({
       where: { userId_clientId: { userId, clientId } },
       create: { userId, clientId, opType, payload: payload as never, status: 'PENDING' },

@@ -15,7 +15,10 @@ export function TodoList({ items }: { items: { id: string; title: string; href: 
         ) : (
           <ul className="space-y-2">
             {items.map((i) => (
-              <li key={i.id} className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
+              <li
+                key={i.id}
+                className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
+              >
                 <span className="font-mono text-sm">{i.title}</span>
                 <Button asChild variant="ghost" size="sm" className="h-8 gap-1 text-gov-blue">
                   <Link href={i.href}>

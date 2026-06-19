@@ -22,10 +22,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ preview: true, ...result });
     } else {
       const batch = await prisma.importBatch.create({
-        data: { filename: file.name, uploadedById: session.user.id, totalRows: 0, status: 'pending' },
+        data: {
+          filename: file.name,
+          uploadedById: session.user.id,
+          totalRows: 0,
+          status: 'pending',
+        },
       });
       const { rows } = await ImportService.parseExcel(buf);
-      await prisma.importBatch.update({ where: { id: batch.id }, data: { totalRows: rows.length } });
+      await prisma.importBatch.update({
+        where: { id: batch.id },
+        data: { totalRows: rows.length },
+      });
       const result = await ImportService.commit(rows, batch.id, session.user.id);
       return NextResponse.json({ preview: false, batchId: batch.id, ...result });
     }

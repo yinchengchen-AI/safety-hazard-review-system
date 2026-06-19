@@ -39,7 +39,13 @@ export const AuditService = {
       });
       await CaseService.transitionStatus(caseId, 'sign', userId);
       await tx.auditLog.create({
-        data: { userId, action: 'audit:sign', targetType: 'Case', targetId: caseId, payload: { comment } },
+        data: {
+          userId,
+          action: 'audit:sign',
+          targetType: 'Case',
+          targetId: caseId,
+          payload: { comment },
+        },
       });
       return c;
     });
@@ -78,7 +84,13 @@ export const AuditService = {
       });
       await CaseService.transitionStatus(caseId, 'reject', userId);
       await tx.auditLog.create({
-        data: { userId, action: 'audit:reject', targetType: 'Case', targetId: caseId, payload: { reason } },
+        data: {
+          userId,
+          action: 'audit:reject',
+          targetType: 'Case',
+          targetId: caseId,
+          payload: { reason },
+        },
       });
       return c;
     });

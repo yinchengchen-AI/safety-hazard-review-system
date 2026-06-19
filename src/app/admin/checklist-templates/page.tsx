@@ -22,7 +22,9 @@ export default async function AdminTemplatesPage() {
       <h1 className="text-2xl font-semibold">检查清单模板</h1>
       {list.map((t) => (
         <Card key={t.id} className="p-4">
-          <div className="font-medium">{t.name} <span className="text-sm text-muted-foreground">({t.hazardType.name})</span></div>
+          <div className="font-medium">
+            {t.name} <span className="text-sm text-muted-foreground">({t.hazardType.name})</span>
+          </div>
           <ul className="mt-2 space-y-1 text-sm">
             {t.items.map((it) => (
               <li key={it.id} className="flex gap-2">

@@ -22,7 +22,10 @@ export const ImportService = {
     errors: { rowNumber: number; field: string; value?: string; message: string }[];
   }> {
     const wb = new ExcelJS.Workbook();
-    const buf = (Buffer.isBuffer(buffer) ? buffer : Buffer.from(new Uint8Array(buffer as ArrayBuffer))); await wb.xlsx.load(buf as never);
+    const buf = Buffer.isBuffer(buffer)
+      ? buffer
+      : Buffer.from(new Uint8Array(buffer as ArrayBuffer));
+    await wb.xlsx.load(buf as never);
     const ws = wb.worksheets[0];
     if (!ws) {
       return { rows: [], errors: [{ rowNumber: 0, field: 'sheet', message: 'No worksheet' }] };
@@ -85,7 +88,9 @@ export const ImportService = {
             address: r.address,
           },
         });
-        const hazardType = await prisma.hazardType.findUnique({ where: { code: r.hazardTypeCode } });
+        const hazardType = await prisma.hazardType.findUnique({
+          where: { code: r.hazardTypeCode },
+        });
         if (!hazardType) throw new Error(`Unknown hazard type: ${r.hazardTypeCode}`);
         const template = await prisma.checklistTemplate.findFirst({
           where: { hazardTypeId: hazardType.id, active: true },

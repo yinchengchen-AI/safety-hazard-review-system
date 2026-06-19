@@ -51,11 +51,7 @@ export function ImportForm() {
 
   return (
     <div className="space-y-4">
-      <input
-        type="file"
-        accept=".xlsx"
-        onChange={(e) => setFile(e.target.files?.[0] || null)}
-      />
+      <input type="file" accept=".xlsx" onChange={(e) => setFile(e.target.files?.[0] || null)} />
       <div className="flex gap-2">
         <Button onClick={parseFile} disabled={!file || loading}>
           解析

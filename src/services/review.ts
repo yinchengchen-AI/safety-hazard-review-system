@@ -16,7 +16,8 @@ export const ReviewService = {
         SELECT * FROM "Review" WHERE "caseId" = ${caseId} AND status = 'IN_PROGRESS' ORDER BY "startedAt" DESC LIMIT 1 FOR UPDATE
       `;
       const review = r[0];
-      if (!review) throw new BusinessError('no_active_review', 'No in-progress review for this case', 404);
+      if (!review)
+        throw new BusinessError('no_active_review', 'No in-progress review for this case', 404);
       if (review.claimedById && review.claimedById !== userId) {
         throw new BusinessError('already_claimed', `Already claimed by ${review.claimedById}`, 409);
       }
@@ -40,13 +41,18 @@ export const ReviewService = {
         SELECT * FROM "Review" WHERE "caseId" = ${caseId} AND status = 'IN_PROGRESS' ORDER BY "startedAt" DESC LIMIT 1 FOR UPDATE
       `;
       const review = r[0];
-      if (!review) throw new BusinessError('no_active_review', 'No in-progress review for this case', 404);
+      if (!review)
+        throw new BusinessError('no_active_review', 'No in-progress review for this case', 404);
       if (review.claimedById === userId) {
         throw new BusinessError('already_claimed_by_you', 'You already claimed this review', 409);
       }
       const idleMs = Date.now() - new Date(review.lastActiveAt).getTime();
       if (idleMs < ACTIVE_GRACE_MS) {
-        throw new BusinessError('review_active', 'Review is still active, takeover not allowed', 409);
+        throw new BusinessError(
+          'review_active',
+          'Review is still active, takeover not allowed',
+          409,
+        );
       }
       const updated = await tx.review.update({
         where: { id: review.id },

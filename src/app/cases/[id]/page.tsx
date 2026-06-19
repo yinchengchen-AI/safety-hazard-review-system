@@ -68,14 +68,31 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               <CardTitle className="text-base">基本信息</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 text-sm md:grid-cols-2">
-              <div><span className="text-muted-foreground">企业：</span> {c.enterprise.name}</div>
-              <div><span className="text-muted-foreground">隐患类型：</span> {c.hazardType.name}</div>
-              <div><span className="text-muted-foreground">严重程度：</span> {c.severity}</div>
-              <div><span className="text-muted-foreground">来源：</span> {c.source}</div>
-              <div><span className="text-muted-foreground">登记人：</span> {c.registeredBy.name}</div>
-              <div><span className="text-muted-foreground">整改期限：</span> {c.deadline.toLocaleDateString('zh-CN')}</div>
-              <div className="md:col-span-2"><span className="text-muted-foreground">地址：</span> {c.address || '-'}</div>
-              <div className="md:col-span-2"><span className="text-muted-foreground">描述：</span> {c.description}</div>
+              <div>
+                <span className="text-muted-foreground">企业：</span> {c.enterprise.name}
+              </div>
+              <div>
+                <span className="text-muted-foreground">隐患类型：</span> {c.hazardType.name}
+              </div>
+              <div>
+                <span className="text-muted-foreground">严重程度：</span> {c.severity}
+              </div>
+              <div>
+                <span className="text-muted-foreground">来源：</span> {c.source}
+              </div>
+              <div>
+                <span className="text-muted-foreground">登记人：</span> {c.registeredBy.name}
+              </div>
+              <div>
+                <span className="text-muted-foreground">整改期限：</span>{' '}
+                {c.deadline.toLocaleDateString('zh-CN')}
+              </div>
+              <div className="md:col-span-2">
+                <span className="text-muted-foreground">地址：</span> {c.address || '-'}
+              </div>
+              <div className="md:col-span-2">
+                <span className="text-muted-foreground">描述：</span> {c.description}
+              </div>
             </CardContent>
           </Card>
 
@@ -98,7 +115,9 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">距整改期限</span>
-                <span className="text-amber-600">{Math.ceil((c.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} 天</span>
+                <span className="text-amber-600">
+                  {Math.ceil((c.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} 天
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -108,8 +127,12 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               <CardTitle className="text-base">附件照片</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2">
-              <div className="aspect-square rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">整改前</div>
-              <div className="aspect-square rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">整改后</div>
+              <div className="aspect-square rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                整改前
+              </div>
+              <div className="aspect-square rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                整改后
+              </div>
             </CardContent>
           </Card>
         </div>

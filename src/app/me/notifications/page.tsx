@@ -35,7 +35,10 @@ export default async function NotificationsPage() {
                   </div>
                 </div>
                 {n.refType === 'Case' && n.refId && (
-                  <Link href={`/cases/${n.refId}`} className="text-gov-blue text-xs whitespace-nowrap">
+                  <Link
+                    href={`/cases/${n.refId}`}
+                    className="text-gov-blue text-xs whitespace-nowrap"
+                  >
                     查看案件 →
                   </Link>
                 )}

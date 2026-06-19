@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CaseService } from '@/services/case';
 
-const createCase = vi.fn().mockResolvedValue({ id: 'c1', code: 'CASE-1', status: 'PENDING_REVIEW' });
+const createCase = vi
+  .fn()
+  .mockResolvedValue({ id: 'c1', code: 'CASE-1', status: 'PENDING_REVIEW' });
 const updateCase = vi.fn().mockResolvedValue({ id: 'c1', status: 'PENDING_AUDIT' });
 const findCase = vi.fn().mockResolvedValue({ id: 'c1', status: 'PENDING_REVIEW' });
 const findFirstCase = vi.fn().mockResolvedValue(null);

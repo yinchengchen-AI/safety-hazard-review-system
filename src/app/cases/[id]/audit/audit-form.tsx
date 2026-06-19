@@ -82,7 +82,8 @@ export function AuditForm({
         <h3 className="font-medium mb-2">逐项结果</h3>
         {review?.items.map((i) => (
           <div key={i.id} className="text-sm py-1">
-            {i.item.content} — <span className="font-mono">{i.result}</span> {i.note && `(${i.note})`}
+            {i.item.content} — <span className="font-mono">{i.result}</span>{' '}
+            {i.note && `(${i.note})`}
           </div>
         ))}
       </section>
@@ -92,8 +93,14 @@ export function AuditForm({
           value={signatureUrl}
           onChange={(e) => setSignatureUrl(e.target.value)}
         />
-        <Textarea placeholder="审核意见" value={comment} onChange={(e) => setComment(e.target.value)} />
-        <Button onClick={sign} className="mr-2">通过 + 签字</Button>
+        <Textarea
+          placeholder="审核意见"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+        />
+        <Button onClick={sign} className="mr-2">
+          通过 + 签字
+        </Button>
         <div className="border-t pt-2 mt-2">
           <Input
             placeholder="驳回理由"

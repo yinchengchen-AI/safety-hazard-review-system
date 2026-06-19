@@ -11,9 +11,7 @@ export function handleError(e: unknown): NextResponse {
   }
   if (e && typeof e === 'object' && 'name' in e && (e as { name: string }).name === 'ZodError') {
     const zod = e as unknown as ZodLike;
-    const message = zod.issues
-      .map((i) => `${i.path.join('.')}: ${i.message}`)
-      .join('; ');
+    const message = zod.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     return problem(400, 'validation_error', message);
   }
   console.error('[api] unhandled error:', e);

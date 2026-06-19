@@ -2,7 +2,14 @@ import { auth } from '@/lib/auth';
 import { assertCan } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 export default async function AdminAuditLogPage() {
   const session = await auth();

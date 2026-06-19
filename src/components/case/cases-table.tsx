@@ -57,7 +57,9 @@ export function CasesTable({ cases }: { cases: Row[] }) {
               <TableCell>
                 <SeverityBadge severity={c.severity} />
               </TableCell>
-              <TableCell className="hidden md:table-cell text-muted-foreground">{c.registeredBy.name}</TableCell>
+              <TableCell className="hidden md:table-cell text-muted-foreground">
+                {c.registeredBy.name}
+              </TableCell>
               <TableCell className="hidden md:table-cell text-muted-foreground">
                 {c.registeredAt.toLocaleString('zh-CN')}
               </TableCell>

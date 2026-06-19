@@ -54,7 +54,13 @@ export function LoginForm() {
       </div>
       {err && <p className="text-sm text-destructive">{err}</p>}
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 登录中...</> : '登录'}
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 登录中...
+          </>
+        ) : (
+          '登录'
+        )}
       </Button>
     </form>
   );

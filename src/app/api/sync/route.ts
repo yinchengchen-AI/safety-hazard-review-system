@@ -17,7 +17,12 @@ export async function POST(req: NextRequest) {
     const { items } = z.object({ items: z.array(ItemSchema).max(50) }).parse(await req.json());
     const results: Array<{ clientId: string; status: string; error?: string }> = [];
     for (const item of items) {
-      const q = await SyncService.enqueue(session.user.id, item.clientId, item.opType, item.payload);
+      const q = await SyncService.enqueue(
+        session.user.id,
+        item.clientId,
+        item.opType,
+        item.payload,
+      );
       try {
         await SyncService.processOne(q.id);
         results.push({ clientId: item.clientId, status: 'synced' });

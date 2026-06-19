@@ -19,11 +19,7 @@ export function transitionCase(from: CaseStatus, event: CaseEvent, actorId: stri
   if (!actorId) throw new BusinessError('invalid_actor', 'actorId required', 400);
   const next = CASE_TRANSITIONS[from]?.[event];
   if (!next) {
-    throw new BusinessError(
-      'invalid_transition',
-      `Cannot ${event} from ${from}`,
-      409,
-    );
+    throw new BusinessError('invalid_transition', `Cannot ${event} from ${from}`, 409);
   }
   return next;
 }

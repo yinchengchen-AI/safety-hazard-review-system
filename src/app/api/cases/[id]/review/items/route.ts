@@ -18,10 +18,18 @@ export async function POST(req: NextRequest) {
     const body = Schema.parse(await req.json());
     await prisma.reviewItemResult.upsert({
       where: { reviewId_itemId: { reviewId: body.reviewId, itemId: body.itemId } },
-      create: { reviewId: body.reviewId, itemId: body.itemId, result: body.result, note: body.note },
+      create: {
+        reviewId: body.reviewId,
+        itemId: body.itemId,
+        result: body.result,
+        note: body.note,
+      },
       update: { result: body.result, note: body.note },
     });
-    await prisma.review.update({ where: { id: body.reviewId }, data: { lastActiveAt: new Date() } });
+    await prisma.review.update({
+      where: { id: body.reviewId },
+      data: { lastActiveAt: new Date() },
+    });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return handleError(e);

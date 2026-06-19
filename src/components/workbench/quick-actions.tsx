@@ -20,7 +20,12 @@ export function QuickActions() {
         {actions.map((action) => {
           const Icon = action.icon;
           return (
-            <Button key={action.href} asChild variant="outline" className="h-auto flex-col gap-1 py-3">
+            <Button
+              key={action.href}
+              asChild
+              variant="outline"
+              className="h-auto flex-col gap-1 py-3"
+            >
               <Link href={action.href}>
                 <Icon className="h-5 w-5" />
                 <span className="text-xs">{action.label}</span>

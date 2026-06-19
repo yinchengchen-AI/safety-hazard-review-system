@@ -14,7 +14,9 @@ export async function syncNow(): Promise<SyncResult> {
     const ops = await offlineDB.listQueue();
     for (const op of ops) {
       try {
-        const payload = op.payload as { photos?: { id: string; storageKey?: string }[] } | undefined;
+        const payload = op.payload as
+          | { photos?: { id: string; storageKey?: string }[] }
+          | undefined;
         if (payload?.photos?.length) {
           for (const photoMeta of payload.photos) {
             const draft = await offlineDB.getPhoto(photoMeta.id);

@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 function buildMocks() {
   const caseRow = { id: 'c1', status: 'PENDING_AUDIT', lockedById: null };
-  const findUniqueCase = vi.fn().mockResolvedValue({ id: 'c1', status: 'PENDING_AUDIT', lockedById: null });
+  const findUniqueCase = vi
+    .fn()
+    .mockResolvedValue({ id: 'c1', status: 'PENDING_AUDIT', lockedById: null });
   const updateCase = vi.fn().mockResolvedValue({ id: 'c1', status: 'IN_AUDIT', lockedById: 'u1' });
   const auditSigCreate = vi.fn();
   const reviewFindFirst = vi.fn().mockResolvedValue({ id: 'r1' });

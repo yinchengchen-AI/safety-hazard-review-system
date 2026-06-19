@@ -52,11 +52,16 @@ export default async function SyncStatusPage() {
         <CardContent className="space-y-2">
           {items.length === 0 && <p className="text-sm text-muted-foreground">没有待同步项</p>}
           {items.map((q) => (
-            <div key={q.id} className="flex items-center justify-between rounded-lg bg-muted/50 p-3 text-sm">
+            <div
+              key={q.id}
+              className="flex items-center justify-between rounded-lg bg-muted/50 p-3 text-sm"
+            >
               <span className="font-mono">{q.opType}</span>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">{q.errorMsg || '—'}</span>
-                <Badge variant={q.status === 'FAILED' ? 'destructive' : 'secondary'}>{q.status}</Badge>
+                <Badge variant={q.status === 'FAILED' ? 'destructive' : 'secondary'}>
+                  {q.status}
+                </Badge>
               </div>
             </div>
           ))}
