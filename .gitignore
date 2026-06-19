@@ -14,3 +14,6 @@ next-env.d.ts
 coverage/
 playwright-report/
 test-results/
+
+# Local dev server runtime artifacts (pid + log)
+.runtime/
