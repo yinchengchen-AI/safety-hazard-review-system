@@ -22,5 +22,7 @@ test-results/
 public/sw.js
 public/sw.js.map
 public/swe-worker-*.js
+public/workbox-*.js
+public/workbox-*.js.map
 # Codex worktree metadata
 .claude/

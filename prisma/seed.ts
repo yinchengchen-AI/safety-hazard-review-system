@@ -8,22 +8,42 @@ async function main() {
   const inspector = await prisma.user.upsert({
     where: { email: 'inspector@example.com' },
     update: {},
-    create: { name: '监管员甲', email: 'inspector@example.com', passwordHash: hashed, role: UserRole.INSPECTOR },
+    create: {
+      name: '监管员甲',
+      email: 'inspector@example.com',
+      passwordHash: hashed,
+      role: UserRole.INSPECTOR,
+    },
   });
   await prisma.user.upsert({
     where: { email: 'chief@example.com' },
     update: {},
-    create: { name: '科长甲', email: 'chief@example.com', passwordHash: hashed, role: UserRole.CHIEF },
+    create: {
+      name: '科长甲',
+      email: 'chief@example.com',
+      passwordHash: hashed,
+      role: UserRole.CHIEF,
+    },
   });
   await prisma.user.upsert({
     where: { email: 'director@example.com' },
     update: {},
-    create: { name: '局长甲', email: 'director@example.com', passwordHash: hashed, role: UserRole.DIRECTOR },
+    create: {
+      name: '局长甲',
+      email: 'director@example.com',
+      passwordHash: hashed,
+      role: UserRole.DIRECTOR,
+    },
   });
   const admin = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
     update: {},
-    create: { name: '系统管理员', email: 'admin@example.com', passwordHash: hashed, role: UserRole.ADMIN },
+    create: {
+      name: '系统管理员',
+      email: 'admin@example.com',
+      passwordHash: hashed,
+      role: UserRole.ADMIN,
+    },
   });
 
   const enterprise = await prisma.enterprise.upsert({

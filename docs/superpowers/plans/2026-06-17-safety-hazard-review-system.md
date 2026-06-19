@@ -111,6 +111,7 @@
 ### Task 1: Next.js 15 + TypeScript init
 
 **Files:**
+
 - Create: `package.json`, `tsconfig.json`, `next.config.ts`, `.gitignore`
 
 - [ ] **Step 1: Init Next.js project**
@@ -139,6 +140,7 @@ git commit -m "chore: scaffold Next.js 15 + TypeScript + Tailwind"
 ### Task 2: shadcn/ui + base components
 
 **Files:**
+
 - Create: `src/components/ui/button.tsx`, `src/components/ui/input.tsx`, `src/components/ui/card.tsx`, `src/lib/utils.ts`
 - Modify: `tailwind.config.ts`
 
@@ -169,6 +171,7 @@ git commit -m "chore: add shadcn/ui base components"
 ### Task 3: Prisma + PostgreSQL init
 
 **Files:**
+
 - Create: `prisma/schema.prisma`, `src/lib/prisma.ts`, `.env.example`
 - Modify: `package.json`
 
@@ -195,9 +198,11 @@ declare global {
   var __prisma: PrismaClient | undefined;
 }
 
-export const prisma = global.__prisma ?? new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-});
+export const prisma =
+  global.__prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
 
 if (process.env.NODE_ENV !== 'production') global.__prisma = prisma;
 ```
@@ -216,6 +221,7 @@ git commit -m "chore: add Prisma + zod dependencies"
 ### Task 4: Linting + formatting
 
 **Files:**
+
 - Modify: `.eslintrc.json`, `.prettierrc`, `package.json`
 
 - [ ] **Step 1: Install**
@@ -251,6 +257,7 @@ git commit -m "chore: add ESLint + Prettier config"
 ### Task 5: Docker Compose for local deps
 
 **Files:**
+
 - Create: `docker-compose.yml`, `.env`
 
 - [ ] **Step 1: Write `docker-compose.yml`**
@@ -264,11 +271,11 @@ services:
       POSTGRES_PASSWORD: shr_dev_pwd
       POSTGRES_DB: shr
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U shr -d shr"]
+      test: ['CMD-SHELL', 'pg_isready -U shr -d shr']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -280,12 +287,12 @@ services:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio_dev_pwd
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000'
+      - '9001:9001'
     volumes:
       - miniodata:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -338,6 +345,7 @@ git commit -m "chore: docker compose for local PG + MinIO"
 ### Task 6: Vitest + supertest + testcontainers
 
 **Files:**
+
 - Create: `vitest.config.ts`, `tests/setup.ts`, `tests/integration/.gitkeep`
 
 - [ ] **Step 1: Install**
@@ -381,6 +389,7 @@ import '@testing-library/jest-dom';
 - [ ] **Step 4: Add test script to `package.json`**
 
 Add to `scripts`:
+
 ```json
 "test": "vitest run",
 "test:watch": "vitest",
@@ -411,6 +420,7 @@ git commit -m "chore: add Vitest + supertest + testcontainers"
 ### Task 7: Prisma schema — full 16 tables
 
 **Files:**
+
 - Create: `prisma/schema.prisma`
 
 - [ ] **Step 1: Write `prisma/schema.prisma`**
@@ -791,6 +801,7 @@ git commit -m "feat(db): add full Prisma schema (16 tables)"
 ### Task 8: Seed data — users, enterprises, hazard types, templates
 
 **Files:**
+
 - Create: `prisma/seed.ts`, modify `package.json`
 
 - [ ] **Step 1: Write `prisma/seed.ts`**
@@ -807,22 +818,42 @@ async function main() {
   const inspector = await prisma.user.upsert({
     where: { email: 'inspector@example.com' },
     update: {},
-    create: { name: '监管员甲', email: 'inspector@example.com', passwordHash: hashed, role: UserRole.INSPECTOR },
+    create: {
+      name: '监管员甲',
+      email: 'inspector@example.com',
+      passwordHash: hashed,
+      role: UserRole.INSPECTOR,
+    },
   });
   await prisma.user.upsert({
     where: { email: 'chief@example.com' },
     update: {},
-    create: { name: '科长甲', email: 'chief@example.com', passwordHash: hashed, role: UserRole.CHIEF },
+    create: {
+      name: '科长甲',
+      email: 'chief@example.com',
+      passwordHash: hashed,
+      role: UserRole.CHIEF,
+    },
   });
   await prisma.user.upsert({
     where: { email: 'director@example.com' },
     update: {},
-    create: { name: '局长甲', email: 'director@example.com', passwordHash: hashed, role: UserRole.DIRECTOR },
+    create: {
+      name: '局长甲',
+      email: 'director@example.com',
+      passwordHash: hashed,
+      role: UserRole.DIRECTOR,
+    },
   });
   const admin = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
     update: {},
-    create: { name: '系统管理员', email: 'admin@example.com', passwordHash: hashed, role: UserRole.ADMIN },
+    create: {
+      name: '系统管理员',
+      email: 'admin@example.com',
+      passwordHash: hashed,
+      role: UserRole.ADMIN,
+    },
   });
 
   // 1 个企业
@@ -843,22 +874,46 @@ async function main() {
   const fireHazard = await prisma.hazardType.upsert({
     where: { code: 'FIRE' },
     update: {},
-    create: { code: 'FIRE', name: '消防安全', category: '消防', sortOrder: 1, createdById: admin.id },
+    create: {
+      code: 'FIRE',
+      name: '消防安全',
+      category: '消防',
+      sortOrder: 1,
+      createdById: admin.id,
+    },
   });
   const specialEquipment = await prisma.hazardType.upsert({
     where: { code: 'SPECIAL_EQUIPMENT' },
     update: {},
-    create: { code: 'SPECIAL_EQUIPMENT', name: '特种设备', category: '特种设备', sortOrder: 2, createdById: admin.id },
+    create: {
+      code: 'SPECIAL_EQUIPMENT',
+      name: '特种设备',
+      category: '特种设备',
+      sortOrder: 2,
+      createdById: admin.id,
+    },
   });
   await prisma.hazardType.upsert({
     where: { code: 'HAZMAT' },
     update: {},
-    create: { code: 'HAZMAT', name: '危化品', category: '危化品', sortOrder: 3, createdById: admin.id },
+    create: {
+      code: 'HAZMAT',
+      name: '危化品',
+      category: '危化品',
+      sortOrder: 3,
+      createdById: admin.id,
+    },
   });
   await prisma.hazardType.upsert({
     where: { code: 'ELECTRICAL' },
     update: {},
-    create: { code: 'ELECTRICAL', name: '电气安全', category: '电气', sortOrder: 4, createdById: admin.id },
+    create: {
+      code: 'ELECTRICAL',
+      name: '电气安全',
+      category: '电气',
+      sortOrder: 4,
+      createdById: admin.id,
+    },
   });
 
   // 1 个清单模板（消防）
@@ -881,11 +936,18 @@ async function main() {
     },
   });
 
-  console.log('Seed complete:', { inspector: inspector.email, enterprise: enterprise.name, fireTemplate: fireTemplate.id });
+  console.log('Seed complete:', {
+    inspector: inspector.email,
+    enterprise: enterprise.name,
+    fireTemplate: fireTemplate.id,
+  });
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
   .finally(() => prisma.$disconnect());
 ```
 
@@ -898,6 +960,7 @@ npm install bcryptjs && npm install -D @types/bcryptjs tsx
 - [ ] **Step 3: Add seed script to `package.json`**
 
 Add to `prisma` block:
+
 ```json
 "prisma": { "seed": "tsx prisma/seed.ts" }
 ```
@@ -920,6 +983,7 @@ git commit -m "feat(db): seed users, enterprises, hazard types, 1 checklist temp
 ### Task 9: NextAuth setup with credentials
 
 **Files:**
+
 - Create: `src/lib/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`, `src/middleware.ts`
 
 - [ ] **Step 1: Install**
@@ -963,7 +1027,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: 'jwt' },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) { token.id = user.id; token.role = user.role; }
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
       return token;
     },
     async session({ session, token }) {
@@ -1030,6 +1097,7 @@ git commit -m "feat(auth): NextAuth credentials provider + middleware"
 ### Task 10: Permission matrix
 
 **Files:**
+
 - Create: `src/lib/permissions.ts`, `tests/unit/lib/permissions.test.ts`
 
 - [ ] **Step 1: Write the failing test `tests/unit/lib/permissions.test.ts`**
@@ -1078,32 +1146,55 @@ Expected: FAIL "Cannot find module '@/lib/permissions'"
 import type { UserRole } from '@prisma/client';
 
 export type Action =
-  | 'case:register' | 'case:list' | 'case:view'
-  | 'review:claim' | 'review:submit' | 'review:takeover'
-  | 'audit:open' | 'audit:sign' | 'audit:reject'
+  | 'case:register'
+  | 'case:list'
+  | 'case:view'
+  | 'review:claim'
+  | 'review:submit'
+  | 'review:takeover'
+  | 'audit:open'
+  | 'audit:sign'
+  | 'audit:reject'
   | 'import:run'
   | 'stats:view'
-  | 'admin:enterprises' | 'admin:hazard-types' | 'admin:templates'
-  | 'user:manage' | 'audit-log:view' | 'import-batches:view';
+  | 'admin:enterprises'
+  | 'admin:hazard-types'
+  | 'admin:templates'
+  | 'user:manage'
+  | 'audit-log:view'
+  | 'import-batches:view';
 
 const MATRIX: Record<UserRole, Set<Action>> = {
   INSPECTOR: new Set([
-    'case:register', 'case:list', 'case:view',
-    'review:claim', 'review:submit', 'review:takeover',
-    'import:run', 'stats:view',
+    'case:register',
+    'case:list',
+    'case:view',
+    'review:claim',
+    'review:submit',
+    'review:takeover',
+    'import:run',
+    'stats:view',
   ]),
   CHIEF: new Set([
-    'case:list', 'case:view',
-    'audit:open', 'audit:sign', 'audit:reject',
-    'stats:view', 'audit-log:view',
+    'case:list',
+    'case:view',
+    'audit:open',
+    'audit:sign',
+    'audit:reject',
+    'stats:view',
+    'audit-log:view',
   ]),
-  DIRECTOR: new Set([
-    'case:list', 'case:view', 'stats:view', 'audit-log:view',
-  ]),
+  DIRECTOR: new Set(['case:list', 'case:view', 'stats:view', 'audit-log:view']),
   ADMIN: new Set([
-    'case:list', 'case:view',
-    'admin:enterprises', 'admin:hazard-types', 'admin:templates',
-    'user:manage', 'audit-log:view', 'import-batches:view', 'stats:view',
+    'case:list',
+    'case:view',
+    'admin:enterprises',
+    'admin:hazard-types',
+    'admin:templates',
+    'user:manage',
+    'audit-log:view',
+    'import-batches:view',
+    'stats:view',
   ]),
 };
 
@@ -1140,6 +1231,7 @@ git commit -m "feat(auth): role × action permission matrix"
 ### Task 11: BusinessError + state machine
 
 **Files:**
+
 - Create: `src/lib/errors.ts`, `src/services/state-machine.ts`, `tests/unit/services/state-machine.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -1223,11 +1315,7 @@ export function transitionCase(from: CaseStatus, event: CaseEvent, actorId: stri
   if (!actorId) throw new BusinessError('invalid_actor', 'actorId required', 400);
   const next = CASE_TRANSITIONS[from]?.[event];
   if (!next) {
-    throw new BusinessError(
-      'invalid_transition',
-      `Cannot ${event} from ${from}`,
-      409,
-    );
+    throw new BusinessError('invalid_transition', `Cannot ${event} from ${from}`, 409);
   }
   return next;
 }
@@ -1248,6 +1336,7 @@ git commit -m "feat(services): state machine + BusinessError"
 ### Task 12: CaseService — register, list, get, transition
 
 **Files:**
+
 - Create: `src/services/case.ts`, `tests/unit/services/case.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -1268,20 +1357,31 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
     },
     review: { create: vi.fn() },
-    $transaction: vi.fn((fn) => fn({
-      case: { create: vi.fn().mockResolvedValue({ id: 'c1', code: 'CASE-1' }), update: vi.fn() },
-      review: { create: vi.fn() },
-    })),
+    $transaction: vi.fn((fn) =>
+      fn({
+        case: { create: vi.fn().mockResolvedValue({ id: 'c1', code: 'CASE-1' }), update: vi.fn() },
+        review: { create: vi.fn() },
+      }),
+    ),
   },
 }));
 
 describe('CaseService', () => {
   it('register creates case with PENDING_REVIEW + empty review', async () => {
-    const c = await CaseService.register({
-      enterpriseId: 'e1', hazardTypeId: 'h1', severity: 'MAJOR',
-      source: '监管检查', description: 'desc', address: 'addr',
-      deadline: new Date(), templateId: 't1', reviewerId: 'u1',
-    }, 'u1');
+    const c = await CaseService.register(
+      {
+        enterpriseId: 'e1',
+        hazardTypeId: 'h1',
+        severity: 'MAJOR',
+        source: '监管检查',
+        description: 'desc',
+        address: 'addr',
+        deadline: new Date(),
+        templateId: 't1',
+        reviewerId: 'u1',
+      },
+      'u1',
+    );
     expect(c.status).toBe('PENDING_REVIEW');
   });
 });
@@ -1355,7 +1455,13 @@ export const CaseService = {
     return prisma.case.findUnique({ where: { id } });
   },
 
-  async list(filter: { status?: CaseStatus; hazardTypeId?: string; enterpriseId?: string; page: number; pageSize: number }) {
+  async list(filter: {
+    status?: CaseStatus;
+    hazardTypeId?: string;
+    enterpriseId?: string;
+    page: number;
+    pageSize: number;
+  }) {
     const where: Prisma.CaseWhereInput = {};
     if (filter.status) where.status = filter.status;
     if (filter.hazardTypeId) where.hazardTypeId = filter.hazardTypeId;
@@ -1376,7 +1482,12 @@ export const CaseService = {
   /**
    * 通用状态转移 — 调用 state machine + 事务更新
    */
-  async transitionStatus(caseId: string, event: CaseEvent, actorId: string, extra: Record<string, any> = {}): Promise<Case> {
+  async transitionStatus(
+    caseId: string,
+    event: CaseEvent,
+    actorId: string,
+    extra: Record<string, any> = {},
+  ): Promise<Case> {
     return prisma.$transaction(async (tx) => {
       const c = await tx.case.findUnique({ where: { id: caseId } });
       if (!c) throw new BusinessError('not_found', 'Case not found', 404);
@@ -1393,7 +1504,13 @@ export const CaseService = {
         },
       });
       await tx.auditLog.create({
-        data: { userId: actorId, action: `case:${event}`, targetType: 'Case', targetId: caseId, payload: { from: c.status, to: next } },
+        data: {
+          userId: actorId,
+          action: `case:${event}`,
+          targetType: 'Case',
+          targetId: caseId,
+          payload: { from: c.status, to: next },
+        },
       });
       return updated;
     });
@@ -1437,6 +1554,7 @@ git commit -m "feat(services): CaseService.register / getById / list / transitio
 ### Task 13: ReviewService — claim / takeover / saveItem / submit
 
 **Files:**
+
 - Create: `src/services/review.ts`, `tests/unit/services/review.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -1447,11 +1565,21 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    $transaction: vi.fn((fn) => fn({
-      review: { findFirst: vi.fn().mockResolvedValue({ id: 'r1', caseId: 'c1', claimedById: null, lastActiveAt: new Date(Date.now() - 25 * 3600 * 1000) }), update: vi.fn().mockResolvedValue({ id: 'r1', claimedById: 'u2' }) },
-      case: { update: vi.fn() },
-      auditLog: { create: vi.fn() },
-    })),
+    $transaction: vi.fn((fn) =>
+      fn({
+        review: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: 'r1',
+            caseId: 'c1',
+            claimedById: null,
+            lastActiveAt: new Date(Date.now() - 25 * 3600 * 1000),
+          }),
+          update: vi.fn().mockResolvedValue({ id: 'r1', claimedById: 'u2' }),
+        },
+        case: { update: vi.fn() },
+        auditLog: { create: vi.fn() },
+      }),
+    ),
   },
 }));
 
@@ -1466,11 +1594,21 @@ describe('ReviewService.takeOver', () => {
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    $transaction: vi.fn((fn) => fn({
-      review: { findFirst: vi.fn().mockResolvedValue({ id: 'r1', caseId: 'c1', claimedById: 'u1', lastActiveAt: new Date() }), update: vi.fn() },
-      case: { update: vi.fn() },
-      auditLog: { create: vi.fn() },
-    })),
+    $transaction: vi.fn((fn) =>
+      fn({
+        review: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: 'r1',
+            caseId: 'c1',
+            claimedById: 'u1',
+            lastActiveAt: new Date(),
+          }),
+          update: vi.fn(),
+        },
+        case: { update: vi.fn() },
+        auditLog: { create: vi.fn() },
+      }),
+    ),
   },
 }));
 
@@ -1508,7 +1646,8 @@ export const ReviewService = {
         SELECT * FROM "Review" WHERE "caseId" = ${caseId} AND status = 'IN_PROGRESS' ORDER BY "startedAt" DESC LIMIT 1 FOR UPDATE
       `;
       const review = r[0];
-      if (!review) throw new BusinessError('no_active_review', 'No in-progress review for this case', 404);
+      if (!review)
+        throw new BusinessError('no_active_review', 'No in-progress review for this case', 404);
       if (review.claimedById && review.claimedById !== userId) {
         // 已被他人领取 → 走 takeOver
         throw new BusinessError('already_claimed', `Already claimed by ${review.claimedById}`, 409);
@@ -1533,20 +1672,31 @@ export const ReviewService = {
         SELECT * FROM "Review" WHERE "caseId" = ${caseId} AND status = 'IN_PROGRESS' ORDER BY "startedAt" DESC LIMIT 1 FOR UPDATE
       `;
       const review = r[0];
-      if (!review) throw new BusinessError('no_active_review', 'No in-progress review for this case', 404);
+      if (!review)
+        throw new BusinessError('no_active_review', 'No in-progress review for this case', 404);
       if (review.claimedById === userId) {
         throw new BusinessError('already_claimed_by_you', 'You already claimed this review', 409);
       }
       const idleMs = Date.now() - new Date(review.lastActiveAt).getTime();
       if (idleMs < ACTIVE_GRACE_MS) {
-        throw new BusinessError('review_active', 'Review is still active, takeover not allowed', 409);
+        throw new BusinessError(
+          'review_active',
+          'Review is still active, takeover not allowed',
+          409,
+        );
       }
       const updated = await tx.review.update({
         where: { id: review.id },
         data: { claimedById: userId, claimedAt: new Date(), lastActiveAt: new Date() },
       });
       await tx.auditLog.create({
-        data: { userId, action: 'review:takeover', targetType: 'Review', targetId: review.id, payload: { previousClaimant: review.claimedById } },
+        data: {
+          userId,
+          action: 'review:takeover',
+          targetType: 'Review',
+          targetId: review.id,
+          payload: { previousClaimant: review.claimedById },
+        },
       });
       return updated;
     });
@@ -1555,7 +1705,13 @@ export const ReviewService = {
   /**
    * 保存单项结果：更新 lastActiveAt
    */
-  async saveItem(reviewId: string, itemId: string, result: 'PASS' | 'FAIL' | 'NA', note: string | undefined, userId: string) {
+  async saveItem(
+    reviewId: string,
+    itemId: string,
+    result: 'PASS' | 'FAIL' | 'NA',
+    note: string | undefined,
+    userId: string,
+  ) {
     return prisma.$transaction(async (tx) => {
       const r = await tx.review.update({
         where: { id: reviewId },
@@ -1577,7 +1733,12 @@ export const ReviewService = {
   /**
    * 提交 Review + Case 状态 → 待审核
    */
-  async submit(caseId: string, conclusion: 'PASS' | 'FAIL' | 'PARTIAL', summary: string, userId: string) {
+  async submit(
+    caseId: string,
+    conclusion: 'PASS' | 'FAIL' | 'PARTIAL',
+    summary: string,
+    userId: string,
+  ) {
     return prisma.$transaction(async (tx) => {
       const r = await tx.review.findFirst({
         where: { caseId, status: 'IN_PROGRESS' },
@@ -1593,7 +1754,13 @@ export const ReviewService = {
       });
       await CaseService.transitionStatus(caseId, 'submit_review', userId);
       await tx.auditLog.create({
-        data: { userId, action: 'review:submit', targetType: 'Review', targetId: r.id, payload: { conclusion } },
+        data: {
+          userId,
+          action: 'review:submit',
+          targetType: 'Review',
+          targetId: r.id,
+          payload: { conclusion },
+        },
       });
       return r;
     });
@@ -1632,6 +1799,7 @@ git commit -m "feat(services): ReviewService.claim / takeOver / saveItem / submi
 ### Task 14: AuditService — openAudit (lock) / sign / reject
 
 **Files:**
+
 - Create: `src/services/audit.ts`, `tests/unit/services/audit.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -1643,12 +1811,19 @@ import { BusinessError } from '@/lib/errors';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    $transaction: vi.fn((fn) => fn({
-      case: { findUnique: vi.fn().mockResolvedValue({ id: 'c1', status: 'PENDING_AUDIT', lockedById: null }), update: vi.fn().mockResolvedValue({ id: 'c1', status: 'IN_AUDIT', lockedById: 'u1' }) },
-      auditSignature: { create: vi.fn() },
-      review: { findFirst: vi.fn().mockResolvedValue({ id: 'r1' }), update: vi.fn() },
-      auditLog: { create: vi.fn() },
-    })),
+    $transaction: vi.fn((fn) =>
+      fn({
+        case: {
+          findUnique: vi
+            .fn()
+            .mockResolvedValue({ id: 'c1', status: 'PENDING_AUDIT', lockedById: null }),
+          update: vi.fn().mockResolvedValue({ id: 'c1', status: 'IN_AUDIT', lockedById: 'u1' }),
+        },
+        auditSignature: { create: vi.fn() },
+        review: { findFirst: vi.fn().mockResolvedValue({ id: 'r1' }), update: vi.fn() },
+        auditLog: { create: vi.fn() },
+      }),
+    ),
   },
 }));
 
@@ -1712,7 +1887,13 @@ export const AuditService = {
       });
       await CaseService.transitionStatus(caseId, 'sign', userId);
       await tx.auditLog.create({
-        data: { userId, action: 'audit:sign', targetType: 'Case', targetId: caseId, payload: { comment } },
+        data: {
+          userId,
+          action: 'audit:sign',
+          targetType: 'Case',
+          targetId: caseId,
+          payload: { comment },
+        },
       });
       return c;
     });
@@ -1752,7 +1933,13 @@ export const AuditService = {
       });
       await CaseService.transitionStatus(caseId, 'reject', userId);
       await tx.auditLog.create({
-        data: { userId, action: 'audit:reject', targetType: 'Case', targetId: caseId, payload: { reason } },
+        data: {
+          userId,
+          action: 'audit:reject',
+          targetType: 'Case',
+          targetId: caseId,
+          payload: { reason },
+        },
       });
       return c;
     });
@@ -1775,6 +1962,7 @@ git commit -m "feat(services): AuditService.openAudit / sign / reject"
 ### Task 15: PhotoService — MinIO upload + signed URL
 
 **Files:**
+
 - Create: `src/lib/minio.ts`, `src/services/photo.ts`, `tests/unit/services/photo.test.ts`
 
 - [ ] **Step 1: Install MinIO client**
@@ -1867,7 +2055,11 @@ export const PhotoService = {
   /**
    * 批量绑定已上传的 photo 到 review
    */
-  async attachToReview(reviewId: string, photoMetas: { storageKey: string; takenAt: Date; gpsLat?: number; gpsLng?: number }[], capturedById: string) {
+  async attachToReview(
+    reviewId: string,
+    photoMetas: { storageKey: string; takenAt: Date; gpsLat?: number; gpsLng?: number }[],
+    capturedById: string,
+  ) {
     return prisma.reviewPhoto.createMany({
       data: photoMetas.map((m) => ({ ...m, reviewId, capturedById, syncStatus: 'SYNCED' })),
     });
@@ -1890,6 +2082,7 @@ git commit -m "feat(services): PhotoService.upload / signedUrl / attachToReview"
 ### Task 16: NotificationService
 
 **Files:**
+
 - Create: `src/services/notification.ts`, `tests/unit/services/notification.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -1911,7 +2104,12 @@ import { NotificationService } from '@/services/notification';
 
 describe('NotificationService', () => {
   it('create writes a notification', async () => {
-    const n = await NotificationService.create('u1', 'AUDIT_PENDING', { refType: 'Case', refId: 'c1', title: 't', body: 'b' });
+    const n = await NotificationService.create('u1', 'AUDIT_PENDING', {
+      refType: 'Case',
+      refId: 'c1',
+      title: 't',
+      body: 'b',
+    });
     expect(n.id).toBe('n1');
   });
 });
@@ -1935,15 +2133,28 @@ export const NotificationService = {
     opts: { refType?: string; refId?: string; title: string; body: string },
   ): Promise<Notification> {
     return prisma.notification.create({
-      data: { userId, type, refType: opts.refType, refId: opts.refId, title: opts.title, body: opts.body },
+      data: {
+        userId,
+        type,
+        refType: opts.refType,
+        refId: opts.refId,
+        title: opts.title,
+        body: opts.body,
+      },
     });
   },
 
   /**
    * 给"所有科长"群发（v0.1 单局简化）
    */
-  async broadcastToChiefs(type: NotificationType, opts: { refType?: string; refId?: string; title: string; body: string }) {
-    const chiefs = await prisma.user.findMany({ where: { role: 'CHIEF', status: 'ACTIVE' }, select: { id: true } });
+  async broadcastToChiefs(
+    type: NotificationType,
+    opts: { refType?: string; refId?: string; title: string; body: string },
+  ) {
+    const chiefs = await prisma.user.findMany({
+      where: { role: 'CHIEF', status: 'ACTIVE' },
+      select: { id: true },
+    });
     if (chiefs.length === 0) return [];
     return prisma.notification.createMany({
       data: chiefs.map((c) => ({
@@ -1994,6 +2205,7 @@ git commit -m "feat(services): NotificationService with broadcastToChiefs"
 ### Task 17: ImportService — Excel parse/validate/commit
 
 **Files:**
+
 - Create: `src/services/import.ts`, `tests/unit/services/import.test.ts`
 
 - [ ] **Step 1: Install**
@@ -2023,7 +2235,16 @@ describe('ImportService.parseExcel', () => {
       { header: '地址', key: 'address', width: 30 },
       { header: '整改期限', key: 'deadline', width: 15 },
     ];
-    ws.addRow({ name: '企业A', uscc: '91110000XXXXXX0001', htcode: 'FIRE', severity: 'MAJOR', source: '监管检查', description: 'desc', address: 'addr', deadline: new Date('2026-12-31') });
+    ws.addRow({
+      name: '企业A',
+      uscc: '91110000XXXXXX0001',
+      htcode: 'FIRE',
+      severity: 'MAJOR',
+      source: '监管检查',
+      description: 'desc',
+      address: 'addr',
+      deadline: new Date('2026-12-31'),
+    });
     const buf = await wb.xlsx.writeBuffer();
 
     const result = await ImportService.parseExcel(Buffer.from(buf));
@@ -2060,11 +2281,15 @@ const RowSchema = z.object({
 export type ImportRow = z.infer<typeof RowSchema>;
 
 export const ImportService = {
-  async parseExcel(buffer: Buffer): Promise<{ rows: ImportRow[]; errors: { rowNumber: number; field: string; value?: string; message: string }[] }> {
+  async parseExcel(buffer: Buffer): Promise<{
+    rows: ImportRow[];
+    errors: { rowNumber: number; field: string; value?: string; message: string }[];
+  }> {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buffer);
     const ws = wb.worksheets[0];
-    if (!ws) return { rows: [], errors: [{ rowNumber: 0, field: 'sheet', message: 'No worksheet' }] };
+    if (!ws)
+      return { rows: [], errors: [{ rowNumber: 0, field: 'sheet', message: 'No worksheet' }] };
 
     const headerMap: Record<number, string> = {};
     ws.getRow(1).eachCell((cell, col) => {
@@ -2094,7 +2319,14 @@ export const ImportService = {
       };
       const parsed = RowSchema.safeParse(mapped);
       if (parsed.success) rows.push(parsed.data);
-      else for (const issue of parsed.error.issues) errors.push({ rowNumber, field: issue.path.join('.'), value: String(mapped[issue.path[0] as keyof typeof mapped] ?? ''), message: issue.message });
+      else
+        for (const issue of parsed.error.issues)
+          errors.push({
+            rowNumber,
+            field: issue.path.join('.'),
+            value: String(mapped[issue.path[0] as keyof typeof mapped] ?? ''),
+            message: issue.message,
+          });
     });
     return { rows, errors };
   },
@@ -2107,9 +2339,15 @@ export const ImportService = {
         const enterprise = await prisma.enterprise.upsert({
           where: { unifiedSocialCreditId: r.unifiedSocialCreditId },
           update: {},
-          create: { name: r.name, unifiedSocialCreditId: r.unifiedSocialCreditId, address: r.address },
+          create: {
+            name: r.name,
+            unifiedSocialCreditId: r.unifiedSocialCreditId,
+            address: r.address,
+          },
         });
-        const hazardType = await prisma.hazardType.findUnique({ where: { code: r.hazardTypeCode } });
+        const hazardType = await prisma.hazardType.findUnique({
+          where: { code: r.hazardTypeCode },
+        });
         if (!hazardType) throw new Error(`Unknown hazard type: ${r.hazardTypeCode}`);
         const template = await prisma.checklistTemplate.findFirst({
           where: { hazardTypeId: hazardType.id, active: true },
@@ -2132,12 +2370,18 @@ export const ImportService = {
         success++;
       } catch (e: any) {
         failed++;
-        await prisma.importError.create({ data: { batchId, rowNumber: success + failed, field: 'row', message: e.message } });
+        await prisma.importError.create({
+          data: { batchId, rowNumber: success + failed, field: 'row', message: e.message },
+        });
       }
     }
     await prisma.importBatch.update({
       where: { id: batchId },
-      data: { successCount: success, failedCount: failed, status: failed === 0 ? 'completed' : 'partial' },
+      data: {
+        successCount: success,
+        failedCount: failed,
+        status: failed === 0 ? 'completed' : 'partial',
+      },
     });
     return { success, failed };
   },
@@ -2159,6 +2403,7 @@ git commit -m "feat(services): ImportService.parseExcel / commit"
 ### Task 18: StatsService
 
 **Files:**
+
 - Create: `src/services/stats.ts`, `tests/unit/services/stats.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -2233,7 +2478,12 @@ export const StatsService = {
       const rows = await prisma.case.groupBy({ by: ['severity'], _count: true });
       return rows;
     }
-    const rows = await prisma.case.groupBy({ by: ['enterpriseId'], _count: true, orderBy: { _count: { enterpriseId: 'desc' } }, take: 20 });
+    const rows = await prisma.case.groupBy({
+      by: ['enterpriseId'],
+      _count: true,
+      orderBy: { _count: { enterpriseId: 'desc' } },
+      take: 20,
+    });
     return rows;
   },
 };
@@ -2254,6 +2504,7 @@ git commit -m "feat(services): StatsService.kpi / trend / distribution"
 ### Task 19: SyncService — server-side queue handling
 
 **Files:**
+
 - Create: `src/services/sync.ts`, `tests/unit/services/sync.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -2276,7 +2527,12 @@ import { SyncService } from '@/services/sync';
 
 describe('SyncService', () => {
   it('enqueue is idempotent by clientId', async () => {
-    const r = await SyncService.enqueue('u1', '550e8400-e29b-41d4-a716-446655440000', 'submit_review', { foo: 1 });
+    const r = await SyncService.enqueue(
+      'u1',
+      '550e8400-e29b-41d4-a716-446655440000',
+      'submit_review',
+      { foo: 1 },
+    );
     expect(r.id).toBe('q1');
   });
 });
@@ -2315,7 +2571,12 @@ export const SyncService = {
       try {
         switch (q.opType) {
           case 'submit_review':
-            await ReviewService.submit(q.payload.caseId, q.payload.conclusion, q.payload.summary, q.userId);
+            await ReviewService.submit(
+              q.payload.caseId,
+              q.payload.conclusion,
+              q.payload.summary,
+              q.userId,
+            );
             break;
           case 'upload_photo':
             // 照片已经在 submit_review 之前上传到 MinIO，attaching 在 payload 里
@@ -2371,6 +2632,7 @@ git commit -m "feat(services): SyncService.enqueue (idempotent) / processOne / l
 ### Task 20: Notification cron (08:00 daily)
 
 **Files:**
+
 - Create: `src/workers/notification-cron.ts`, `src/lib/cron.ts`
 
 - [ ] **Step 1: Install node-cron**
@@ -2440,11 +2702,18 @@ export async function scanDeadlines() {
   });
   for (const c of soonCases) {
     const exists = await prisma.notification.findFirst({
-      where: { userId: c.registeredById, refType: 'Case', refId: c.id, type: 'DEADLINE_SOON', createdAt: { gte: new Date(now.toDateString()) } },
+      where: {
+        userId: c.registeredById,
+        refType: 'Case',
+        refId: c.id,
+        type: 'DEADLINE_SOON',
+        createdAt: { gte: new Date(now.toDateString()) },
+      },
     });
     if (exists) continue;
     await NotificationService.create(c.registeredById, 'DEADLINE_SOON', {
-      refType: 'Case', refId: c.id,
+      refType: 'Case',
+      refId: c.id,
       title: `案件 ${c.code} 即将到期`,
       body: `整改期限：${c.deadline.toLocaleDateString('zh-CN')}`,
     });
@@ -2460,13 +2729,15 @@ export async function scanDeadlines() {
   });
   for (const c of overdueCases) {
     await NotificationService.create(c.registeredById, 'DEADLINE_OVERDUE', {
-      refType: 'Case', refId: c.id,
+      refType: 'Case',
+      refId: c.id,
       title: `案件 ${c.code} 已超期`,
       body: `整改期限：${c.deadline.toLocaleDateString('zh-CN')}`,
     });
     // 升级给科长
     await NotificationService.broadcastToChiefs('DEADLINE_OVERDUE', {
-      refType: 'Case', refId: c.id,
+      refType: 'Case',
+      refId: c.id,
       title: `案件 ${c.code} 已超期（创建人 ${c.registeredBy.name}）`,
       body: `请关注。`,
     });
@@ -2492,6 +2763,7 @@ export async function register() {
 ```
 
 Add to `next.config.ts`:
+
 ```ts
 export default { experimental: { instrumentationHook: true } };
 ```
@@ -2506,6 +2778,7 @@ git commit -m "feat(workers): notification cron (deadline soon / overdue)"
 ### Task 21: Recycle cron (02:00 daily)
 
 **Files:**
+
 - Create: `src/workers/recycle-cron.ts`
 
 - [ ] **Step 1: Write `src/workers/recycle-cron.ts`**
@@ -2528,7 +2801,12 @@ export async function scanRecycle() {
       data: { claimedById: null, claimedAt: null },
     });
     await prisma.auditLog.create({
-      data: { userId: r.claimedById!, action: 'review:reclaim_idle', targetType: 'Review', targetId: r.id },
+      data: {
+        userId: r.claimedById!,
+        action: 'review:reclaim_idle',
+        targetType: 'Review',
+        targetId: r.id,
+      },
     });
     if (r.claimedById) {
       await prisma.notification.create({
@@ -2552,7 +2830,12 @@ export async function scanRecycle() {
       data: { lockedById: null, lockedAt: null, status: 'PENDING_AUDIT' },
     });
     await prisma.auditLog.create({
-      data: { userId: c.lockedById!, action: 'case:reclaim_idle', targetType: 'Case', targetId: c.id },
+      data: {
+        userId: c.lockedById!,
+        action: 'case:reclaim_idle',
+        targetType: 'Case',
+        targetId: c.id,
+      },
     });
   }
 }
@@ -2570,6 +2853,7 @@ git commit -m "feat(workers): recycle cron (release stale review claims + case l
 ## Phase 4: API Routes (T22–T30)
 
 All API routes follow the same pattern:
+
 1. `auth()` to get session
 2. `assertCan(role, action)`
 3. Call service
@@ -2578,6 +2862,7 @@ All API routes follow the same pattern:
 ### Task 22: `/api/cases` — list + register
 
 **Files:**
+
 - Create: `src/app/api/cases/route.ts`
 
 - [ ] **Step 1: Write `src/app/api/cases/route.ts`**
@@ -2606,7 +2891,9 @@ export async function GET(req: NextRequest) {
     };
     const result = await CaseService.list(filter);
     return NextResponse.json(result);
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 
 const RegisterSchema = z.object({
@@ -2632,18 +2919,26 @@ export async function POST(req: NextRequest) {
     const template = await prisma.checklistTemplate.findFirst({
       where: { hazardTypeId: input.hazardTypeId, active: true },
     });
-    if (!template) return problem(400, 'no_template', 'No active checklist template for this hazard type');
+    if (!template)
+      return problem(400, 'no_template', 'No active checklist template for this hazard type');
     const c = await CaseService.register(
       { ...input, templateId: template.id, reviewerId: session.user.id },
       session.user.id,
     );
     return NextResponse.json(c, { status: 201 });
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 
 function handleError(e: any) {
   if (e instanceof BusinessError) return problem(e.httpStatus, e.code, e.message);
-  if (e.name === 'ZodError') return problem(400, 'validation_error', e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join('; '));
+  if (e.name === 'ZodError')
+    return problem(
+      400,
+      'validation_error',
+      e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join('; '),
+    );
   console.error(e);
   return problem(500, 'internal_error', e.message);
 }
@@ -2678,6 +2973,7 @@ git commit -m "feat(api): /api/cases list + register"
 ### Task 23: `/api/cases/[id]` — get detail
 
 **Files:**
+
 - Create: `src/app/api/cases/[id]/route.ts`
 
 - [ ] **Step 1: Write**
@@ -2698,7 +2994,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     const c = await prisma.case.findUnique({
       where: { id: params.id },
       include: {
-        enterprise: true, hazardType: true,
+        enterprise: true,
+        hazardType: true,
         registeredBy: { select: { name: true, email: true } },
         lockedBy: { select: { name: true } },
         attachments: true,
@@ -2711,12 +3008,17 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
             claimedBy: { select: { name: true } },
           },
         },
-        auditSignatures: { orderBy: { signedAt: 'desc' }, include: { auditor: { select: { name: true } } } },
+        auditSignatures: {
+          orderBy: { signedAt: 'desc' },
+          include: { auditor: { select: { name: true } } },
+        },
       },
     });
     if (!c) throw new BusinessError('not_found', 'Case not found', 404);
     return NextResponse.json(c);
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -2728,7 +3030,12 @@ import { BusinessError } from '@/lib/errors';
 
 export function handleError(e: any) {
   if (e instanceof BusinessError) return problem(e.httpStatus, e.code, e.message);
-  if (e.name === 'ZodError') return problem(400, 'validation_error', e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join('; '));
+  if (e.name === 'ZodError')
+    return problem(
+      400,
+      'validation_error',
+      e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join('; '),
+    );
   console.error(e);
   return problem(500, 'internal_error', e.message);
 }
@@ -2753,6 +3060,7 @@ git commit -m "feat(api): /api/cases/[id] detail with full history"
 ### Task 24: `/api/cases/[id]/review` — claim / takeOver / saveItem / submit
 
 **Files:**
+
 - Create: `src/app/api/cases/[id]/review/route.ts`
 
 - [ ] **Step 1: Write**
@@ -2781,7 +3089,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       const r = await ReviewService.takeOver(params.id, session.user.id);
       return NextResponse.json(r);
     }
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 
 const SubmitSchema = z.object({
@@ -2797,7 +3107,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const body = SubmitSchema.parse(await req.json());
     const r = await ReviewService.submit(params.id, body.conclusion, body.summary, session.user.id);
     return NextResponse.json(r);
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -2811,6 +3123,7 @@ git commit -m "feat(api): /api/cases/[id]/review claim / takeover / submit"
 ### Task 25: `/api/cases/[id]/audit` — open / sign / reject
 
 **Files:**
+
 - Create: `src/app/api/cases/[id]/audit/route.ts`
 
 - [ ] **Step 1: Write**
@@ -2832,7 +3145,9 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     assertCan(session.user.role, 'audit:open');
     const c = await AuditService.openAudit(params.id, session.user.id);
     return NextResponse.json(c);
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 
 const SignSchema = z.object({ signatureUrl: z.string().url(), comment: z.string().optional() });
@@ -2849,7 +3164,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       const full = await prisma.case.findUnique({ where: { id: params.id } });
       if (full) {
         await NotificationService.create(full.registeredById, 'AUDIT_RESULT', {
-          refType: 'Case', refId: params.id,
+          refType: 'Case',
+          refId: params.id,
           title: `案件 ${full.code} 已被驳回`,
           body: `理由：${reason}`,
         });
@@ -2858,18 +3174,26 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     } else {
       assertCan(session.user.role, 'audit:sign');
       const body = SignSchema.parse(await req.json());
-      const c = await AuditService.sign(params.id, session.user.id, body.signatureUrl, body.comment);
+      const c = await AuditService.sign(
+        params.id,
+        session.user.id,
+        body.signatureUrl,
+        body.comment,
+      );
       const full = await prisma.case.findUnique({ where: { id: params.id } });
       if (full) {
         await NotificationService.create(full.registeredById, 'AUDIT_RESULT', {
-          refType: 'Case', refId: params.id,
+          refType: 'Case',
+          refId: params.id,
           title: `案件 ${full.code} 已销案`,
           body: body.comment || '审核通过',
         });
       }
       return NextResponse.json(c);
     }
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -2883,6 +3207,7 @@ git commit -m "feat(api): /api/cases/[id]/audit open / sign / reject + notify"
 ### Task 26: `/api/import` — upload + parse + commit
 
 **Files:**
+
 - Create: `src/app/api/import/route.ts`
 
 - [ ] **Step 1: Write**
@@ -2914,14 +3239,24 @@ export async function POST(req: NextRequest) {
     } else {
       // 阶段 2：用户确认后提交
       const batch = await prisma.importBatch.create({
-        data: { filename: file.name, uploadedById: session.user.id, totalRows: 0, status: 'pending' },
+        data: {
+          filename: file.name,
+          uploadedById: session.user.id,
+          totalRows: 0,
+          status: 'pending',
+        },
       });
       const { rows } = await ImportService.parseExcel(buf);
-      await prisma.importBatch.update({ where: { id: batch.id }, data: { totalRows: rows.length } });
+      await prisma.importBatch.update({
+        where: { id: batch.id },
+        data: { totalRows: rows.length },
+      });
       const result = await ImportService.commit(rows, batch.id, session.user.id);
       return NextResponse.json({ preview: false, batchId: batch.id, ...result });
     }
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -2935,6 +3270,7 @@ git commit -m "feat(api): /api/import upload + parse + commit"
 ### Task 27: `/api/photos` — upload to MinIO
 
 **Files:**
+
 - Create: `src/app/api/photos/route.ts`
 
 - [ ] **Step 1: Write**
@@ -2957,7 +3293,9 @@ export async function POST(req: NextRequest) {
     const buf = Buffer.from(await file.arrayBuffer());
     const r = await PhotoService.upload(buf, file.type, file.name, session.user.id);
     return NextResponse.json(r);
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -2971,6 +3309,7 @@ git commit -m "feat(api): /api/photos upload to MinIO"
 ### Task 28: `/api/sync` — batch sync entry
 
 **Files:**
+
 - Create: `src/app/api/sync/route.ts`
 
 - [ ] **Step 1: Write**
@@ -2995,7 +3334,12 @@ export async function POST(req: NextRequest) {
     const { items } = z.object({ items: z.array(ItemSchema).max(50) }).parse(await req.json());
     const results = [];
     for (const item of items) {
-      const q = await SyncService.enqueue(session.user.id, item.clientId, item.opType, item.payload);
+      const q = await SyncService.enqueue(
+        session.user.id,
+        item.clientId,
+        item.opType,
+        item.payload,
+      );
       try {
         await SyncService.processOne(q.id);
         results.push({ clientId: item.clientId, status: 'synced' });
@@ -3004,7 +3348,9 @@ export async function POST(req: NextRequest) {
       }
     }
     return NextResponse.json({ results });
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 
 export async function GET(_req: NextRequest) {
@@ -3013,7 +3359,9 @@ export async function GET(_req: NextRequest) {
   try {
     const items = await SyncService.listPending(session.user.id);
     return NextResponse.json({ items });
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -3027,6 +3375,7 @@ git commit -m "feat(api): /api/sync batch entry + status list"
 ### Task 29: `/api/notifications` + `/api/stats/*` + `/api/health`
 
 **Files:**
+
 - Create: `src/app/api/notifications/route.ts`, `src/app/api/stats/kpi/route.ts`, `src/app/api/stats/trend/route.ts`, `src/app/api/stats/distribution/route.ts`, `src/app/api/health/route.ts`
 
 - [ ] **Step 1: Write `src/app/api/notifications/route.ts`**
@@ -3045,7 +3394,9 @@ export async function GET(req: NextRequest) {
     const page = Number(sp.get('page') || 1);
     const pageSize = Number(sp.get('pageSize') || 20);
     return NextResponse.json(await NotificationService.list(session.user.id, page, pageSize));
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -3062,7 +3413,9 @@ export async function GET() {
   if (!session) return problem(401, 'unauthorized', 'Login required');
   try {
     return NextResponse.json(await StatsService.kpi());
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -3080,7 +3433,9 @@ export async function GET(req: NextRequest) {
   try {
     const days = Number(req.nextUrl.searchParams.get('days') || 30);
     return NextResponse.json(await StatsService.trend(days));
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -3096,9 +3451,14 @@ export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return problem(401, 'unauthorized', 'Login required');
   try {
-    const by = (req.nextUrl.searchParams.get('by') || 'hazardType') as 'hazardType' | 'enterprise' | 'severity';
+    const by = (req.nextUrl.searchParams.get('by') || 'hazardType') as
+      | 'hazardType'
+      | 'enterprise'
+      | 'severity';
     return NextResponse.json(await StatsService.distribution(by));
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -3111,8 +3471,18 @@ import { minio, BUCKET } from '@/lib/minio';
 
 export async function GET() {
   const checks: Record<string, string> = {};
-  try { await prisma.$queryRaw`SELECT 1`; checks.postgres = 'ok'; } catch (e: any) { checks.postgres = e.message; }
-  try { await minio.bucketExists(BUCKET); checks.minio = 'ok'; } catch (e: any) { checks.minio = e.message; }
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    checks.postgres = 'ok';
+  } catch (e: any) {
+    checks.postgres = e.message;
+  }
+  try {
+    await minio.bucketExists(BUCKET);
+    checks.minio = 'ok';
+  } catch (e: any) {
+    checks.minio = e.message;
+  }
   const ok = Object.values(checks).every((v) => v === 'ok');
   return NextResponse.json({ ok, checks }, { status: ok ? 200 : 503 });
 }
@@ -3136,6 +3506,7 @@ git commit -m "feat(api): /api/notifications, /api/stats/*, /api/health"
 ### Task 30: Notification on review:submit (already wired in T25 sign/reject; add for submit too)
 
 **Files:**
+
 - Modify: `src/services/review.ts` (in `submit`)
 
 - [ ] **Step 1: Update `ReviewService.submit` to notify all chiefs**
@@ -3144,7 +3515,8 @@ Add at the end of the `submit` transaction body (after `CaseService.transitionSt
 
 ```ts
 await NotificationService.broadcastToChiefs('AUDIT_PENDING', {
-  refType: 'Case', refId: caseId,
+  refType: 'Case',
+  refId: caseId,
   title: `案件待审核`,
   body: `监管员 ${userId} 提交了复核，请审核。`,
 });
@@ -3162,6 +3534,7 @@ git commit -m "feat(services): notify all chiefs on review:submit"
 ## Phase 5: UI Pages (T31–T42)
 
 All UI pages use App Router with Server Components for data fetching and Client Components for interactivity. The pattern is:
+
 - `page.tsx` — server component, fetches data via `auth()` + Prisma
 - `*-form.tsx` or `*-client.tsx` — client component for forms / interactions
 - shadcn/ui for buttons, inputs, tables, dialogs
@@ -3169,6 +3542,7 @@ All UI pages use App Router with Server Components for data fetching and Client 
 ### Task 31: `/login` page
 
 **Files:**
+
 - Create: `src/app/login/page.tsx`, `src/app/login/login-form.tsx`
 
 - [ ] **Step 1: Write `src/app/login/login-form.tsx`**
@@ -3194,17 +3568,34 @@ export function LoginForm() {
     setErr('');
     const res = await signIn('credentials', { email, password, redirect: false });
     setLoading(false);
-    if (res?.error) { setErr('登录失败'); return; }
+    if (res?.error) {
+      setErr('登录失败');
+      return;
+    }
     router.push('/');
     router.refresh();
   }
 
   return (
     <form onSubmit={submit} className="space-y-4 max-w-sm">
-      <Input type="email" placeholder="邮箱" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      <Input type="password" placeholder="密码" value={password} onChange={(e) => setPassword(e.target.value)} required />
+      <Input
+        type="email"
+        placeholder="邮箱"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+      <Input
+        type="password"
+        placeholder="密码"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
       {err && <p className="text-red-500 text-sm">{err}</p>}
-      <Button type="submit" disabled={loading} className="w-full">{loading ? '...' : '登录'}</Button>
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? '...' : '登录'}
+      </Button>
     </form>
   );
 }
@@ -3240,6 +3631,7 @@ git commit -m "feat(ui): /login page"
 ### Task 32: `/` (work dashboard)
 
 **Files:**
+
 - Create: `src/app/page.tsx`, `src/components/workbench/kpi-cards.tsx`, `src/components/workbench/todo-list.tsx`
 
 - [ ] **Step 1: Write `src/app/page.tsx`**
@@ -3263,7 +3655,10 @@ export default async function Dashboard() {
   let todos: { id: string; title: string; href: string }[] = [];
   if (role === 'INSPECTOR') {
     const myCases = await prisma.case.findMany({
-      where: { registeredById: id, status: { in: ['PENDING_REVIEW', 'PENDING_AUDIT', 'IN_AUDIT'] } },
+      where: {
+        registeredById: id,
+        status: { in: ['PENDING_REVIEW', 'PENDING_AUDIT', 'IN_AUDIT'] },
+      },
       take: 10,
       orderBy: { registeredAt: 'desc' },
     });
@@ -3325,7 +3720,9 @@ export function TodoList({ items }: { items: { id: string; title: string; href: 
       {items.map((i) => (
         <li key={i.id} className="flex justify-between items-center py-1">
           <span className="font-mono text-sm">{i.title}</span>
-          <Link href={i.href} className="text-blue-600 text-sm">查看 →</Link>
+          <Link href={i.href} className="text-blue-600 text-sm">
+            查看 →
+          </Link>
         </li>
       ))}
     </ul>
@@ -3343,6 +3740,7 @@ git commit -m "feat(ui): work dashboard with KPI + role-based todos"
 ### Task 33: `/cases` list
 
 **Files:**
+
 - Create: `src/app/cases/page.tsx`, `src/components/case/cases-table.tsx`
 
 - [ ] **Step 1: Write `src/app/cases/page.tsx`**
@@ -3354,7 +3752,11 @@ import { CasesTable } from '@/components/case/cases-table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default async function CasesListPage({ searchParams }: { searchParams: { status?: string } }) {
+export default async function CasesListPage({
+  searchParams,
+}: {
+  searchParams: { status?: string };
+}) {
   const session = await auth();
   if (!session) return null;
   const where = searchParams.status ? { status: searchParams.status as any } : {};
@@ -3369,8 +3771,12 @@ export default async function CasesListPage({ searchParams }: { searchParams: { 
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">案件列表</h1>
         <div className="flex gap-2">
-          <Button asChild><Link href="/cases/import">批量导入</Link></Button>
-          <Button asChild><Link href="/cases/new">登记案件</Link></Button>
+          <Button asChild>
+            <Link href="/cases/import">批量导入</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/cases/new">登记案件</Link>
+          </Button>
         </div>
       </div>
       <CasesTable cases={cases} />
@@ -3382,16 +3788,29 @@ export default async function CasesListPage({ searchParams }: { searchParams: { 
 - [ ] **Step 2: Write `src/components/case/cases-table.tsx`**
 
 ```tsx
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 const STATUS_LABEL: Record<string, string> = {
-  PENDING_REVIEW: '待复核', PENDING_AUDIT: '待审核', IN_AUDIT: '审核中', CLOSED: '已销案',
+  PENDING_REVIEW: '待复核',
+  PENDING_AUDIT: '待审核',
+  IN_AUDIT: '审核中',
+  CLOSED: '已销案',
 };
 const STATUS_COLOR: Record<string, string> = {
-  PENDING_REVIEW: 'bg-yellow-100', PENDING_AUDIT: 'bg-blue-100', IN_AUDIT: 'bg-purple-100', CLOSED: 'bg-green-100',
+  PENDING_REVIEW: 'bg-yellow-100',
+  PENDING_AUDIT: 'bg-blue-100',
+  IN_AUDIT: 'bg-purple-100',
+  CLOSED: 'bg-green-100',
 };
 
 export function CasesTable({ cases }: { cases: any[] }) {
@@ -3415,10 +3834,16 @@ export function CasesTable({ cases }: { cases: any[] }) {
             <TableCell className="font-mono">{c.code}</TableCell>
             <TableCell>{c.enterprise.name}</TableCell>
             <TableCell>{c.hazardType.name}</TableCell>
-            <TableCell><Badge className={STATUS_COLOR[c.status]}>{STATUS_LABEL[c.status]}</Badge></TableCell>
+            <TableCell>
+              <Badge className={STATUS_COLOR[c.status]}>{STATUS_LABEL[c.status]}</Badge>
+            </TableCell>
             <TableCell>{c.registeredBy.name}</TableCell>
             <TableCell>{c.registeredAt.toLocaleString('zh-CN')}</TableCell>
-            <TableCell><Button asChild size="sm" variant="link"><Link href={`/cases/${c.id}`}>查看</Link></Button></TableCell>
+            <TableCell>
+              <Button asChild size="sm" variant="link">
+                <Link href={`/cases/${c.id}`}>查看</Link>
+              </Button>
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -3437,6 +3862,7 @@ git commit -m "feat(ui): /cases list with status badges"
 ### Task 34: `/cases/new` register form
 
 **Files:**
+
 - Create: `src/app/cases/new/page.tsx`, `src/app/cases/new/register-form.tsx`
 
 - [ ] **Step 1: Write `src/app/cases/new/page.tsx`**
@@ -3470,15 +3896,28 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-export function RegisterForm({ enterprises, hazardTypes }: { enterprises: any[]; hazardTypes: any[] }) {
+export function RegisterForm({
+  enterprises,
+  hazardTypes,
+}: {
+  enterprises: any[];
+  hazardTypes: any[];
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true); setErr('');
+    setLoading(true);
+    setErr('');
     const fd = new FormData(e.currentTarget);
     const body = Object.fromEntries(fd);
     const res = await fetch('/api/cases', {
@@ -3487,22 +3926,43 @@ export function RegisterForm({ enterprises, hazardTypes }: { enterprises: any[];
       body: JSON.stringify(body),
     });
     setLoading(false);
-    if (!res.ok) { setErr((await res.json()).message); return; }
+    if (!res.ok) {
+      setErr((await res.json()).message);
+      return;
+    }
     const c = await res.json();
     router.push(`/cases/${c.id}`);
   }
   return (
     <form onSubmit={submit} className="space-y-4">
       <Select name="enterpriseId" required>
-        <SelectTrigger><SelectValue placeholder="选择企业" /></SelectTrigger>
-        <SelectContent>{enterprises.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}</SelectContent>
+        <SelectTrigger>
+          <SelectValue placeholder="选择企业" />
+        </SelectTrigger>
+        <SelectContent>
+          {enterprises.map((e) => (
+            <SelectItem key={e.id} value={e.id}>
+              {e.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
       </Select>
       <Select name="hazardTypeId" required>
-        <SelectTrigger><SelectValue placeholder="隐患类型" /></SelectTrigger>
-        <SelectContent>{hazardTypes.map((h) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}</SelectContent>
+        <SelectTrigger>
+          <SelectValue placeholder="隐患类型" />
+        </SelectTrigger>
+        <SelectContent>
+          {hazardTypes.map((h) => (
+            <SelectItem key={h.id} value={h.id}>
+              {h.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
       </Select>
       <Select name="severity" required defaultValue="MAJOR">
-        <SelectTrigger><SelectValue placeholder="严重程度" /></SelectTrigger>
+        <SelectTrigger>
+          <SelectValue placeholder="严重程度" />
+        </SelectTrigger>
         <SelectContent>
           <SelectItem value="MAJOR">重大</SelectItem>
           <SelectItem value="MODERATE">较大</SelectItem>
@@ -3514,7 +3974,9 @@ export function RegisterForm({ enterprises, hazardTypes }: { enterprises: any[];
       <Textarea name="description" placeholder="隐患描述" required />
       <Input name="deadline" type="date" required />
       {err && <p className="text-red-500 text-sm">{err}</p>}
-      <Button type="submit" disabled={loading}>{loading ? '提交中...' : '登记'}</Button>
+      <Button type="submit" disabled={loading}>
+        {loading ? '提交中...' : '登记'}
+      </Button>
     </form>
   );
 }
@@ -3530,6 +3992,7 @@ git commit -m "feat(ui): /cases/new register form"
 ### Task 35: `/cases/import` Excel upload
 
 **Files:**
+
 - Create: `src/app/cases/import/page.tsx`, `src/app/cases/import/import-form.tsx`
 
 - [ ] **Step 1: Write `src/app/cases/import/page.tsx`**
@@ -3540,7 +4003,13 @@ export default function ImportPage() {
   return (
     <main className="p-6 max-w-2xl space-y-4">
       <h1 className="text-2xl font-semibold">批量导入案件</h1>
-      <p className="text-sm text-muted-foreground">下载 <a className="text-blue-600 underline" href="/templates/import-template.xlsx">导入模板</a> 填写后上传。</p>
+      <p className="text-sm text-muted-foreground">
+        下载{' '}
+        <a className="text-blue-600 underline" href="/templates/import-template.xlsx">
+          导入模板
+        </a>{' '}
+        填写后上传。
+      </p>
       <ImportForm />
     </main>
   );
@@ -3555,7 +4024,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
-type Preview = { preview: true; rows: any[]; errors: any[] } | { preview: false; batchId: string; success: number; failed: number };
+type Preview =
+  | { preview: true; rows: any[]; errors: any[] }
+  | { preview: false; batchId: string; success: number; failed: number };
 
 export function ImportForm() {
   const router = useRouter();
@@ -3566,7 +4037,8 @@ export function ImportForm() {
   async function parseFile() {
     if (!file) return;
     setLoading(true);
-    const fd = new FormData(); fd.append('file', file);
+    const fd = new FormData();
+    fd.append('file', file);
     const res = await fetch('/api/import', { method: 'POST', body: fd });
     setLoading(false);
     setPreview(await res.json());
@@ -3575,7 +4047,9 @@ export function ImportForm() {
   async function commit() {
     if (!file) return;
     setLoading(true);
-    const fd = new FormData(); fd.append('file', file); fd.append('confirm', 'true');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('confirm', 'true');
     const res = await fetch('/api/import', { method: 'POST', body: fd });
     setLoading(false);
     const r = await res.json();
@@ -3586,16 +4060,26 @@ export function ImportForm() {
     <div className="space-y-4">
       <input type="file" accept=".xlsx" onChange={(e) => setFile(e.target.files?.[0] || null)} />
       <div className="flex gap-2">
-        <Button onClick={parseFile} disabled={!file || loading}>解析</Button>
-        {preview && <Button onClick={commit} disabled={loading}>确认导入 ({preview.rows.length} 行)</Button>}
+        <Button onClick={parseFile} disabled={!file || loading}>
+          解析
+        </Button>
+        {preview && (
+          <Button onClick={commit} disabled={loading}>
+            确认导入 ({preview.rows.length} 行)
+          </Button>
+        )}
       </div>
       {preview && (
         <div className="space-y-2 text-sm">
-          <p>有效行: {preview.rows.length} | 错误行: {preview.errors.length}</p>
+          <p>
+            有效行: {preview.rows.length} | 错误行: {preview.errors.length}
+          </p>
           {preview.errors.length > 0 && (
             <ul className="text-red-600 list-disc pl-5">
               {preview.errors.slice(0, 20).map((e: any, i: number) => (
-                <li key={i}>第 {e.rowNumber} 行 {e.field}: {e.message}</li>
+                <li key={i}>
+                  第 {e.rowNumber} 行 {e.field}: {e.message}
+                </li>
               ))}
             </ul>
           )}
@@ -3641,6 +4125,7 @@ git commit -m "feat(ui): /cases/import with preview + confirm flow"
 ### Task 36: `/cases/[id]` detail
 
 **Files:**
+
 - Create: `src/app/cases/[id]/page.tsx`
 
 - [ ] **Step 1: Write**
@@ -3653,7 +4138,10 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 const STATUS_LABEL: Record<string, string> = {
-  PENDING_REVIEW: '待复核', PENDING_AUDIT: '待审核', IN_AUDIT: '审核中', CLOSED: '已销案',
+  PENDING_REVIEW: '待复核',
+  PENDING_AUDIT: '待审核',
+  IN_AUDIT: '审核中',
+  CLOSED: '已销案',
 };
 
 export default async function CaseDetail({ params }: { params: { id: string } }) {
@@ -3661,11 +4149,18 @@ export default async function CaseDetail({ params }: { params: { id: string } })
   const c = await prisma.case.findUnique({
     where: { id: params.id },
     include: {
-      enterprise: true, hazardType: true,
+      enterprise: true,
+      hazardType: true,
       registeredBy: { select: { name: true } },
       lockedBy: { select: { name: true } },
-      reviews: { orderBy: { startedAt: 'desc' }, include: { reviewer: { select: { name: true } }, items: { include: { item: true } } } },
-      auditSignatures: { orderBy: { signedAt: 'desc' }, include: { auditor: { select: { name: true } } } },
+      reviews: {
+        orderBy: { startedAt: 'desc' },
+        include: { reviewer: { select: { name: true } }, items: { include: { item: true } } },
+      },
+      auditSignatures: {
+        orderBy: { signedAt: 'desc' },
+        include: { auditor: { select: { name: true } } },
+      },
     },
   });
   if (!c) return <p>案件不存在</p>;
@@ -3676,28 +4171,60 @@ export default async function CaseDetail({ params }: { params: { id: string } })
         <Badge>{STATUS_LABEL[c.status]}</Badge>
       </div>
       <section className="grid grid-cols-2 gap-4 text-sm">
-        <div><span className="text-muted-foreground">企业：</span>{c.enterprise.name}</div>
-        <div><span className="text-muted-foreground">隐患类型：</span>{c.hazardType.name}</div>
-        <div><span className="text-muted-foreground">严重程度：</span>{c.severity}</div>
-        <div><span className="text-muted-foreground">来源：</span>{c.source}</div>
-        <div><span className="text-muted-foreground">地址：</span>{c.address}</div>
-        <div><span className="text-muted-foreground">整改期限：</span>{c.deadline.toLocaleDateString('zh-CN')}</div>
-        <div className="col-span-2"><span className="text-muted-foreground">描述：</span>{c.description}</div>
+        <div>
+          <span className="text-muted-foreground">企业：</span>
+          {c.enterprise.name}
+        </div>
+        <div>
+          <span className="text-muted-foreground">隐患类型：</span>
+          {c.hazardType.name}
+        </div>
+        <div>
+          <span className="text-muted-foreground">严重程度：</span>
+          {c.severity}
+        </div>
+        <div>
+          <span className="text-muted-foreground">来源：</span>
+          {c.source}
+        </div>
+        <div>
+          <span className="text-muted-foreground">地址：</span>
+          {c.address}
+        </div>
+        <div>
+          <span className="text-muted-foreground">整改期限：</span>
+          {c.deadline.toLocaleDateString('zh-CN')}
+        </div>
+        <div className="col-span-2">
+          <span className="text-muted-foreground">描述：</span>
+          {c.description}
+        </div>
       </section>
       <div className="flex gap-2">
         {c.status === 'PENDING_REVIEW' && (
-          <Button asChild><Link href={`/cases/${c.id}/review`}>开始复核</Link></Button>
+          <Button asChild>
+            <Link href={`/cases/${c.id}/review`}>开始复核</Link>
+          </Button>
         )}
         {(c.status === 'PENDING_AUDIT' || c.status === 'IN_AUDIT') && (
-          <Button asChild><Link href={`/cases/${c.id}/audit`}>审核</Link></Button>
+          <Button asChild>
+            <Link href={`/cases/${c.id}/audit`}>审核</Link>
+          </Button>
         )}
       </div>
       <section>
         <h2 className="text-lg font-medium mb-2">复核历史</h2>
         {c.reviews.map((r) => (
           <div key={r.id} className="border rounded p-3 mb-2 text-sm">
-            <div>状态：{r.status} | 复核人：{r.reviewer.name} | 提交时间：{r.submittedAt?.toLocaleString('zh-CN') || '未提交'}</div>
-            {r.conclusion && <div>结论：{r.conclusion} | 摘要：{r.summary}</div>}
+            <div>
+              状态：{r.status} | 复核人：{r.reviewer.name} | 提交时间：
+              {r.submittedAt?.toLocaleString('zh-CN') || '未提交'}
+            </div>
+            {r.conclusion && (
+              <div>
+                结论：{r.conclusion} | 摘要：{r.summary}
+              </div>
+            )}
           </div>
         ))}
       </section>
@@ -3705,7 +4232,8 @@ export default async function CaseDetail({ params }: { params: { id: string } })
         <h2 className="text-lg font-medium mb-2">签字记录</h2>
         {c.auditSignatures.map((s) => (
           <div key={s.id} className="border rounded p-3 mb-2 text-sm">
-            {s.auditor.name} {s.decision === 'PASS' ? '通过' : '驳回'} — {s.signedAt.toLocaleString('zh-CN')}
+            {s.auditor.name} {s.decision === 'PASS' ? '通过' : '驳回'} —{' '}
+            {s.signedAt.toLocaleString('zh-CN')}
             {s.comment && <div className="text-muted-foreground">{s.comment}</div>}
           </div>
         ))}
@@ -3725,6 +4253,7 @@ git commit -m "feat(ui): /cases/[id] detail with history + signatures"
 ### Task 37: `/cases/[id]/review` review form
 
 **Files:**
+
 - Create: `src/app/cases/[id]/review/page.tsx`, `src/app/cases/[id]/review/review-form.tsx`
 
 - [ ] **Step 1: Write `src/app/cases/[id]/review/page.tsx`**
@@ -3739,7 +4268,9 @@ export default async function ReviewPage({ params }: { params: { id: string } })
   const session = await auth();
   const c = await prisma.case.findUnique({
     where: { id: params.id },
-    include: { reviews: { orderBy: { startedAt: 'desc' }, take: 1, include: { items: true, photos: true } } },
+    include: {
+      reviews: { orderBy: { startedAt: 'desc' }, take: 1, include: { items: true, photos: true } },
+    },
   });
   if (!c) notFound();
   const review = c.reviews[0];
@@ -3782,7 +4313,8 @@ export function ReviewForm({ caseId, reviewId, template, review }: any) {
 
   async function claim() {
     const res = await fetch(`/api/cases/${caseId}/review`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'claim' }),
     });
     if (res.ok) setClaimed(true);
@@ -3792,13 +4324,15 @@ export function ReviewForm({ caseId, reviewId, template, review }: any) {
   async function saveItem(itemId: string, result: string, note: string) {
     setResults((r) => ({ ...r, [itemId]: { result, note } }));
     await fetch(`/api/cases/${caseId}/review/items`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reviewId, itemId, result, note }),
     });
   }
 
   async function uploadPhoto(file: File) {
-    const fd = new FormData(); fd.append('file', file);
+    const fd = new FormData();
+    fd.append('file', file);
     const res = await fetch('/api/photos', { method: 'POST', body: fd });
     const { storageKey } = await res.json();
     setPhotos((p) => [...p, storageKey]);
@@ -3806,7 +4340,8 @@ export function ReviewForm({ caseId, reviewId, template, review }: any) {
 
   async function submit() {
     const res = await fetch(`/api/cases/${caseId}/review`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ conclusion, summary, photos }),
     });
     if (res.ok) router.push(`/cases/${caseId}`);
@@ -3819,36 +4354,70 @@ export function ReviewForm({ caseId, reviewId, template, review }: any) {
     <div className="space-y-6">
       {template.items.map((item: any) => (
         <div key={item.id} className="border rounded p-3 space-y-2">
-          <div className="font-medium">{item.content}{item.required && <span className="text-red-500">*</span>}</div>
+          <div className="font-medium">
+            {item.content}
+            {item.required && <span className="text-red-500">*</span>}
+          </div>
           <div className="flex gap-2 text-sm">
             {['PASS', 'FAIL', 'NA'].map((r) => (
               <label key={r} className="flex items-center gap-1">
-                <input type="radio" name={`r-${item.id}`} value={r} onChange={() => saveItem(item.id, r, results[item.id]?.note || '')} />
+                <input
+                  type="radio"
+                  name={`r-${item.id}`}
+                  value={r}
+                  onChange={() => saveItem(item.id, r, results[item.id]?.note || '')}
+                />
                 {r === 'PASS' ? '通过' : r === 'FAIL' ? '不通过' : 'N/A'}
               </label>
             ))}
           </div>
-          <Input placeholder="备注（可选）" onBlur={(e) => saveItem(item.id, results[item.id]?.result || 'NA', e.target.value)} />
+          <Input
+            placeholder="备注（可选）"
+            onBlur={(e) => saveItem(item.id, results[item.id]?.result || 'NA', e.target.value)}
+          />
         </div>
       ))}
       <div>
         <h3 className="font-medium mb-2">照片</h3>
-        <input ref={fileRef} type="file" accept="image/*" multiple onChange={(e) => Array.from(e.target.files || []).forEach(uploadPhoto)} />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => Array.from(e.target.files || []).forEach(uploadPhoto)}
+        />
         <div className="grid grid-cols-4 gap-2 mt-2">
-          {photos.map((k) => <img key={k} src={`/api/photos/${k}`} alt="" className="w-full h-24 object-cover rounded" />)}
+          {photos.map((k) => (
+            <img
+              key={k}
+              src={`/api/photos/${k}`}
+              alt=""
+              className="w-full h-24 object-cover rounded"
+            />
+          ))}
         </div>
       </div>
       <div>
         <label className="font-medium">总体结论</label>
-        <select className="block w-full border rounded p-2 mt-1" value={conclusion} onChange={(e) => setConclusion(e.target.value)}>
+        <select
+          className="block w-full border rounded p-2 mt-1"
+          value={conclusion}
+          onChange={(e) => setConclusion(e.target.value)}
+        >
           <option value="">--</option>
           <option value="PASS">通过</option>
           <option value="FAIL">不通过</option>
           <option value="PARTIAL">部分通过</option>
         </select>
       </div>
-      <Textarea placeholder="总体说明" value={summary} onChange={(e) => setSummary(e.target.value)} />
-      <Button onClick={submit} disabled={!conclusion || !summary}>提交复核</Button>
+      <Textarea
+        placeholder="总体说明"
+        value={summary}
+        onChange={(e) => setSummary(e.target.value)}
+      />
+      <Button onClick={submit} disabled={!conclusion || !summary}>
+        提交复核
+      </Button>
     </div>
   );
 }
@@ -3863,7 +4432,12 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { handleError, problem } from '../../../../../_lib/error';
 
-const Schema = z.object({ reviewId: z.string(), itemId: z.string(), result: z.enum(['PASS', 'FAIL', 'NA']), note: z.string().optional() });
+const Schema = z.object({
+  reviewId: z.string(),
+  itemId: z.string(),
+  result: z.enum(['PASS', 'FAIL', 'NA']),
+  note: z.string().optional(),
+});
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -3872,12 +4446,22 @@ export async function POST(req: NextRequest) {
     const body = Schema.parse(await req.json());
     await prisma.reviewItemResult.upsert({
       where: { reviewId_itemId: { reviewId: body.reviewId, itemId: body.itemId } },
-      create: { reviewId: body.reviewId, itemId: body.itemId, result: body.result, note: body.note },
+      create: {
+        reviewId: body.reviewId,
+        itemId: body.itemId,
+        result: body.result,
+        note: body.note,
+      },
       update: { result: body.result, note: body.note },
     });
-    await prisma.review.update({ where: { id: body.reviewId }, data: { lastActiveAt: new Date() } });
+    await prisma.review.update({
+      where: { id: body.reviewId },
+      data: { lastActiveAt: new Date() },
+    });
     return NextResponse.json({ ok: true });
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -3891,6 +4475,7 @@ git commit -m "feat(ui): /cases/[id]/review form with claim + items + photos"
 ### Task 38: `/cases/[id]/audit` audit form
 
 **Files:**
+
 - Create: `src/app/cases/[id]/audit/page.tsx`, `src/app/cases/[id]/audit/audit-form.tsx`
 
 - [ ] **Step 1: Write `src/app/cases/[id]/audit/page.tsx`**
@@ -3906,7 +4491,11 @@ export default async function AuditPage({ params }: { params: { id: string } }) 
   const c = await prisma.case.findUnique({
     where: { id: params.id },
     include: {
-      reviews: { orderBy: { startedAt: 'desc' }, take: 1, include: { items: { include: { item: true } }, photos: true, reviewer: true } },
+      reviews: {
+        orderBy: { startedAt: 'desc' },
+        take: 1,
+        include: { items: { include: { item: true } }, photos: true, reviewer: true },
+      },
       lockedBy: { select: { name: true } },
     },
   });
@@ -3914,8 +4503,15 @@ export default async function AuditPage({ params }: { params: { id: string } }) 
   return (
     <main className="p-6 max-w-3xl space-y-4">
       <h1 className="text-2xl font-semibold font-mono">{c.code} — 审核</h1>
-      {c.lockedBy && c.status === 'IN_AUDIT' && <p className="text-yellow-600 text-sm">已被 {c.lockedBy.name} 领取</p>}
-      <AuditForm caseId={c.id} status={c.status} lockedByMe={c.lockedById === session?.user.id} review={c.reviews[0]} />
+      {c.lockedBy && c.status === 'IN_AUDIT' && (
+        <p className="text-yellow-600 text-sm">已被 {c.lockedBy.name} 领取</p>
+      )}
+      <AuditForm
+        caseId={c.id}
+        status={c.status}
+        lockedByMe={c.lockedById === session?.user.id}
+        review={c.reviews[0]}
+      />
     </main>
   );
 }
@@ -3944,8 +4540,12 @@ export function AuditForm({ caseId, status, lockedByMe, review }: any) {
 
   async function sign() {
     const res = await fetch(`/api/cases/${caseId}/audit`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ signatureUrl: signatureUrl || 'data:image/png;base64,placeholder', comment }),
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        signatureUrl: signatureUrl || 'data:image/png;base64,placeholder',
+        comment,
+      }),
     });
     if (res.ok) router.push(`/cases/${caseId}`);
     else alert((await res.json()).message);
@@ -3953,7 +4553,8 @@ export function AuditForm({ caseId, status, lockedByMe, review }: any) {
 
   async function reject() {
     const res = await fetch(`/api/cases/${caseId}/audit?action=reject`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason }),
     });
     if (res.ok) router.push(`/cases/${caseId}`);
@@ -3961,7 +4562,8 @@ export function AuditForm({ caseId, status, lockedByMe, review }: any) {
   }
 
   if (status === 'PENDING_AUDIT') return <Button onClick={open}>领取审核</Button>;
-  if (status === 'IN_AUDIT' && !lockedByMe) return <p className="text-sm text-muted-foreground">已被其他科长领取</p>;
+  if (status === 'IN_AUDIT' && !lockedByMe)
+    return <p className="text-sm text-muted-foreground">已被其他科长领取</p>;
 
   return (
     <div className="space-y-4">
@@ -3974,17 +4576,34 @@ export function AuditForm({ caseId, status, lockedByMe, review }: any) {
         <h3 className="font-medium mb-2">逐项结果</h3>
         {review?.items.map((i: any) => (
           <div key={i.id} className="text-sm py-1">
-            {i.item.content} — <span className="font-mono">{i.result}</span> {i.note && `(${i.note})`}
+            {i.item.content} — <span className="font-mono">{i.result}</span>{' '}
+            {i.note && `(${i.note})`}
           </div>
         ))}
       </section>
       <div className="space-y-2 border-t pt-4">
-        <Input placeholder="签名 URL（生产用 canvas 签名板）" value={signatureUrl} onChange={(e) => setSignatureUrl(e.target.value)} />
-        <Textarea placeholder="审核意见" value={comment} onChange={(e) => setComment(e.target.value)} />
-        <Button onClick={sign} className="mr-2">通过 + 签字</Button>
+        <Input
+          placeholder="签名 URL（生产用 canvas 签名板）"
+          value={signatureUrl}
+          onChange={(e) => setSignatureUrl(e.target.value)}
+        />
+        <Textarea
+          placeholder="审核意见"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+        />
+        <Button onClick={sign} className="mr-2">
+          通过 + 签字
+        </Button>
         <div className="border-t pt-2 mt-2">
-          <Input placeholder="驳回理由" value={reason} onChange={(e) => setReason(e.target.value)} />
-          <Button onClick={reject} variant="destructive" className="mt-2" disabled={!reason}>驳回</Button>
+          <Input
+            placeholder="驳回理由"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+          <Button onClick={reject} variant="destructive" className="mt-2" disabled={!reason}>
+            驳回
+          </Button>
         </div>
       </div>
     </div>
@@ -4002,6 +4621,7 @@ git commit -m "feat(ui): /cases/[id]/audit with open/sign/reject"
 ### Task 39: `/me/notifications` + `/me/sync`
 
 **Files:**
+
 - Create: `src/app/me/notifications/page.tsx`, `src/app/me/sync/page.tsx`
 
 - [ ] **Step 1: Write `src/app/me/notifications/page.tsx`**
@@ -4027,7 +4647,11 @@ export default async function NotificationsPage() {
             {!n.readAt && <Badge>未读</Badge>}
           </div>
           <p className="text-muted-foreground">{n.body}</p>
-          {n.refType === 'Case' && n.refId && <Link href={`/cases/${n.refId}`} className="text-blue-600 text-xs">查看案件 →</Link>}
+          {n.refType === 'Case' && n.refId && (
+            <Link href={`/cases/${n.refId}`} className="text-blue-600 text-xs">
+              查看案件 →
+            </Link>
+          )}
         </div>
       ))}
     </main>
@@ -4074,6 +4698,7 @@ git commit -m "feat(ui): /me/notifications + /me/sync"
 ### Task 40: `/stats` dashboard
 
 **Files:**
+
 - Create: `src/app/stats/page.tsx`
 
 - [ ] **Step 1: Write**
@@ -4120,6 +4745,7 @@ git commit -m "feat(ui): /stats dashboard"
 ### Task 41: Admin pages (users / enterprises / hazard-types / templates / audit-log)
 
 **Files:**
+
 - Create: `src/app/admin/users/page.tsx`, `src/app/admin/enterprises/page.tsx`, `src/app/admin/hazard-types/page.tsx`, `src/app/admin/checklist-templates/page.tsx`, `src/app/admin/audit-log/page.tsx`
 
 - [ ] **Step 1: Write `src/app/admin/users/page.tsx`** (pattern; replicate for others)
@@ -4134,28 +4760,58 @@ import { UsersTable } from '@/components/admin/users-table';
 export default async function AdminUsersPage() {
   const session = await auth();
   if (!session) redirect('/login');
-  try { assertCan(session.user.role, 'user:manage'); } catch { return <p>无权限</p>; }
+  try {
+    assertCan(session.user.role, 'user:manage');
+  } catch {
+    return <p>无权限</p>;
+  }
   const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
-  return <main className="p-6"><h1 className="text-2xl font-semibold mb-4">用户管理</h1><UsersTable users={users} /></main>;
+  return (
+    <main className="p-6">
+      <h1 className="text-2xl font-semibold mb-4">用户管理</h1>
+      <UsersTable users={users} />
+    </main>
+  );
 }
 ```
 
 - [ ] **Step 2: Write `src/components/admin/users-table.tsx`**
 
 ```tsx
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-const ROLE_LABEL: Record<string, string> = { INSPECTOR: '监管员', CHIEF: '科长', DIRECTOR: '局长', ADMIN: '管理员' };
+const ROLE_LABEL: Record<string, string> = {
+  INSPECTOR: '监管员',
+  CHIEF: '科长',
+  DIRECTOR: '局长',
+  ADMIN: '管理员',
+};
 export function UsersTable({ users }: { users: any[] }) {
   return (
     <Table>
-      <TableHeader><TableRow><TableHead>姓名</TableHead><TableHead>邮箱</TableHead><TableHead>角色</TableHead><TableHead>状态</TableHead></TableRow></TableHeader>
+      <TableHeader>
+        <TableRow>
+          <TableHead>姓名</TableHead>
+          <TableHead>邮箱</TableHead>
+          <TableHead>角色</TableHead>
+          <TableHead>状态</TableHead>
+        </TableRow>
+      </TableHeader>
       <TableBody>
         {users.map((u) => (
           <TableRow key={u.id}>
             <TableCell>{u.name}</TableCell>
             <TableCell>{u.email}</TableCell>
-            <TableCell><Badge>{ROLE_LABEL[u.role]}</Badge></TableCell>
+            <TableCell>
+              <Badge>{ROLE_LABEL[u.role]}</Badge>
+            </TableCell>
             <TableCell>{u.status}</TableCell>
           </TableRow>
         ))}
@@ -4182,6 +4838,7 @@ git commit -m "feat(ui): admin pages (users, enterprises, hazard-types, template
 ### Task 42: Layout + nav
 
 **Files:**
+
 - Modify: `src/app/layout.tsx`
 
 - [ ] **Step 1: Write `src/app/layout.tsx`**
@@ -4200,7 +4857,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         {session ? (
           <header className="border-b px-6 py-3 flex items-center gap-6">
-            <Link href="/" className="font-semibold">安全生产隐患复核</Link>
+            <Link href="/" className="font-semibold">
+              安全生产隐患复核
+            </Link>
             <nav className="flex gap-4 text-sm">
               <Link href="/cases">案件</Link>
               <Link href="/stats">统计</Link>
@@ -4209,8 +4868,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {session.user.role === 'ADMIN' && <Link href="/admin/users">管理</Link>}
             </nav>
             <div className="ml-auto flex items-center gap-3 text-sm">
-              <span>{session.user.name} ({session.user.role})</span>
-              <form action={async () => { 'use server'; await signOut({ redirectTo: '/login' }); }}>
+              <span>
+                {session.user.name} ({session.user.role})
+              </span>
+              <form
+                action={async () => {
+                  'use server';
+                  await signOut({ redirectTo: '/login' });
+                }}
+              >
                 <button className="text-blue-600">登出</button>
               </form>
             </div>
@@ -4237,6 +4903,7 @@ git commit -m "feat(ui): app layout with role-aware nav"
 ### Task 43: next-pwa setup
 
 **Files:**
+
 - Modify: `next.config.ts`, `src/app/manifest.ts`
 
 - [ ] **Step 1: Install**
@@ -4323,6 +4990,7 @@ git commit -m "feat(pwa): next-pwa setup with manifest + runtime caching"
 ### Task 44: IndexedDB layer (idb wrapper)
 
 **Files:**
+
 - Create: `src/pwa/offline-db.ts`
 
 - [ ] **Step 1: Install idb**
@@ -4340,8 +5008,22 @@ const DB_NAME = 'shr-offline';
 const VERSION = 1;
 
 export type DraftPhoto = { id: string; reviewId: string; blob: Blob; takenAt: number };
-export type DraftReview = { id: string; caseId: string; reviewId: string; items: any[]; conclusion?: string; summary?: string; updatedAt: number };
-export type PendingOp = { clientId: string; opType: string; payload: any; createdAt: number; retryCount: number };
+export type DraftReview = {
+  id: string;
+  caseId: string;
+  reviewId: string;
+  items: any[];
+  conclusion?: string;
+  summary?: string;
+  updatedAt: number;
+};
+export type PendingOp = {
+  clientId: string;
+  opType: string;
+  payload: any;
+  createdAt: number;
+  retryCount: number;
+};
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
@@ -4349,9 +5031,12 @@ export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB(DB_NAME, VERSION, {
       upgrade(db) {
-        if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('drafts')) db.createObjectStore('drafts', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('queue')) db.createObjectStore('queue', { keyPath: 'clientId' });
+        if (!db.objectStoreNames.contains('photos'))
+          db.createObjectStore('photos', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('drafts'))
+          db.createObjectStore('drafts', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('queue'))
+          db.createObjectStore('queue', { keyPath: 'clientId' });
       },
     });
   }
@@ -4396,7 +5081,10 @@ export const offlineDB = {
   async incRetry(clientId: string) {
     const db = await getDB();
     const op = await db.get('queue', clientId);
-    if (op) { op.retryCount++; await db.put('queue', op); }
+    if (op) {
+      op.retryCount++;
+      await db.put('queue', op);
+    }
   },
 };
 ```
@@ -4411,6 +5099,7 @@ git commit -m "feat(pwa): IndexedDB layer (photos, drafts, queue)"
 ### Task 45: Sync worker (client-side)
 
 **Files:**
+
 - Create: `src/pwa/sync-worker.ts`
 
 - [ ] **Step 1: Write `src/pwa/sync-worker.ts`**
@@ -4424,7 +5113,8 @@ let syncing = false;
 export async function syncNow(): Promise<{ synced: number; failed: number }> {
   if (syncing) return { synced: 0, failed: 0 };
   syncing = true;
-  let synced = 0, failed = 0;
+  let synced = 0,
+    failed = 0;
   try {
     const ops = await offlineDB.listQueue();
     for (const op of ops) {
@@ -4477,7 +5167,8 @@ async function scheduleRetry(clientId: string) {
   if (op && op.retryCount >= 3) {
     // 通知服务器 + UI
     await fetch('/api/sync/notify-failed', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ clientId }),
     });
   } else {
@@ -4488,7 +5179,9 @@ async function scheduleRetry(clientId: string) {
 
 // Hook into online event
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => { void syncNow(); });
+  window.addEventListener('online', () => {
+    void syncNow();
+  });
 }
 ```
 
@@ -4504,11 +5197,13 @@ git commit -m "feat(pwa): sync worker with exponential backoff"
 ### Task 46: Wire offline into review form
 
 **Files:**
+
 - Modify: `src/app/cases/[id]/review/review-form.tsx` (T37)
 
 - [ ] **Step 1: Update `review-form.tsx` to use offline DB when offline**
 
 Replace the `uploadPhoto` and `submit` handlers to:
+
 - If `navigator.onLine === false`: save to IndexedDB + enqueue
 - If online: existing behavior
 
@@ -4527,7 +5222,15 @@ async function uploadPhoto(file: File) {
 
 async function submit() {
   if (!navigator.onLine) {
-    await offlineDB.saveDraft({ id: reviewId, caseId, reviewId, items: Object.values(results), conclusion, summary, updatedAt: 0 });
+    await offlineDB.saveDraft({
+      id: reviewId,
+      caseId,
+      reviewId,
+      items: Object.values(results),
+      conclusion,
+      summary,
+      updatedAt: 0,
+    });
     await offlineDB.enqueue({
       clientId: crypto.randomUUID(),
       opType: 'submit_review',
@@ -4548,7 +5251,7 @@ Modify `src/app/layout.tsx` to import sync worker:
 ```tsx
 import { useEffect } from 'react';
 // inside <body>:
-<script dangerouslySetInnerHTML={{ __html: `import('/_next/static/chunks/sync-worker.js')` }} />
+<script dangerouslySetInnerHTML={{ __html: `import('/_next/static/chunks/sync-worker.js')` }} />;
 ```
 
 (Better: use a small client component that triggers initial sync on mount.)
@@ -4563,6 +5266,7 @@ git commit -m "feat(pwa): wire offline into review form + mount sync worker"
 ### Task 47: Sync queue API helper
 
 **Files:**
+
 - Create: `src/app/api/sync/notify-failed/route.ts`
 
 - [ ] **Step 1: Write**
@@ -4590,7 +5294,9 @@ export async function POST(req: NextRequest) {
       },
     });
     return NextResponse.json({ ok: true });
-  } catch (e) { return handleError(e); }
+  } catch (e) {
+    return handleError(e);
+  }
 }
 ```
 
@@ -4604,6 +5310,7 @@ git commit -m "feat(api): /api/sync/notify-failed for client → server notifica
 ### Task 48: Photo serving endpoint (proxy to MinIO)
 
 **Files:**
+
 - Create: `src/app/api/photos/[key]/route.ts`
 
 - [ ] **Step 1: Write**
@@ -4636,6 +5343,7 @@ git commit -m "feat(api): /api/photos/[key] signed URL redirect"
 ### Task 49: Playwright config + login E2E
 
 **Files:**
+
 - Create: `playwright.config.ts`, `tests/e2e/login.spec.ts`
 
 - [ ] **Step 1: Install**
@@ -4656,7 +5364,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   use: { baseURL: 'http://localhost:3000', trace: 'on-first-retry' },
-  webServer: { command: 'npm run start', port: 3000, reuseExistingServer: !process.env.CI, timeout: 60_000 },
+  webServer: {
+    command: 'npm run start',
+    port: 3000,
+    reuseExistingServer: !process.env.CI,
+    timeout: 60_000,
+  },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
 });
 ```
@@ -4694,6 +5407,7 @@ git commit -m "test(e2e): playwright config + login test"
 ### Task 50: E2E happy path (登记 → 复核 → 审核 → 销案)
 
 **Files:**
+
 - Create: `tests/e2e/happy-path.spec.ts`
 
 - [ ] **Step 1: Write**
@@ -4760,6 +5474,7 @@ git commit -m "test(e2e): full happy path (register → review → audit → clo
 ### Task 51: E2E 驳回 + 重交
 
 **Files:**
+
 - Create: `tests/e2e/reject-resubmit.spec.ts`
 
 - [ ] **Step 1: Write**
@@ -4796,6 +5511,7 @@ git add -A && git commit -m "test(e2e): reject + resubmit flow"
 ### Task 52: E2E 离线 + 联网同步
 
 **Files:**
+
 - Create: `tests/e2e/offline-sync.spec.ts`
 
 - [ ] **Step 1: Write**
@@ -4827,7 +5543,9 @@ test('offline review draft syncs when back online', async ({ page, context }) =>
   await context.setOffline(false);
   // 触发同步（页面自动监听 online 事件；或手动访问 /me/sync 触发）
   await page.goto('/me/sync');
-  await expect(page.locator('text=已销案, .bg-green-100').or(page.locator('text=暂无待同步'))).toBeVisible({ timeout: 10000 });
+  await expect(
+    page.locator('text=已销案, .bg-green-100').or(page.locator('text=暂无待同步')),
+  ).toBeVisible({ timeout: 10000 });
 });
 ```
 
@@ -4841,6 +5559,7 @@ git add -A && git commit -m "test(e2e): offline review + sync on reconnect"
 ### Task 53: Docker Compose (final)
 
 **Files:**
+
 - Modify: `docker-compose.yml`, `Dockerfile`
 
 - [ ] **Step 1: Write `Dockerfile`**
@@ -4889,13 +5608,13 @@ services:
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev_secret}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       MINIO_ENDPOINT: minio
-      MINIO_PORT: "9000"
+      MINIO_PORT: '9000'
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: minio_dev_pwd
       MINIO_BUCKET: shr-photos
       TZ: Asia/Shanghai
     ports:
-      - "3000:3000"
+      - '3000:3000'
 ```
 
 - [ ] **Step 3: Verify full stack**
@@ -4918,6 +5637,7 @@ git commit -m "ops: Dockerfile + full docker-compose stack"
 ### Task 54: GitHub Actions CI
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Write**
@@ -4967,6 +5687,7 @@ git commit -m "ops: GitHub Actions CI (lint + typecheck + test + e2e + build)"
 ## Self-Review
 
 **1. Spec coverage:** Skim each spec section; verify plan has matching task:
+
 - §1 背景 → Phase 0-7 (entire plan)
 - §2 决策 → all embedded in tasks
 - §3 架构 → Phase 0-1 (scaffolding, schema, auth, permissions)
@@ -4988,6 +5709,7 @@ git commit -m "ops: GitHub Actions CI (lint + typecheck + test + e2e + build)"
 **2. Placeholder scan:** No "TBD", "fill in details", or vague steps. All code is concrete.
 
 **3. Type consistency:** Reviewed key signatures:
+
 - `ReviewService.claim(caseId, userId)` ↔ T24 API matches
 - `AuditService.openAudit(caseId, userId)` ↔ T25 API matches
 - `CaseService.register(input, actorId)` ↔ T22 API matches
@@ -4998,6 +5720,7 @@ git commit -m "ops: GitHub Actions CI (lint + typecheck + test + e2e + build)"
 **4. Schema corrections noted:** T13 noted the `ReviewItemResult` composite unique key — schema in T7 should add `@@unique([reviewId, itemId])` for `saveItem` upsert to work cleanly. (Already addressed in T13's note.)
 
 **5. Minor issues to consider at implementation time:**
+
 - T7 schema doesn't yet have `@@unique([reviewId, itemId])` on `ReviewItemResult` — add in T7 implementation
 - T20's `instrumentation.ts` needs Next.js 15 compatible hook signature
 - `PhotoService.getSignedUrl` is called by `/api/photos/[key]` — note that the key in URL is the storageKey (UUID + ext), and should be URL-decoded if it contains `/`
@@ -5031,6 +5754,7 @@ curl http://localhost:3000/api/health
 ```
 
 **v0.1 done when:**
+
 - All 4 seeded users can log in
 - 监管员 can register a case manually + via Excel import
 - 监管员 can claim a review, fill checklist, take photos, submit
@@ -5040,4 +5764,3 @@ curl http://localhost:3000/api/health
 - 24h 不活动后回收 cron 释放锁（手动测：调 `await scanRecycle()` with adjusted threshold）
 - /stats shows KPI + 30 天趋势 + 隐患类型分布
 - 通知 cron 推送的临期/超时记录出现在 /me/notifications
-
