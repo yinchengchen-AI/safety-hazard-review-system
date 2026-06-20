@@ -2,6 +2,7 @@ import { NotificationService } from './notification';
 import { prisma } from '@/lib/prisma';
 import { BusinessError } from '@/lib/errors';
 import { CaseService } from './case';
+import type { PhotoMeta } from './photo';
 import type { Review, ItemResult, Conclusion } from '@prisma/client';
 
 const ACTIVE_GRACE_MS = 24 * 3600 * 1000;
@@ -101,8 +102,15 @@ export const ReviewService = {
 
   /**
    * 提交 Review + Case 状态 → 待审核
+   * photos: 离线客户端先在 sync 队列里堆积，提交时一起落库（spec §5.6 同步）
    */
-  async submit(caseId: string, conclusion: Conclusion, summary: string, userId: string) {
+  async submit(
+    caseId: string,
+    conclusion: Conclusion,
+    summary: string,
+    userId: string,
+    photos: PhotoMeta[] = [],
+  ) {
     return prisma.$transaction(async (tx) => {
       const r = await tx.review.findFirst({
         where: { caseId, status: 'IN_PROGRESS' },
@@ -116,6 +124,11 @@ export const ReviewService = {
         where: { id: r.id },
         data: { status: 'SUBMITTED', submittedAt: new Date(), conclusion, summary },
       });
+      if (photos.length) {
+        await tx.reviewPhoto.createMany({
+          data: photos.map((m) => ({ ...m, reviewId: r.id, capturedById: userId, syncStatus: 'SYNCED' })),
+        });
+      }
       await CaseService.transitionStatus(caseId, 'submit_review', userId);
       await tx.auditLog.create({
         data: {
@@ -123,7 +136,7 @@ export const ReviewService = {
           action: 'review:submit',
           targetType: 'Review',
           targetId: r.id,
-          payload: { conclusion },
+          payload: { conclusion, photoCount: photos.length },
         },
       });
       await NotificationService.broadcastToChiefs('AUDIT_PENDING', {

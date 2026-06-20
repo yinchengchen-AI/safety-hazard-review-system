@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { ReviewService } from './review';
+import type { PhotoMeta } from './photo';
 import { BusinessError } from '@/lib/errors';
 
 export const SyncService = {
@@ -30,11 +31,13 @@ export const SyncService = {
         switch (q.opType) {
           case 'submit_review': {
             const p = (q.payload ?? {}) as Record<string, unknown>;
+            const photos = Array.isArray(p['photos']) ? (p['photos'] as PhotoMeta[]) : [];
             await ReviewService.submit(
               p['caseId'] as string,
               p['conclusion'] as 'PASS' | 'FAIL' | 'PARTIAL',
               (p['summary'] as string) ?? '',
               q.userId,
+              photos,
             );
             break;
           }
@@ -47,14 +50,28 @@ export const SyncService = {
         });
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
+        // 这次更新后 retryCount 达到 3 → 标 FAILED（spec §5.6 兜底通知）
+        const willFail = q.retryCount + 1 >= 3;
         await tx.offlineSyncQueue.update({
           where: { id: q.id },
           data: {
-            status: q.retryCount >= 3 ? 'FAILED' : 'PENDING',
+            status: willFail ? 'FAILED' : 'PENDING',
             retryCount: { increment: 1 },
             errorMsg: message,
           },
         });
+        if (willFail) {
+          await tx.notification.create({
+            data: {
+              userId: q.userId,
+              type: 'SYNC_FAILED',
+              refType: 'OfflineSyncQueue',
+              refId: q.id,
+              title: '离线同步失败',
+              body: `操作 ${q.opType} 重试 3 次仍失败：${message}`,
+            },
+          });
+        }
         throw e;
       }
     });

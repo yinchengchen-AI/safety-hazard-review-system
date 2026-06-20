@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { CaseService } from '@/services/case';
 
 const IDLE_MS = 24 * 3600 * 1000;
 
@@ -38,24 +39,14 @@ export async function scanRecycle() {
     }
   }
 
-  // 释放长期未签字的 Case 锁
+  // 释放长期未签字的 Case 锁 — 走 CaseService.transitionStatus('reclaim_idle')，
+  // 让状态机写统一的 case:reclaim_idle 审计行（spec §5.7）
   const staleLocks = await prisma.case.findMany({
     where: { status: 'IN_AUDIT', lockedAt: { lt: threshold } },
+    select: { id: true, lockedById: true },
   });
   for (const c of staleLocks) {
-    await prisma.case.update({
-      where: { id: c.id },
-      data: { lockedById: null, lockedAt: null, status: 'PENDING_AUDIT' },
-    });
-    if (c.lockedById) {
-      await prisma.auditLog.create({
-        data: {
-          userId: c.lockedById,
-          action: 'case:reclaim_idle',
-          targetType: 'Case',
-          targetId: c.id,
-        },
-      });
-    }
+    if (!c.lockedById) continue;
+    await CaseService.transitionStatus(c.id, 'reclaim_idle', c.lockedById);
   }
 }

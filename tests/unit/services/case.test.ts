@@ -9,6 +9,7 @@ function buildMocks() {
   const caseCount = vi.fn();
   const reviewCreate = vi.fn();
   const auditCreate = vi.fn();
+  const executeRaw = vi.fn().mockResolvedValue(undefined);
   const tx = {
     case: {
       create: caseCreate,
@@ -20,9 +21,23 @@ function buildMocks() {
     },
     review: { create: reviewCreate },
     auditLog: { create: auditCreate },
+    // generateCaseCode now does an advisory lock + findFirst
+    $executeRaw: executeRaw,
   };
   const transaction = vi.fn((fn: (t: typeof tx) => unknown) => fn(tx));
-  return { tx, transaction, caseCreate, caseUpdate, caseFindUnique, caseFindFirst, caseFindMany, caseCount, reviewCreate, auditCreate };
+  return {
+    tx,
+    transaction,
+    caseCreate,
+    caseUpdate,
+    caseFindUnique,
+    caseFindFirst,
+    caseFindMany,
+    caseCount,
+    reviewCreate,
+    auditCreate,
+    executeRaw,
+  };
 }
 
 describe('CaseService', () => {
@@ -57,6 +72,9 @@ describe('CaseService', () => {
     expect(m.auditCreate).toHaveBeenCalledWith({
       data: { userId: 'u1', action: 'register', targetType: 'Case', targetId: 'c1' },
     });
+    // code-generator needs advisory lock + a (possibly null) findFirst result
+    expect(m.executeRaw).toHaveBeenCalled();
+    expect(m.caseFindFirst).toHaveBeenCalled();
   });
 
   it('getById delegates to prisma.case.findUnique', async () => {

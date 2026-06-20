@@ -148,6 +148,7 @@ describe('ReviewService', () => {
         update: vi.fn().mockResolvedValueOnce({ ...reviewRow, status: 'SUBMITTED' }),
       },
       auditLog: { create: vi.fn() },
+      reviewPhoto: { createMany: vi.fn().mockResolvedValueOnce({ count: 0 }) },
     };
     const transaction = vi.fn((fn: (t: typeof tx) => unknown) => fn(tx));
     vi.doMock('@/lib/prisma', () => ({ prisma: { $transaction: transaction } }));
@@ -166,13 +167,62 @@ describe('ReviewService', () => {
       expect.objectContaining({ refType: 'Case', refId: 'c1' }),
     );
     expect(tx.auditLog.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ action: 'review:submit', payload: { conclusion: 'PASS' } }),
+      data: expect.objectContaining({
+        action: 'review:submit',
+        payload: { conclusion: 'PASS', photoCount: 0 },
+      }),
+    });
+    // No photos passed → no createMany call
+    expect(tx.reviewPhoto.createMany).not.toHaveBeenCalled();
+  });
+
+  it('submit persists offline photos in the same transaction', async () => {
+    const reviewRow = {
+      id: 'r1',
+      caseId: 'c1',
+      reviewerId: 'u-inspector',
+      templateId: 't1',
+      claimedById: 'u1',
+      status: 'IN_PROGRESS',
+    };
+    const tx = {
+      review: {
+        findFirst: vi.fn().mockResolvedValueOnce(reviewRow),
+        update: vi.fn().mockResolvedValueOnce({ ...reviewRow, status: 'SUBMITTED' }),
+      },
+      auditLog: { create: vi.fn() },
+      reviewPhoto: { createMany: vi.fn().mockResolvedValueOnce({ count: 2 }) },
+    };
+    const transaction = vi.fn((fn: (t: typeof tx) => unknown) => fn(tx));
+    vi.doMock('@/lib/prisma', () => ({ prisma: { $transaction: transaction } }));
+    transitionStatusSpy.mockResolvedValueOnce({});
+    broadcastSpy.mockResolvedValueOnce({ count: 2 });
+
+    const photos = [
+      { storageKey: 'photos/a.jpg', takenAt: new Date() },
+      { storageKey: 'photos/b.jpg', takenAt: new Date(), gpsLat: 1.23, gpsLng: 4.56 },
+    ];
+    const { ReviewService } = await import('@/services/review');
+    await ReviewService.submit('c1', 'FAIL', 'see photos', 'u1', photos);
+
+    expect(tx.reviewPhoto.createMany).toHaveBeenCalledWith({
+      data: [
+        { storageKey: 'photos/a.jpg', takenAt: photos[0].takenAt, reviewId: 'r1', capturedById: 'u1', syncStatus: 'SYNCED' },
+        { storageKey: 'photos/b.jpg', takenAt: photos[1].takenAt, gpsLat: 1.23, gpsLng: 4.56, reviewId: 'r1', capturedById: 'u1', syncStatus: 'SYNCED' },
+      ],
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: 'review:submit',
+        payload: { conclusion: 'FAIL', photoCount: 2 },
+      }),
     });
   });
 
   it('submit rejects when no in-progress review exists', async () => {
     const tx = {
       review: { findFirst: vi.fn().mockResolvedValueOnce(null), update: vi.fn() },
+      reviewPhoto: { createMany: vi.fn() },
     };
     const transaction = vi.fn((fn: (t: typeof tx) => unknown) => fn(tx));
     vi.doMock('@/lib/prisma', () => ({ prisma: { $transaction: transaction } }));
@@ -186,6 +236,7 @@ describe('ReviewService', () => {
     const reviewRow = { id: 'r1', caseId: 'c1', claimedById: 'someone-else', status: 'IN_PROGRESS' };
     const tx = {
       review: { findFirst: vi.fn().mockResolvedValueOnce(reviewRow), update: vi.fn() },
+      reviewPhoto: { createMany: vi.fn() },
     };
     const transaction = vi.fn((fn: (t: typeof tx) => unknown) => fn(tx));
     vi.doMock('@/lib/prisma', () => ({ prisma: { $transaction: transaction } }));

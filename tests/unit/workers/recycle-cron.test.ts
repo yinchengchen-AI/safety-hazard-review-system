@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+const transitionStatusSpy = vi.fn();
+
+vi.mock('@/services/case', () => ({
+  CaseService: { transitionStatus: (...args: unknown[]) => transitionStatusSpy(...args) },
+}));
+
 type PrismaMock = ReturnType<typeof buildPrismaMock>;
 
 function buildPrismaMock() {
@@ -61,27 +67,32 @@ describe('recycle-cron.scanRecycle', () => {
     });
   });
 
-  it('releases idle case audit locks and rolls status back to PENDING_AUDIT', async () => {
+  it('releases idle case audit locks by routing through the state machine', async () => {
     m.review.findMany.mockResolvedValueOnce([]);
     m.case.findMany.mockResolvedValueOnce([
       { id: 'c1', status: 'IN_AUDIT', lockedById: 'u2' },
     ]);
+    transitionStatusSpy.mockResolvedValueOnce({});
 
     const { scanRecycle } = await import('@/workers/recycle-cron');
     await scanRecycle();
 
-    expect(m.case.update).toHaveBeenCalledWith({
-      where: { id: 'c1' },
-      data: { lockedById: null, lockedAt: null, status: 'PENDING_AUDIT' },
-    });
-    expect(m.auditLog.create).toHaveBeenCalledWith({
-      data: {
-        userId: 'u2',
-        action: 'case:reclaim_idle',
-        targetType: 'Case',
-        targetId: 'c1',
-      },
-    });
+    // The direct prisma write is gone — the worker now goes through
+    // CaseService.transitionStatus so the audit row uses the same payload
+    // shape as every other case transition.
+    expect(transitionStatusSpy).toHaveBeenCalledWith('c1', 'reclaim_idle', 'u2');
+    expect(m.case.update).not.toHaveBeenCalled();
+  });
+
+  it('skips case-level reclaim when the lock has no claimer (no audit needed)', async () => {
+    m.review.findMany.mockResolvedValueOnce([]);
+    m.case.findMany.mockResolvedValueOnce([{ id: 'c1', status: 'IN_AUDIT', lockedById: null }]);
+
+    const { scanRecycle } = await import('@/workers/recycle-cron');
+    await scanRecycle();
+
+    expect(transitionStatusSpy).not.toHaveBeenCalled();
+    expect(m.case.update).not.toHaveBeenCalled();
   });
 
   it('does nothing when no stale rows exist', async () => {
