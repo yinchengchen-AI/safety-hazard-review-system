@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import Image from 'next/image';
 
 type Item = { id: string; content: string; required: boolean };
 type Template = { id: string; name: string; items: Item[] };
@@ -158,10 +159,13 @@ export function ReviewForm({
         />
         <div className="grid grid-cols-4 gap-2 mt-2">
           {photos.map((k) => (
-            <img
+            <Image
               key={k}
               src={`/api/photos/${k}`}
               alt=""
+              width={96}
+              height={96}
+              unoptimized
               className="w-full h-24 object-cover rounded"
             />
           ))}

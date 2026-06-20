@@ -1,35 +1,106 @@
-import { describe, it, expect } from 'vitest';
-import ExcelJS from 'exceljs';
-import { ImportService } from '@/services/import';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-describe('ImportService.parseExcel', () => {
-  it('parses a simple Excel buffer into rows + errors', async () => {
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Cases');
-    ws.columns = [
-      { header: '企业名称', key: 'name', width: 20 },
-      { header: '统一社会信用代码', key: 'uscc', width: 20 },
-      { header: '隐患类型编码', key: 'htcode', width: 20 },
-      { header: '严重程度', key: 'severity', width: 10 },
-      { header: '来源', key: 'source', width: 10 },
-      { header: '描述', key: 'description', width: 30 },
-      { header: '地址', key: 'address', width: 30 },
-      { header: '整改期限', key: 'deadline', width: 15 },
-    ];
-    ws.addRow({
-      name: '企业A',
-      uscc: '91110000XXXXXX0001',
-      htcode: 'FIRE',
-      severity: 'MAJOR',
-      source: '监管检查',
-      description: 'desc',
-      address: 'addr',
-      deadline: new Date('2026-12-31'),
+const registerSpy = vi.fn();
+vi.mock('@/services/case', () => ({
+  CaseService: { register: (...args: unknown[]) => registerSpy(...args) },
+}));
+
+function buildPrisma() {
+  return {
+    enterprise: { upsert: vi.fn() },
+    hazardType: { findUnique: vi.fn() },
+    checklistTemplate: { findFirst: vi.fn() },
+    importError: { create: vi.fn() },
+    importBatch: { update: vi.fn() },
+  };
+}
+
+describe('ImportService.commit', () => {
+  let m: ReturnType<typeof buildPrisma>;
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    m = buildPrisma();
+    vi.doMock('@/lib/prisma', () => ({ prisma: m }));
+  });
+
+  const baseRow = {
+    name: '企业A',
+    unifiedSocialCreditId: '91110000XXXXXX0001',
+    hazardTypeCode: 'FIRE',
+    severity: 'MAJOR' as const,
+    source: '监管检查',
+    description: 'desc',
+    address: 'addr',
+    deadline: new Date('2026-12-31'),
+  };
+
+  it('upserts enterprise + looks up hazard + template + registers a case', async () => {
+    m.enterprise.upsert.mockResolvedValueOnce({ id: 'e1' });
+    m.hazardType.findUnique.mockResolvedValueOnce({ id: 'h1' });
+    m.checklistTemplate.findFirst.mockResolvedValueOnce({ id: 't1' });
+    registerSpy.mockResolvedValueOnce({});
+    m.importBatch.update.mockResolvedValueOnce({});
+
+    const { ImportService } = await import('@/services/import');
+    const r = await ImportService.commit([baseRow], 'batch-1', 'u1');
+    expect(r).toEqual({ success: 1, failed: 0 });
+    expect(registerSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enterpriseId: 'e1',
+        hazardTypeId: 'h1',
+        templateId: 't1',
+        reviewerId: 'u1',
+      }),
+      'u1',
+    );
+    expect(m.importBatch.update).toHaveBeenCalledWith({
+      where: { id: 'batch-1' },
+      data: { successCount: 1, failedCount: 0, status: 'completed' },
     });
-    const buf = await wb.xlsx.writeBuffer();
+  });
 
-    const result = await ImportService.parseExcel(Buffer.from(buf as ArrayBuffer));
-    expect(result.rows).toHaveLength(1);
-    expect(result.errors).toHaveLength(0);
+  it('marks partial when any row fails and writes an ImportError', async () => {
+    m.enterprise.upsert.mockResolvedValueOnce({ id: 'e1' });
+    m.hazardType.findUnique.mockResolvedValueOnce({ id: 'h1' });
+    m.checklistTemplate.findFirst.mockResolvedValueOnce({ id: 't1' });
+    registerSpy.mockResolvedValueOnce({});
+    // second row: unknown hazard code
+    m.enterprise.upsert.mockResolvedValueOnce({ id: 'e2' });
+    m.hazardType.findUnique.mockResolvedValueOnce(null);
+    m.importError.create.mockResolvedValueOnce({});
+    m.importBatch.update.mockResolvedValueOnce({});
+
+    const { ImportService } = await import('@/services/import');
+    const r = await ImportService.commit(
+      [baseRow, { ...baseRow, hazardTypeCode: 'NOPE', unifiedSocialCreditId: '91110000XXXXXX0002' }],
+      'batch-2',
+      'u1',
+    );
+    expect(r).toEqual({ success: 1, failed: 1 });
+    expect(m.importError.create).toHaveBeenCalledWith({
+      data: { batchId: 'batch-2', rowNumber: 2, field: 'row', message: expect.stringContaining('NOPE') },
+    });
+    expect(m.importBatch.update).toHaveBeenCalledWith({
+      where: { id: 'batch-2' },
+      data: { successCount: 1, failedCount: 1, status: 'partial' },
+    });
+  });
+
+  it('marks partial when no active template exists for the hazard type', async () => {
+    m.enterprise.upsert.mockResolvedValueOnce({ id: 'e1' });
+    m.hazardType.findUnique.mockResolvedValueOnce({ id: 'h1' });
+    m.checklistTemplate.findFirst.mockResolvedValueOnce(null);
+    m.importError.create.mockResolvedValueOnce({});
+    m.importBatch.update.mockResolvedValueOnce({});
+
+    const { ImportService } = await import('@/services/import');
+    const r = await ImportService.commit([baseRow], 'batch-3', 'u1');
+    expect(r).toEqual({ success: 0, failed: 1 });
+    expect(m.importError.create).toHaveBeenCalled();
+    expect(m.importBatch.update).toHaveBeenCalledWith({
+      where: { id: 'batch-3' },
+      data: { successCount: 0, failedCount: 1, status: 'partial' },
+    });
   });
 });

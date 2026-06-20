@@ -119,8 +119,10 @@ src/
 └─ components/           # ui/ 基础件 + admin/ case/ workbench/ layout/ stats/
 prisma/                  # schema + 迁移 + seed
 tests/
-├─ unit/                 # Vitest（services / lib）
-├─ integration/          # Vitest（API 集成）
+├─ unit/
+│  ├─ services/          # 业务核心（10 个文件）
+│  ├─ lib/               # auth / db / storage / permissions / validation / log（3 个）
+│  └─ workers/           # node-cron 任务（scanDeadlines / scanRecycle，2 个）
 └─ e2e/                  # Playwright
 docs/                    # 设计文档 + 实施计划
 ```
@@ -146,9 +148,29 @@ docs/                    # 设计文档 + 实施计划
 
 ## 🧪 测试
 
-- **单元 / 集成**：覆盖 `src/services/`、`src/lib/`、`src/workers/`，阈值 lines 25% / functions 23% / branches 17% / statements 25%。
-- **E2E**：登录 / 全流程 happy path / 驳回 + 重交 / 离线同步。CI 在 PR 与 main 推送时跑。
-- **手动冒烟**：监管员登记 → 复核（含拍照）→ 科长审核通过 / 驳回 → 销案 / 重新复核。
+### 单元（Vitest）
+
+- **范围**：`src/services/` + `src/lib/` + `src/workers/`，14 个文件 / 93 用例。
+- **阈值**（v8）：lines 25% / functions 23% / branches 17% / statements 25%。当前实际远超阈值。
+- **覆盖矩阵**：
+
+| 层级           | 覆盖范围                                                                                      |
+| -------------- | --------------------------------------------------------------------------------------------- |
+| `services/`    | `case`（register / getById / list / transitionStatus）、`review`（claim / takeOver / submit）、`audit`（lock / sign / reject）、`stats`（KPI / trend / distribution）、`import`（Excel 解析 + 失败回显）、`photo`（upload / signedUrl / delete / attachToReview）、`sync`（队列 upsert / 重试 / 阈值）、`notification`（create / broadcast / list / markRead）、`state-machine`、`case-code-generator` |
+| `lib/`         | `api-error`（problem / handleError + BusinessError + Zod 分支）、`cron`（validate / register / start / 错误吞掉）、`permissions`（`can` 角色矩阵 + `assertCan`） |
+| `workers/`     | `scanRecycle`（释放空闲 review 锁 / case 锁 + audit + 通知）、`scanDeadlines`（临期 / 逾期 + 群发科长 + 当日去重） |
+
+- **运行**：`npm test`（一次性）/ `npm run test:watch` / `npm run test:cov`（HTML 报告输出到 `coverage/`）。
+
+### E2E（Playwright）
+
+- 场景：登录 / 全流程 happy path / 驳回 + 重交 / 离线同步。
+- 运行：`npm run test:e2e`（需 dev server + seeded DB）。
+- CI 在 PR 与 main 推送时跑。
+
+### 手动冒烟
+
+监管员登记 → 复核（含拍照）→ 科长审核通过 / 驳回 → 销案 / 重新复核。
 
 ## 🏗 架构要点
 
