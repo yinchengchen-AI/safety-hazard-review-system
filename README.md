@@ -68,7 +68,7 @@ open http://localhost:3000
 docker compose --profile infra up -d
 npm install
 npx prisma migrate dev
-npm run db:seed   # 4 个种子账号
+npx prisma db seed   # 10 用户 / 15 企业 / 4 隐患类型 / 50 案件
 npm run dev
 ```
 
@@ -80,7 +80,7 @@ npm install
 # 2. 复制 .env 并改 DATABASE_URL / MINIO_* 指向你的服务
 cp .env.example .env
 npx prisma migrate deploy
-npm run db:seed
+npx prisma db seed
 npm run dev
 ```
 
@@ -92,6 +92,27 @@ npm run dev
 | `chief@example.com`     | 科长   |
 | `director@example.com`  | 局长   |
 | `admin@example.com`     | 管理员 |
+
+另含 `inspector2@example.com` ... `inspector5@example.com`、`chief2@example.com`、`chief3@example.com`（密码同上），便于演示并发与多角色协作。
+
+## 🌱 种子数据
+
+`npx prisma db seed` 一次性产出：
+
+- **10 用户** — 5 INSPECTOR + 3 CHIEF + 1 DIRECTOR + 1 ADMIN
+- **15 企业** — 化工 / 机械 / 纺织 / 建材 / 食品 / 物流 / 电子 / 矿业 / 制药 / 电气 / 塑料 / 汽修 / 印刷 / 粮油 / 建筑
+- **4 隐患类型** — 消防 / 特种设备 / 危化品 / 电气
+- **4 清单模板** — 每个隐患类型一套（FIRE 5 项，其余 4 项）
+- **50 案件** — 工单号按 `YYYYMMDD-NNNN` 编号，按状态分布：15 待复核 / 12 待审核 / 10 审核中 / 13 已销案
+  - 严重程度按 30% 重大 / 40% 较大 / 30% 一般加权抽样
+  - 4 类隐患平摊，期限按状态分层（待复核含 15% 临期 + 8% 已逾期）
+- **50 复核记录** — 待复核案件为 `IN_PROGRESS`，其余为 `SUBMITTED` 含结论、说明、得分（60–100）
+- **157 项结果** — 每条复核 3–5 项，85% PASS / 10% FAIL / 5% NA
+- **13 签字记录** — 仅 `CLOSED` 案件附 `AuditSignature(PASS)`，`signatureUrl` 为 `seed/signatures/<code>.png` 演示占位（无真实 PNG）
+- **19 通知** — 10 临期 + 5 逾期 + 4 科长群发待审核（3 案件 × 3 科长 + 1 仅剩 1 科长）
+- **50 审计日志** — 每案件 1 条 `case:register`
+
+**幂等性**：按 `code startsWith ${TODAY_PREFIX}` 守卫，当天已生成过 50 案件则整体跳过，输出当前实体计数。监管员 / 科长并发的 `claimedById` / `lockedById` 与状态对齐。
 
 ## 📜 脚本
 
