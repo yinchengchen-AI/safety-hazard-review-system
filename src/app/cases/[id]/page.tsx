@@ -16,7 +16,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function CaseDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await auth();
+  const session = await auth();
   const c = await prisma.case.findUnique({
     where: { id },
     include: {
@@ -39,10 +39,18 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
   });
   if (!c) return <p>案件不存在</p>;
 
+  // IN_AUDIT 但被其他人领取时，给个禁用的占位按钮，避免空 Link 点击后被服务端打回
+  const currentUserId = session?.user?.id;
+  const lockedByOther =
+    c.status === 'IN_AUDIT' && !!c.lockedById && c.lockedById !== currentUserId;
   const actionButton =
     c.status === 'PENDING_REVIEW' ? (
       <Button asChild>
         <Link href={`/cases/${c.id}/review`}>开始复核</Link>
+      </Button>
+    ) : lockedByOther ? (
+      <Button variant="secondary" disabled title={`已被 ${c.lockedBy?.name ?? c.lockedById} 领取`}>
+        已被 {c.lockedBy?.name ?? c.lockedById} 领取
       </Button>
     ) : c.status === 'PENDING_AUDIT' || c.status === 'IN_AUDIT' ? (
       <Button asChild>
