@@ -126,12 +126,13 @@ backend/
 
 - 停止 Alembic，后续由 `prisma migrate dev/deploy` 接管。
 - 切换前需保证现有 Alembic 历史与 Prisma schema 等价。
+- **基线（Baseline）**：对已有数据的数据库，先生成与当前 schema 等价的首个 Prisma 迁移，然后通过 `prisma migrate resolve --applied <migration_name>` 标记为已应用，避免 `prisma migrate deploy` 重复建表。
 - 新环境首次部署执行 `prisma migrate deploy`。
 
 ### 4.4 数据迁移
 
 - 由于 schema 保持不变，**无需 ETL**，直接复用原数据库。
-- 切换窗口：备份数据库 → 停止旧服务 → `prisma migrate deploy` → 启动新服务。
+- 切换窗口：备份数据库 → 停止旧服务 → `prisma migrate deploy`（首个迁移已通过 baseline 标记为已应用） → 启动新服务。
 
 ---
 
