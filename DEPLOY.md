@@ -1,152 +1,77 @@
-# 生产环境部署指南
+# 生产部署指南（TypeScript 全栈）
 
-## 快速开始
+本文描述 2026-Q3 切流后的 TypeScript 全栈部署流程。旧 Python
+栈（`backend-legacy/` + `docker-compose.legacy.yml`）保留 30 天
+作为回滚预案。
+
+## 1. 一次性初始化
 
 ```bash
-# 1. 上传代码到服务器
-scp -r safety-hazard-review-system root@your-tencent-ip:/opt/
-
-# 2. SSH 登录服务器
-ssh root@your-tencent-ip
-
-# 3. 进入项目目录
+# 在目标服务器上：
+git clone <repo-url> /opt/safety-hazard-review-system
 cd /opt/safety-hazard-review-system
-
-# 4. 设置环境变量并部署
-export SECRET_KEY=$(openssl rand -hex 32)
-export POSTGRES_PASSWORD=$(openssl rand -hex 16)
-export MINIO_ROOT_PASSWORD=$(openssl rand -hex 16)
-./deploy.sh
+./init-env.sh   # 生成 /etc/safety-hazard.env（强随机密码 / SECRET_KEY）
 ```
 
-## 腾讯云特定配置
+生成的 `SECRET_KEY` 至少 32 字符；启动期 `assert_safe_for_runtime`
+会在 staging/production 下二次校验：若 `SECRET_KEY` 是占位串或
+< 32 字符，启动直接抛 `RuntimeError`。
 
-### 1. 安全组规则
-
-| 端口 | 协议 | 来源 | 用途 |
-|------|------|------|------|
-| 22 | TCP | 你的IP | SSH |
-| 80 | TCP | 0.0.0.0/0 | HTTP |
-| 443 | TCP | 0.0.0.0/0 | HTTPS |
-
-注意：8000/9000/9001/5432/6379 端口**不要**对外开放，通过 Nginx 反向代理访问。
-
-### 2. 安装 Nginx
+## 2. 启动
 
 ```bash
-sudo apt update
-sudo apt install -y nginx
-sudo cp nginx.conf /etc/nginx/sites-available/safety-hazard
-sudo ln -s /etc/nginx/sites-available/safety-hazard /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
+docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env build
+docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -d
 ```
 
-### 3. 配置 HTTPS (SSL)
+启动的服务：
+- `postgres` (15-alpine, 5432)
+- `redis` (7-alpine, 6379)
+- `minio` (latest, 9000/9001)
+- `backend` (NestJS 10, 8000)
+- `worker` (BullMQ consumer + cron jobs)
+- `frontend` (Next.js 14 standalone, 3000)
+- `nginx` (80，对外唯一入口)
+
+仅 80 端口对外；其它端口绑定 `127.0.0.1`。
+
+## 3. 迁移
 
 ```bash
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d your-domain.com
+./migrate.sh
 ```
 
-### 4. 使用生产环境配置
+`backend/prisma/migrations/0_init/` 已经在切换时由 `prisma migrate
+resolve --applied 0_init` 标 baseline；本脚本对未来的 `migrate dev`
+新增迁移幂等。
 
-```bash
-# 创建环境变量文件
-sudo tee /opt/safety-hazard-review-system/.env.prod << 'EOF'
-SECRET_KEY=your-generated-secret
-POSTGRES_PASSWORD=your-postgres-password
-MINIO_ROOT_PASSWORD=your-minio-password
-ALLOWED_ORIGINS=https://your-domain.com
-EOF
+## 4. 健康检查 / 监控
 
-# 使用生产配置启动
-sudo docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
-```
+- `GET /health` → `{"status":"ok"}`，探测 DB 连通。
+- `GET /metrics` → Prometheus 格式（nodejs 默认指标 +
+  Prisma 客户端指标），由 PrometheusModule 注册。`@willsoto/nestjs-prometheus` 的 `defaultMetrics.enabled` 默认开。
+- 监控接入建议：Nginx 暴露 `/metrics` 给内网 Prometheus scraper；用 BullMQ 队列长度告警（`report_queue.waiting` / `active` / `completed` / `failed`）。
 
+## 5. 切流（Phase 6）
 
+切流窗口（staging 演练过 2 轮后执行）：
 
-## 环境变量
+1. 备份数据库：`pg_dump -Fc safety_hazard > backups/pre-ts-migration-$(date +%s).sql.gz`
+2. 关停旧服务：`docker compose -f docker-compose.legacy.yml stop`
+3. 起新服务：`./deploy-remote.sh`（`docker compose -f docker-compose.prod.yml up -d` + migrate）
+4. 验证：登录、创建企业、Excel 导入 50 行、创建复核任务、批量通过、生成报告、下载 PDF/Word
+5. 切 Nginx upstream（如使用外部 Nginx）：从 `backend-py:8000` 改到 `backend:8000`
 
-| 变量 | 必填 | 说明 |
-|------|------|------|
-| `ENV` | 是 | `dev` / `test` / `staging` / `production`。`staging` 与 `production` 启动期会硬阻断：默认 `your-secret-key-change-in-production`、长度 < 32 的 SECRET_KEY、默认 `admin/admin123` 账号。`deploy-remote.sh` 自动写入 `ENV=production`。 |
-| `SECRET_KEY` | 是 | JWT 签名密钥与 HMAC 照片 URL 签名密钥。生产环境必须 `openssl rand -hex 32` 生成。 |
-| `PHOTO_SIGNATURE_TTL` | 否 | 照片 HMAC 签名 URL 有效期（秒），默认 900。 |
-| `LOGIN_RATE_LIMIT` | 否 | slowapi 限流阈值，默认 `5/minute`。 |
+回滚预案：
+- 保留 `docker-compose.legacy.yml`（绑定 8000）+ 旧 Python 镜像 tag
+- 若 5 分钟内 P95 > 2× baseline 或 P0 事故，立即停 prod stack、起
+  legacy stack、保留数据库不变。
+- 30 天后清理 `backend-legacy/`、`docker-compose.legacy.yml`、
+  Python 镜像 tag。
 
-启动期阻断的具体行为：
-- 容器启动后 `assert_safe_for_runtime` 立即连接数据库。
-- 若 `ENV` 为 `staging` / `production` 且 `SECRET_KEY` 是默认占位串或长度 < 32：直接抛 `RuntimeError`，容器退出码非 0。
-- 若 `ENV` 为 `staging` / `production` 且 `users` 表里 `admin` 账号的密码仍为 `admin123`：同样抛 `RuntimeError`。
-- 解决：`openssl rand -hex 32` 生成新 SECRET_KEY；通过 API 或一次性脚本修改 admin 密码。
+## 6. CI
 
-## 日常运维
-
-### 查看日志
-```bash
-docker-compose logs -f backend      # 后端日志
-docker-compose logs -f celery-worker # Celery 日志
-docker-compose logs -f frontend     # 前端日志
-```
-
-### 数据库备份
-```bash
-# 手动备份
-docker exec safety-postgres pg_dump -U postgres safety_hazard > backup_$(date +%Y%m%d).sql
-
-# 自动备份 (添加到 crontab)
-0 2 * * * cd /opt/safety-hazard-review-system && docker exec safety-postgres pg_dump -U postgres safety_hazard > backups/backup_$(date +\%Y\%m\%d).sql
-```
-
-### 更新部署
-
-> ⚠️ **重要**：必须带 `--env-file` 加载保存的密码，否则容器会使用默认密码 `postgres`，导致数据库认证失败、无法登录。
-
-```bash
-cd /opt/safety-hazard-review-system
-git pull
-
-# 只重建前端（推荐，速度快，不影响后端）
-sudo docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -d --build frontend
-
-# 重建全部服务
-sudo docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -d --build
-```
-
-## 故障排查
-
-| 问题 | 排查命令 |
-|------|----------|
-| 服务无法启动 | `docker compose ps` |
-| 数据库连接失败 | `docker compose logs postgres` |
-| 后端报错 | `docker compose logs backend` |
-| Nginx 502 | `sudo tail -f /var/log/nginx/error.log` |
-| 磁盘空间不足 | `df -h` 和 `docker system prune` |
-
-### 登录失败 / Internal Server Error
-
-**症状**：前端可以打开，但登录时报错或提示服务器错误。
-
-**排查**：
-```bash
-# 1. 查看后端日志，若出现 InvalidPasswordError 则是密码问题
-sudo docker logs safety-backend --tail 30
-
-# 2. 确认后端容器实际使用的数据库 URL
-sudo docker exec safety-backend env | grep DATABASE_URL
-```
-
-**根因**：使用 `docker compose up --build` 时若未指定 `--env-file`，`POSTGRES_PASSWORD` 会回退为默认值 `postgres`，而数据库卷中存储的是首次部署时随机生成的密码，导致认证失败。
-
-**修复**：
-```bash
-# 用保存的环境变量文件重启后端
-sudo docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -d backend
-
-# 验证登录接口是否正常
-curl -s -X POST http://localhost:8000/api/v1/auth/login \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=admin123"
-# 正常应返回 {"access_token": "...", "token_type": "bearer"}
-```
+GitHub Actions 跑：
+- 后端：`cd backend && pytest`（沿用 Phase 1 写好的 76 个测试）
+- 前端：`cd frontend && npm run build && npm run lint`
+- E2E：`cd frontend && npx playwright install --with-deps && npx playwright test`（本地 docker compose 起来 backend + frontend + minio + postgres + redis + worker）

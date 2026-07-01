@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { AppConfigModule } from './config/config.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { StartupChecksModule } from './common/startup-checks.module';
@@ -31,6 +32,7 @@ import { ReportRenderer } from './queues/report-renderer';
     AuthModule,
     UsersModule,
     StorageModule,
+    PrometheusModule.register({ defaultMetrics: { enabled: true }, path: '' }),
     BullmqModule,
     EnterprisesModule,
     HazardsModule,

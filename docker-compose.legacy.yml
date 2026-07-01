@@ -1,0 +1,48 @@
+# Legacy Python stack — kept around for Phase 6 cutover rehearsal
+# and post-cutover rollback window. Pulled by the same Postgres
+# database that the TypeScript stack uses, so the cutover is a
+# service-name swap, not a data migration.
+version: "3.8"
+
+services:
+  backend-py:
+    build:
+      context: ./backend-legacy
+    container_name: safety-backend-py
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:-safety_hazard}
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?}
+      MINIO_BUCKET: ${MINIO_BUCKET:-hazard-photos}
+      SECRET_KEY: ${SECRET_KEY:?}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+    restart: unless-stopped
+
+  celery-py:
+    build:
+      context: ./backend-legacy
+      dockerfile: Dockerfile.celery
+    container_name: safety-celery-py
+    environment:
+      ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:-safety_hazard}
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?}
+      MINIO_BUCKET: ${MINIO_BUCKET:-hazard-photos}
+      SECRET_KEY: ${SECRET_KEY:?}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+    restart: unless-stopped

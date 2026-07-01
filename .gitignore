@@ -64,3 +64,4 @@ frontend/.vite/
 
 # Local env templates (keep .example, ignore real .env)
 !.env.example
+.claude/
