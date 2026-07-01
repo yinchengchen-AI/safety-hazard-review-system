@@ -23,7 +23,7 @@ async def generate_report(
 ):
     user_id = current_user.id
     orchestrator = ReportOrchestrationService(db)
-    await orchestrator.create_and_enqueue(task_id)
+    await orchestrator.create_and_enqueue(task_id, force=True)
 
     await audit_log_service.record(
         db=db,

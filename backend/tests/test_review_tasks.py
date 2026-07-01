@@ -231,3 +231,131 @@ async def test_complete_task_creates_report(client: AsyncClient):
     )
     assert status_res.status_code == 200
     assert status_res.json()["status"] == "pending"
+
+
+
+@pytest.mark.asyncio
+async def test_cancel_task_reverts_hazard_status(client, db_session):
+    """Cancelling a task that contains already-reviewed hazards must put
+    the hazards back to 'pending' and decrement review_count, mirroring
+    remove_hazard_from_task. Without this, reviewed hazards get stranded
+    in passed/failed after a cancellation.
+    """
+    import uuid as _uuid
+    from app.models import User, Enterprise, Batch, Hazard, ReviewTask, TaskHazard
+
+    reviewer = User(
+        username=f"reviewer-{_uuid.uuid4().hex[:6]}",
+        password_hash="x",
+        role="inspector",
+        is_active=True,
+    )
+    db_session.add(reviewer)
+    await db_session.flush()
+
+    enterprise = Enterprise(name=f"ent-{_uuid.uuid4().hex[:6]}")
+    db_session.add(enterprise)
+    await db_session.flush()
+
+    batch = Batch(name="b", total_count=1, success_count=1, fail_count=0, creator_id=reviewer.id)
+    db_session.add(batch)
+    await db_session.flush()
+
+    hazard = Hazard(
+        enterprise_id=enterprise.id,
+        batch_id=batch.id,
+        content="x",
+        description="x",
+        status="pending",
+        review_count=0,
+    )
+    db_session.add(hazard)
+    # Commit so the route's session (which uses the same engine but a
+    # different AsyncSession) can see the row.
+    await db_session.commit()
+
+    login = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "admin", "password": "admin123"},
+    )
+    token = login.json()["access_token"]
+
+    create = await client.post(
+        "/api/v1/review-tasks",
+        json={"name": "cancel-revert", "hazard_ids": [str(hazard.id)]},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert create.status_code == 201, create.text
+    task_id = create.json()["id"]
+
+    review = await client.post(
+        f"/api/v1/review-tasks/{task_id}/hazards/{hazard.id}/review",
+        json={"conclusion": "ok", "status_in_task": "passed"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert review.status_code == 200, review.text
+
+    await db_session.refresh(hazard)
+    assert hazard.status == "passed"
+    assert hazard.review_count == 1
+
+    cancel = await client.post(
+        f"/api/v1/review-tasks/{task_id}/cancel",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert cancel.status_code == 200, cancel.text
+
+    await db_session.refresh(hazard)
+    assert hazard.status == "pending", f"expected pending, got {hazard.status}"
+    assert hazard.review_count == 0, f"expected 0, got {hazard.review_count}"
+
+
+@pytest.mark.asyncio
+async def test_login_sets_http_only_cookie(client):
+    """The login endpoint must set an httpOnly cookie on success.
+
+    The browser SPA relies on this cookie for auth; JS cannot read it.
+    """
+    response = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "admin", "password": "admin123"},
+    )
+    assert response.status_code == 200
+    set_cookie = response.headers.get("set-cookie", "")
+    assert "access_token=" in set_cookie, f"no auth cookie in: {set_cookie}"
+    assert "HttpOnly" in set_cookie, "cookie is not httpOnly"
+    assert "samesite=lax" in set_cookie.lower()
+
+
+@pytest.mark.asyncio
+async def test_logout_clears_cookie(client):
+    login = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "admin", "password": "admin123"},
+    )
+    assert login.status_code == 200
+    assert "access_token=" in login.headers.get("set-cookie", "")
+
+    logout = await client.post("/api/v1/auth/logout")
+    assert logout.status_code == 204
+    cleared = logout.headers.get("set-cookie", "")
+    assert "access_token=" in cleared
+    assert ("Max-Age=0" in cleared) or ("expires=" in cleared.lower())
+
+
+@pytest.mark.asyncio
+async def test_auth_me_via_authorization_header(client):
+    """Authorization header still authenticates (backward compat for tests
+    and direct API consumers). The browser path uses the cookie instead.
+    """
+    login = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "admin", "password": "admin123"},
+    )
+    token = login.json()["access_token"]
+    me = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert me.status_code == 200
+    assert me.json()["username"] == "admin"

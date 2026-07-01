@@ -33,6 +33,7 @@ import {
 import { useUserStore } from '../../store/userStore'
 import { useNotificationStore } from '../../store/notificationStore'
 import type { Notification } from '../../store/notificationStore'
+import { logout as apiLogout } from '../../api/auth'
 
 const { Header, Sider, Content } = AntLayout
 
@@ -139,7 +140,7 @@ function formatRelativeTime(dateStr: string): string {
 function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user } = useUserStore()
+  const { user, clearUser } = useUserStore()
   const [openKeys, setOpenKeys] = useState<string[]>([])
   const [collapsed, setCollapsed] = useState(false)
 
@@ -205,8 +206,15 @@ function Layout() {
     setDropdownOpen(false)
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
+  const handleLogout = async () => {
+    try {
+      // Server clears the httpOnly cookie; we just navigate.
+      await apiLogout()
+    } catch {
+      // Even if the network call fails (e.g. session already expired)
+      // we still want to land on the login page.
+    }
+    clearUser()
     navigate('/login')
   }
 

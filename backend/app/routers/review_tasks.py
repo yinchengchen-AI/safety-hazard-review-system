@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
@@ -10,22 +11,11 @@ from app.core.database import get_db
 from app.schemas import ReviewTaskCreate, ReviewTaskResponse, ReviewTaskDetailResponse, TaskHazardReview, TaskHazardResponse, BatchReviewRequest
 from app.models import ReviewTask, Hazard, TaskHazard, HazardStatusHistory, User, Photo, Report
 from app.dependencies.auth import get_current_active_user
+from app.core.url_signer import sign_photo_url
 from app.services.report_orchestration_service import ReportOrchestrationService
 from app.services import audit_log_service, notification_service
 
 router = APIRouter()
-
-
-def _append_token_to_url(url: str, token: str) -> str:
-    sep = "&" if "?" in url else "?"
-    return f"{url}{sep}token={token}"
-
-
-def _extract_token_from_request(request: Request) -> str:
-    auth = request.headers.get("Authorization", "")
-    if auth.lower().startswith("bearer "):
-        return auth[7:]
-    return request.query_params.get("token", "")
 
 
 @router.post("", response_model=ReviewTaskResponse, status_code=status.HTTP_201_CREATED)
@@ -104,7 +94,6 @@ async def create_review_task(
     try:
         await notification_service.notify_task_created(db, task, actor_id=current_user.id)
     except Exception:
-        import logging
         logging.getLogger(__name__).warning("Failed to create task_created notifications", exc_info=True)
 
     await db.commit()
@@ -165,7 +154,6 @@ async def list_review_tasks(
 
 @router.get("/{task_id}", response_model=ReviewTaskDetailResponse)
 async def get_review_task(
-    request: Request,
     task_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -214,21 +202,15 @@ async def get_review_task(
         th.photos = []
         th_resp = TaskHazardResponse.model_validate(th)
         th.photos = original_photos
-        user_token = _extract_token_from_request(request)
         th_resp.reviewer_username = th.reviewer.username if th.reviewer else None
         th_resp.photos = []
         for p in th.photos:
             if p.deleted_at is not None:
                 continue
-            original_url = f"/api/v1/photos/{p.id}/image?size=original"
-            thumbnail_url = f"/api/v1/photos/{p.id}/image?size=thumbnail"
-            if user_token:
-                original_url = _append_token_to_url(original_url, user_token)
-                thumbnail_url = _append_token_to_url(thumbnail_url, user_token)
             th_resp.photos.append({
                 "id": str(p.id),
-                "original_url": original_url,
-                "thumbnail_url": thumbnail_url,
+                "original_url": sign_photo_url(p.id, "original"),
+                "thumbnail_url": sign_photo_url(p.id, "thumbnail"),
                 "width": p.width,
                 "height": p.height,
             })
@@ -364,18 +346,12 @@ async def review_hazard(
     )
     all_photos = all_photos_result.scalars().all()
 
-    user_token = _extract_token_from_request(request)
     photos_out = []
     for p in all_photos:
-        original_url = f"/api/v1/photos/{p.id}/image?size=original"
-        thumbnail_url = f"/api/v1/photos/{p.id}/image?size=thumbnail"
-        if user_token:
-            original_url = _append_token_to_url(original_url, user_token)
-            thumbnail_url = _append_token_to_url(thumbnail_url, user_token)
         photos_out.append({
             "id": str(p.id),
-            "original_url": original_url,
-            "thumbnail_url": thumbnail_url,
+            "original_url": sign_photo_url(p.id, "original"),
+            "thumbnail_url": sign_photo_url(p.id, "thumbnail"),
             "width": p.width,
             "height": p.height,
         })
@@ -546,31 +522,20 @@ async def batch_review_hazards(
                 photo.task_hazard_id = task_hazard.id
                 photo.temp_token = None
 
-        user_token = _extract_token_from_request(request)
         photos_out = []
         for p in existing_photos_map.get(task_hazard.id, []):
-            original_url = f"/api/v1/photos/{p.id}/image?size=original"
-            thumbnail_url = f"/api/v1/photos/{p.id}/image?size=thumbnail"
-            if user_token:
-                original_url = _append_token_to_url(original_url, user_token)
-                thumbnail_url = _append_token_to_url(thumbnail_url, user_token)
             photos_out.append({
                 "id": str(p.id),
-                "original_url": original_url,
-                "thumbnail_url": thumbnail_url,
+                "original_url": sign_photo_url(p.id, "original"),
+                "thumbnail_url": sign_photo_url(p.id, "thumbnail"),
                 "width": p.width,
                 "height": p.height,
             })
         for p in photos:
-            original_url = f"/api/v1/photos/{p.id}/image?size=original"
-            thumbnail_url = f"/api/v1/photos/{p.id}/image?size=thumbnail"
-            if user_token:
-                original_url = _append_token_to_url(original_url, user_token)
-                thumbnail_url = _append_token_to_url(thumbnail_url, user_token)
             photos_out.append({
                 "id": str(p.id),
-                "original_url": original_url,
-                "thumbnail_url": thumbnail_url,
+                "original_url": sign_photo_url(p.id, "original"),
+                "thumbnail_url": sign_photo_url(p.id, "thumbnail"),
                 "width": p.width,
                 "height": p.height,
             })
@@ -692,7 +657,7 @@ async def complete_task(
 
     try:
         orchestrator = ReportOrchestrationService(db)
-        await orchestrator.create_and_enqueue(task.id)
+        await orchestrator.create_and_enqueue(task.id, force=False)
     except Exception as e:
         import logging
         logging.getLogger(__name__).exception("Failed to enqueue report generation after task completion: %s", e)
@@ -714,11 +679,44 @@ async def cancel_task(
     if not task:
         raise HTTPException(status_code=404, detail="Review task not found")
 
-    hazard_result = await db.execute(
+
+    # Revert reviewed hazards: status -> pending, review_count -= 1, history row.
+    # Mirrors ``remove_hazard_from_task`` so the two cancellation paths stay
+    # consistent and reviewed hazards never get stranded in passed/failed.
+    th_result = await db.execute(
+        select(TaskHazard).where(TaskHazard.task_id == task_id)
+    )
+    task_hazards = th_result.scalars().all()
+    reviewed_ids = [th.hazard_id for th in task_hazards if th.status_in_task is not None]
+    if reviewed_ids:
+        hazard_result = await db.execute(
+            select(Hazard).where(Hazard.id.in_(reviewed_ids))
+        )
+        hazards_by_id = {h.id: h for h in hazard_result.scalars().all()}
+        for th in task_hazards:
+            if th.status_in_task is None:
+                continue
+            hazard = hazards_by_id.get(th.hazard_id)
+            if hazard is None:
+                continue
+            old_status = hazard.status
+            hazard.status = "pending"
+            if old_status in ("passed", "failed") and hazard.review_count > 0:
+                hazard.review_count -= 1
+            history = HazardStatusHistory(
+                hazard_id=hazard.id,
+                from_status=old_status,
+                to_status="pending",
+                changed_by=current_user.id,
+                reason=f"Task {task_id} cancelled",
+            )
+            db.add(history)
+
+    # Release the task lock on every hazard (reviewed or not).
+    lock_result = await db.execute(
         select(Hazard).where(Hazard.current_task_id == task_id)
     )
-    hazards = hazard_result.scalars().all()
-    for h in hazards:
+    for h in lock_result.scalars().all():
         h.current_task_id = None
 
     task.status = "cancelled"

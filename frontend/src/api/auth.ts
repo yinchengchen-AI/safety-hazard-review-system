@@ -10,3 +10,8 @@ export const login = (username: string, password: string) => {
 }
 
 export const getMe = () => request.get('/auth/me')
+
+// The server sets the httpOnly auth cookie on /auth/login and clears it on
+// /auth/logout. The browser attaches the cookie automatically, so the SPA
+// only needs to call this so the Layout can clear local user state.
+export const logout = () => request.post('/auth/logout')

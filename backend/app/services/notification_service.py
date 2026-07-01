@@ -28,8 +28,22 @@ async def notify_task_created(db: AsyncSession, task: ReviewTask, actor_id: UUID
             )
         )
         inspectors = result.scalars().all()
+        # Pre-filter: avoid IntegrityError round-trip on the unique
+        # (user_id, type, related_id) index.
+        candidates = [i.id for i in inspectors if i.id != actor_id]
+        if candidates:
+            existing = await db.execute(
+                select(Notification.user_id).where(
+                    Notification.user_id.in_(candidates),
+                    Notification.type == "task_created",
+                    Notification.related_id == task.id,
+                )
+            )
+            already = set(existing.scalars().all())
+        else:
+            already = set()
         for inspector in inspectors:
-            if inspector.id == actor_id:
+            if inspector.id == actor_id or inspector.id in already:
                 continue
             notification = Notification(
                 user_id=inspector.id,
@@ -64,6 +78,20 @@ async def notify_task_completed(db: AsyncSession, task: ReviewTask, actor_id: UU
         for admin in admins:
             if admin.id != actor_id:
                 recipients.add(admin.id)
+
+        # Pre-filter: the (user_id, type, related_id) unique constraint
+        # is the source of truth, but doing a quick SELECT first means
+        # we never have to swallow IntegrityError and keeps the
+        # transaction small.
+        if recipients:
+            existing = await db.execute(
+                select(Notification.user_id).where(
+                    Notification.user_id.in_(recipients),
+                    Notification.type == "task_completed",
+                    Notification.related_id == task.id,
+                )
+            )
+            recipients -= set(existing.scalars().all())
 
         for user_id in recipients:
             notification = Notification(
@@ -102,6 +130,16 @@ async def notify_task_cancelled(db: AsyncSession, task: ReviewTask, actor_id: UU
         for rid in reviewer_ids:
             if rid and rid != actor_id:
                 recipients.add(rid)
+
+        if recipients:
+            existing = await db.execute(
+                select(Notification.user_id).where(
+                    Notification.user_id.in_(recipients),
+                    Notification.type == "task_cancelled",
+                    Notification.related_id == task.id,
+                )
+            )
+            recipients -= set(existing.scalars().all())
 
         for user_id in recipients:
             notification = Notification(

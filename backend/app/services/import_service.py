@@ -86,7 +86,7 @@ class ImportService:
             })
         return {"total": len(df), "items": items}
 
-    async def import_file(self, temp_token: str, filename: str, batch_name: str, user_id: UUID):
+    async def import_file(self, temp_token: str, filename: str, batch_name: str, user_id: UUID) -> "BatchImportResult":
         storage = StorageService()
         temp_object_name = f"temp/batch-preview/{temp_token}/{filename}"
         try:
@@ -122,27 +122,26 @@ class ImportService:
         except Exception:
             pass
 
-        errors = []
+        # All rows share one outer transaction; per-row failures roll back to a
+        # SAVEPOINT so a single bad row never aborts the whole batch. The
+        # ImportError records are written outside the failed savepoint.
+        errors: list[dict] = []
         success_count = 0
 
         for idx, row in df.iterrows():
             row_num = int(idx) + 2  # Excel row number (1-based + header)
-            try:
-                await self._process_row(row, row_num, batch.id)
-                success_count += 1
-            except Exception as e:
-                errors.append({
-                    "row_index": row_num,
-                    "reason": str(e),
-                })
+            row_errors = await self._process_row(row, row_num, batch.id)
+            if row_errors:
+                errors.append({"row_index": row_num, "reason": row_errors["reason"]})
                 error_record = ImportError(
                     batch_id=batch.id,
                     row_index=row_num,
                     raw_data=str(row.to_dict()),
-                    reason=str(e),
+                    reason=row_errors["reason"],
                 )
                 self.db.add(error_record)
-                await self.db.flush()
+            else:
+                success_count += 1
 
         batch.success_count = success_count
         batch.fail_count = len(errors)
@@ -155,14 +154,14 @@ class ImportService:
         except Exception:
             pass
 
-        from app.schemas import BatchResponse
+        from app.schemas import BatchImportResult, BatchResponse
 
-        return {
-            "batch": BatchResponse.model_validate(batch),
-            "success_count": success_count,
-            "fail_count": len(errors),
-            "errors": errors,
-        }
+        return BatchImportResult(
+            batch=BatchResponse.model_validate(batch),
+            success_count=success_count,
+            fail_count=len(errors),
+            errors=errors,
+        )
 
     def _read_csv(self, raw: bytes) -> pd.DataFrame:
         for encoding in ["utf-8", "gbk", "gb2312", "utf-8-sig"]:
@@ -172,8 +171,31 @@ class ImportService:
                 continue
         raise ValueError("Unable to decode CSV file with any supported encoding")
 
-    async def _process_row(self, row, row_num: int, batch_id: UUID):
-        # Normalize column names - support Chinese and English headers
+    async def _process_row(self, row, row_num: int, batch_id: UUID) -> dict | None:
+        """Process a single Excel/CSV row.
+
+        Returns ``None`` on success, or ``{"reason": "..."}`` on handled
+        failure. Each row is wrapped in a SAVEPOINT so a single bad row
+        never poisons the outer transaction; the caller is free to add
+        an ``ImportError`` record outside the rolled-back savepoint.
+        """
+        savepoint = await self.db.begin_nested()
+        try:
+            outcome = await self._process_row_inner(row, batch_id)
+        except Exception as e:
+            await savepoint.rollback()
+            return {"reason": str(e)}
+        else:
+            if outcome is not None:
+                await savepoint.rollback()
+                return outcome
+            await savepoint.commit()
+            return None
+
+    async def _process_row_inner(self, row, batch_id: UUID) -> dict | None:
+        # ``None`` = success, ``{"reason": ...}`` = handled business error
+        # (e.g. duplicate row, empty required field). The outer wrapper
+        # converts the dict into an ImportError record.
         cols = {str(k).strip(): str(k).strip() for k in row.index}
 
         enterprise_name = self._get_value(row, cols, ["企业名称", "enterprise_name", "企业", "enterprise"])
@@ -199,9 +221,9 @@ class ImportService:
         report_remarks = self._get_value(row, cols, ["举报情况备注", "report_remarks", "备注"])
 
         if not enterprise_name:
-            raise ValueError("企业名称不能为空")
+            return {"reason": "企业名称不能为空"}
         if not description:
-            raise ValueError("隐患描述不能为空")
+            return {"reason": "隐患描述不能为空"}
 
         # Parse dates
         inspection_date = self._parse_date(inspection_date_str)
@@ -241,18 +263,17 @@ class ImportService:
             if contact_person:
                 enterprise.contact_person = contact_person
             await self.db.flush()
-        await self.db.commit()
 
-        # Re-bind enterprise id after commit
+        # Re-bind enterprise id after flush (the row lives in the session's
+        # identity map and is visible to subsequent rows in this transaction).
         enterprise_id = enterprise.id
 
-        # Update batch reporting_unit
+        # Update batch reporting_unit only on the first occurrence.
         batch_result = await self.db.execute(select(Batch).where(Batch.id == batch_id))
         batch = batch_result.scalar_one_or_none()
         if batch and reporting_unit and not batch.reporting_unit:
             batch.reporting_unit = reporting_unit
             await self.db.flush()
-            await self.db.commit()
 
         # Deduplication check (1 month)
         one_month_ago = datetime.now(ZoneInfo("Asia/Shanghai")) - timedelta(days=30)
@@ -266,7 +287,7 @@ class ImportService:
             )
         )
         if dup_result.scalar_one_or_none():
-            raise ValueError("重复数据（最近1个月内已存在）")
+            return {"reason": "重复数据（最近1个月内已存在）"}
 
         hazard = Hazard(
             enterprise_id=enterprise_id,
@@ -292,10 +313,10 @@ class ImportService:
             self.db.add(hazard)
             await self.db.flush()
         except IntegrityError:
-            await self.db.rollback()
-            raise ValueError("重复数据（最近1个月内已存在）")
-        # Commit per row for partial success semantics
-        await self.db.commit()
+            return {"reason": "重复数据（最近1个月内已存在）"}
+        # Caller is responsible for committing the outer transaction;
+        # per-row commits are gone so the whole import is atomic.
+        return None
 
     def _get_value(self, row, cols: dict, possible_names: list):
         for name in possible_names:

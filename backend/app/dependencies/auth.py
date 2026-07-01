@@ -10,11 +10,29 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=F
 
 
 def _extract_token(request: Request) -> str | None:
-    # 1. Header Authorization: Bearer <token>
+    """Return the bearer token from header, cookie, or ``?token=`` query.
+
+    Lookup order:
+
+    1. ``Authorization: Bearer <token>`` header (highest priority so
+       tests / curl / scripts can impersonate a user even when an old
+       cookie is still on the wire).
+    2. ``access_token`` httpOnly cookie (the primary path for the
+       browser SPA; the browser never sends an Authorization header
+       for a same-origin XHR).
+    3. ``?token=`` query parameter, retained only for the photo URL
+       migration window - will be removed once HMAC-signed photo
+       URLs are the only path.
+    """
+    # 1. Authorization: Bearer <token>
     auth = request.headers.get("Authorization", "")
     if auth.lower().startswith("bearer "):
         return auth[7:]
-    # 2. Query parameter ?token=<token>
+    # 2. httpOnly cookie - the primary path for the SPA.
+    cookie_token = request.cookies.get("access_token")
+    if cookie_token:
+        return cookie_token
+    # 3. Query parameter ?token=<token>  (legacy photo URL fallback)
     token = request.query_params.get("token")
     if token:
         return token
@@ -39,7 +57,15 @@ async def get_current_user(
     user_id = payload.get("sub")
     if user_id is None:
         raise credentials_exception
-    result = await db.execute(select(User).where(User.id == user_id, User.deleted_at.is_(None)))
+    # Filter on both soft-delete and the explicit ``is_active`` flag. The
+    # latter is what lets an admin disable a user without losing history.
+    result = await db.execute(
+        select(User).where(
+            User.id == user_id,
+            User.deleted_at.is_(None),
+            User.is_active.is_(True),
+        )
+    )
     user = result.scalar_one_or_none()
     if user is None:
         raise credentials_exception
@@ -49,4 +75,6 @@ async def get_current_user(
 async def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
+    # ``is_active`` is enforced inside ``get_current_user`` now, so this
+    # dependency exists for naming/backwards-compatibility only.
     return current_user

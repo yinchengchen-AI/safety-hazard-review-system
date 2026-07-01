@@ -22,13 +22,7 @@ RUN apt-get update && apt-get install -y \
     libx11-dev \
     libxext-dev \
     libxrender-dev \
-    libfontconfig1-dev \
-    libpango1.0-dev \
-    libcairo2-dev \
-    libgdk-pixbuf-2.0-dev \
-    libffi-dev \
-    shared-mime-info \
-    wget \
+                  wget \
     gnupg \
     fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
@@ -44,4 +38,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips=127.0.0.1"]

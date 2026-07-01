@@ -1,8 +1,14 @@
 import axios from 'axios'
 
+// Auth is now carried by an httpOnly cookie set by the server on /auth/login.
+// The browser attaches it automatically, so the SPA does not need to read or
+// write the token at all. ``withCredentials`` is what tells axios to include
+// the cookie on cross-origin XHRs; in dev the Vite proxy makes the API
+// same-origin, in prod Nginx serves both from the same host.
 const request = axios.create({
   baseURL: '/api/v1',
   timeout: 30000,
+  withCredentials: true,
 })
 
 // 英文错误消息 → 中文映射
@@ -50,10 +56,8 @@ function translateError(data: any): any {
 }
 
 request.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
+  // No manual auth header: the httpOnly cookie is attached automatically
+  // because ``withCredentials: true`` is set on the instance above.
   return config
 })
 
@@ -64,7 +68,10 @@ request.interceptors.response.use(
       // 登录接口的 401 是认证失败，需要由调用方处理错误提示
       const isLoginRequest = error.config?.url?.endsWith('/auth/login')
       if (!isLoginRequest) {
-        localStorage.removeItem('token')
+        // Auth cookie is httpOnly so we cannot clear it from JS; redirect
+        // the user to /login and the next /me call will return 401.
+        // The Layout's storage-event listener will also pick up the
+        // absence of an authenticated user and reset state.
         window.location.href = '/login'
       }
     }

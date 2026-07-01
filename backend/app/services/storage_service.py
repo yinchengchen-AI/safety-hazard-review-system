@@ -7,6 +7,10 @@ from app.core.config import settings
 
 class StorageService:
     def __init__(self):
+        # Bucket creation runs in the FastAPI lifespan hook (see
+        # ``app.main``) so this constructor stays cheap and non-blocking.
+        # Re-running ``ensure_bucket`` here would block the event loop on
+        # every request because the MinIO client uses sync HTTP.
         self.client = Minio(
             settings.MINIO_ENDPOINT,
             access_key=settings.MINIO_ACCESS_KEY,
@@ -14,11 +18,6 @@ class StorageService:
             secure=settings.MINIO_SECURE,
         )
         self.bucket = settings.MINIO_BUCKET
-        self._ensure_bucket()
-
-    def _ensure_bucket(self):
-        if not self.client.bucket_exists(self.bucket):
-            self.client.make_bucket(self.bucket)
 
     async def upload_image(self, content: bytes, filename: str, temp_token: str):
         ext = "jpg" if filename.lower().endswith((".jpg", ".jpeg")) else "png"
@@ -35,7 +34,6 @@ class StorageService:
         img.save(thumb_buffer, format=img_format)
         thumb_buffer.seek(0)
 
-        # Upload original
         self.client.put_object(
             self.bucket,
             object_name,
@@ -43,8 +41,6 @@ class StorageService:
             length=len(content),
             content_type=f"image/{ext}" if ext != "jpg" else "image/jpeg",
         )
-
-        # Upload thumbnail
         self.client.put_object(
             self.bucket,
             thumb_name,
@@ -52,8 +48,6 @@ class StorageService:
             length=thumb_buffer.getbuffer().nbytes,
             content_type=f"image/{ext}" if ext != "jpg" else "image/jpeg",
         )
-
-        # Return object names for backend proxying
         return object_name, thumb_name
 
     def upload_file(self, content: bytes, object_name: str, content_type: str = "application/octet-stream") -> str:
@@ -67,7 +61,6 @@ class StorageService:
         return object_name
 
     def get_file(self, object_name: str):
-        # object_name should not include bucket prefix
         if object_name.startswith(f"/{self.bucket}/"):
             object_name = object_name[len(f"/{self.bucket}/"):]
         return self.client.get_object(self.bucket, object_name)
@@ -90,3 +83,9 @@ class StorageService:
         except Exception:
             pass
 
+
+def ensure_bucket() -> None:
+    """Idempotently create the configured bucket. Call once from lifespan."""
+    svc = StorageService()
+    if not svc.client.bucket_exists(svc.bucket):
+        svc.client.make_bucket(svc.bucket)

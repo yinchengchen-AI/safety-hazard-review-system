@@ -213,7 +213,7 @@ cd backend && pytest tests/test_auth.py
   - `client`（function 级别）：覆盖 `get_db` 依赖以使用测试数据库，测试结束后清理 overrides。
 
 ### 测试数据库要求
-- 需要本地 PostgreSQL 数据库：`postgresql+asyncpg://postgres:postgres@localhost:5432/safety_hazard_test`
+- 需要本地 PostgreSQL 数据库：`postgresql+asyncpg://postgres:postgres@localhost:5433/safety_hazard_test`（conftest 硬编码为 5433，与本地开发库 5432 隔离）
 - 测试使用 `NullPool` 避免连接池缓存问题。
 
 ---
@@ -315,10 +315,15 @@ sudo docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env
 
 ## 安全注意事项
 
-- **SECRET_KEY**：生产环境必须通过环境变量设置强随机密钥（`openssl rand -hex 32`），不要依赖默认生成的随机值。
+- **ENV 变量**：启动期必须设置。`dev` / `test` 允许弱 SECRET_KEY；`staging` / `production` 硬阻断默认 `your-secret-key-change-in-production` 与长度 < 32 的密钥。docker-compose 已分别设置 `ENV=dev` 与 `ENV=production`。
+- **启动期默认账号检查**：在 `staging` / `production` 下若 `admin/admin123` 仍存在，应用直接抛出 `RuntimeError` 拒绝启动。dev 环境仅打印 WARNING。
+- **SECRET_KEY**：生产环境必须通过环境变量设置强随机密钥（`openssl rand -hex 32`），不要依赖默认生成的随机值。`deploy-remote.sh` 会自动生成并写入 `/etc/safety-hazard.env`。
 - **数据库密码**：生产环境使用强密码，并通过 `--env-file` 持久化到 `/etc/safety-hazard.env`。
 - **MinIO**：生产环境绑定到 `127.0.0.1`，不对外暴露 9000/9001 端口。
-- **CORS**：`ALLOWED_ORIGINS` 在生产环境应严格限制为实际域名，不要使用 `*`。
+- **CORS**：`ALLOWED_ORIGINS` 在生产环境应严格限制为实际域名，不要使用 `*`。后端启动期不再接受 `*`，methods / headers 也已收紧为白名单。
+- **JWT 不再出现在 URL**：图片访问通过 HMAC 签名短链（`?sig=&exp=`），TTL 默认 15 分钟，TTL 内可被浏览器缓存复用。`?token=\<jwt\>` 路径仅作为 1 个发布周期的兼容回退，响应头 `X-Photo-Auth-Deprecated: true`。
+- **登录限流**：[slowapi](https://github.com/laurentS/slowapi) 基于 Redis 存储，`5/minute` 每 IP。生产环境请确保 Redis 与应用同区域，并考虑把限流 key 升级为 IP+username。
 - **文件上传**：后端限制文件大小 10MB，并通过文件头校验图片格式，防止恶意文件上传。
-- **管理员密码**：首次部署后默认账号为 `admin` / `admin123`，必须在首次登录后立即修改。
-- **Nginx**：生产配置设置 `client_max_body_size 50M` 以支持批量图片上传。
+- **管理员密码**：首次部署后默认账号为 `admin` / `admin123`，必须在首次登录后立即修改（生产环境不修改会被启动期硬阻断）。
+- **Nginx**：`nginx.conf` 注入 CSP / X-Frame-Options / X-Content-Type-Options / Referrer-Policy / Permissions-Policy / HSTS（仅 HTTPS）；生产配置设置 `client_max_body_size 50M` 以支持批量图片上传。
+- **依赖**：passlib 已移除（不再维护），改用 `bcrypt==4.2.0`；旧 passlib 格式 `b$` hash 仍能 verify，登录成功后透明 rehash。`xlsx@0.18.5`（CVE-2023-30533）已在前端用 `exceljs@^4.4.0` 替换，仅 `BatchHistory.tsx` 的“下载失败明细”使用。

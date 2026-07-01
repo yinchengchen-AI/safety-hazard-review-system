@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useState, useEffect, lazy } from 'react'
+import { useEffect, lazy } from 'react'
 import Login from './pages/Login'
 import Layout from './components/Layout'
 
@@ -19,38 +19,22 @@ const EnterpriseDetail = lazy(() => import('./pages/Enterprise/EnterpriseDetail'
 import { useUserStore } from './store/userStore'
 
 function App() {
-  const [isAuth, setIsAuth] = useState(!!localStorage.getItem('token'))
-  const { fetchUser, clearUser } = useUserStore()
+  // The httpOnly auth cookie is invisible to JS. The user store reflects
+  // the result of /auth/me: when the cookie is missing or expired the
+  // request interceptor redirects to /login and the user store clears.
+  const { user, fetchUser } = useUserStore()
 
   useEffect(() => {
-    const handleStorage = () => {
-      const hasToken = !!localStorage.getItem('token')
-      setIsAuth(hasToken)
-      if (hasToken) {
-        fetchUser()
-      } else {
-        clearUser()
-      }
-    }
-    window.addEventListener('storage', handleStorage)
-    return () => window.removeEventListener('storage', handleStorage)
-  }, [fetchUser, clearUser])
-
-  useEffect(() => {
-    if (isAuth) {
-      fetchUser()
-    }
-  }, [isAuth, fetchUser])
+    // Probe /me on mount. If the cookie is valid, the store will populate;
+    // if not, the 401 interceptor in api/request.ts handles the redirect.
+    fetchUser()
+  }, [fetchUser])
 
   const checkAuth = () => {
-    const hasToken = !!localStorage.getItem('token')
-    setIsAuth(hasToken)
-    if (hasToken) {
-      fetchUser()
-    } else {
-      clearUser()
-    }
+    fetchUser()
   }
+
+  const isAuth = !!user
 
   return (
     <BrowserRouter>

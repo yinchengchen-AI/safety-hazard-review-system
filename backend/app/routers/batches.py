@@ -105,11 +105,11 @@ async def import_hazards(
         user_id=current_user.id,
         action="import_batch",
         target_type="batch",
-        target_id=result.batch_id if hasattr(result, 'batch_id') else None,
+        target_id=result.batch.id,
         detail={
             "batch_name": name,
-            "success_count": result.success_count if hasattr(result, 'success_count') else 0,
-            "error_count": result.error_count if hasattr(result, 'error_count') else 0,
+            "success_count": result.success_count,
+            "error_count": result.fail_count,
         },
         request_info={
             "ip": request.client.host if request.client else None,
