@@ -1,0 +1,269 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model audit_logs {
+  id          String    @id @db.Uuid @default(uuid())
+  user_id     String?   @db.Uuid
+  action      String    @db.VarChar(50)
+  target_type String    @db.VarChar(50)
+  target_id   String?   @db.Uuid
+  detail      Json?
+  ip_address  String?   @db.VarChar(50)
+  method      String?   @db.VarChar(10)
+  path        String?   @db.VarChar(200)
+  status_code Int?
+  user_agent  String?   @db.VarChar(500)
+  created_at  DateTime? @db.Timestamptz(6)
+  users       users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([action, created_at], map: "ix_audit_logs_action")
+  @@index([target_type, target_id, created_at], map: "ix_audit_logs_target")
+  @@index([user_id, created_at], map: "ix_audit_logs_user_created")
+}
+
+model batches {
+  id                 String               @id @db.Uuid @default(uuid())
+  name               String               @db.VarChar(100)
+  import_time        DateTime?            @db.Timestamptz(6)
+  file_name          String?              @db.VarChar(255)
+  total_count        Int?
+  success_count      Int?
+  fail_count         Int?
+  creator_id         String?              @db.Uuid
+  original_file_path String?              @db.VarChar(500)
+  reporting_unit     String?              @db.VarChar(100)
+  created_at         DateTime?            @db.Timestamptz(6)
+  deleted_at         DateTime?            @db.Timestamptz(6)
+  users              users?               @relation(fields: [creator_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  hazards            hazards[]
+  import_errors      import_errors[]
+  statistics_daily   statistics_daily[]
+  statistics_monthly statistics_monthly[]
+}
+
+model enterprises {
+  id                 String               @id @db.Uuid @default(uuid())
+  name               String               @db.VarChar(200)
+  credit_code        String?              @db.VarChar(50)
+  region             String?              @db.VarChar(100)
+  address            String?              @db.VarChar(500)
+  contact_person     String?              @db.VarChar(100)
+  industry_sector    String?              @db.VarChar(100)
+  enterprise_type    String?              @db.VarChar(50)
+  created_at         DateTime?            @db.Timestamptz(6)
+  deleted_at         DateTime?            @db.Timestamptz(6)
+  hazards            hazards[]
+  statistics_daily   statistics_daily[]
+  statistics_monthly statistics_monthly[]
+}
+
+model hazard_status_history {
+  id          String    @id @db.Uuid @default(uuid())
+  hazard_id   String    @db.Uuid
+  from_status String?   @db.VarChar(20)
+  to_status   String    @db.VarChar(20)
+  changed_by  String?   @db.Uuid
+  changed_at  DateTime? @db.Timestamptz(6)
+  reason      String?   @db.VarChar
+  users       users?    @relation(fields: [changed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  hazards     hazards   @relation(fields: [hazard_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model hazards {
+  id                        String                  @id @db.Uuid @default(uuid())
+  enterprise_id             String                  @db.Uuid
+  batch_id                  String                  @db.Uuid
+  content                   String?                 @db.VarChar
+  description               String?                 @db.VarChar
+  location                  String?                 @db.VarChar(255)
+  category                  String?                 @db.VarChar(50)
+  inspection_method         String?                 @db.VarChar(50)
+  inspector                 String?                 @db.VarChar(100)
+  inspection_date           DateTime?               @db.Date
+  judgment_basis            String?                 @db.VarChar(500)
+  violation_clause          String?                 @db.VarChar
+  is_rectified              String?                 @db.VarChar(20)
+  rectification_date        DateTime?               @db.Date
+  rectification_responsible String?                 @db.VarChar(200)
+  rectification_measures    String?                 @db.VarChar
+  report_remarks            String?                 @db.VarChar
+  reporting_unit            String?                 @db.VarChar(100)
+  status                    String                  @db.VarChar(20)
+  current_task_id           String?                 @db.Uuid
+  review_count              Int?
+  created_at                DateTime?               @db.Timestamptz(6)
+  updated_at                DateTime?               @db.Timestamptz(6)
+  deleted_at                DateTime?               @db.Timestamptz(6)
+  hazard_status_history     hazard_status_history[]
+  batches                   batches                 @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  review_tasks              review_tasks?           @relation(fields: [current_task_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enterprises               enterprises             @relation(fields: [enterprise_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  task_hazards              task_hazards[]
+
+  @@index([batch_id, status], map: "ix_hazards_batch_status")
+  @@index([current_task_id], map: "ix_hazards_current_task")
+  @@index([enterprise_id, status, created_at], map: "ix_hazards_enterprise_status_created")
+}
+
+model import_errors {
+  id         String    @id @db.Uuid @default(uuid())
+  batch_id   String    @db.Uuid
+  row_index  Int
+  raw_data   String?   @db.VarChar
+  reason     String    @db.VarChar(500)
+  created_at DateTime? @db.Timestamptz(6)
+  batches    batches   @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([batch_id], map: "ix_import_errors_batch")
+}
+
+model notifications {
+  id           String    @id @db.Uuid @default(uuid())
+  user_id      String    @db.Uuid
+  type         String    @db.VarChar(30)
+  title        String    @db.VarChar(200)
+  content      String?   @db.VarChar(500)
+  related_type String?   @db.VarChar(30)
+  related_id   String?   @db.Uuid
+  is_read      Boolean
+  read_at      DateTime? @db.Timestamptz(6)
+  created_at   DateTime? @db.Timestamptz(6)
+  updated_at   DateTime? @db.Timestamptz(6)
+  deleted_at   DateTime? @db.Timestamptz(6)
+  users        users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([user_id, type, related_id], map: "uix_notification_user_type_related")
+  @@index([read_at], map: "ix_notifications_read_at")
+  @@index([related_type, related_id], map: "ix_notifications_related")
+  @@index([user_id, created_at], map: "ix_notifications_user_created")
+  @@index([user_id, is_read, created_at], map: "ix_notifications_user_unread")
+}
+
+model photos {
+  id             String        @id @db.Uuid @default(uuid())
+  task_hazard_id String?       @db.Uuid
+  temp_token     String?       @db.VarChar(64)
+  original_path  String        @db.VarChar(500)
+  thumbnail_path String        @db.VarChar(500)
+  file_size      BigInt?
+  mime_type      String?       @db.VarChar(50)
+  width          Int?
+  height         Int?
+  uploaded_at    DateTime?     @db.Timestamptz(6)
+  deleted_at     DateTime?     @db.Timestamptz(6)
+  task_hazards   task_hazards? @relation(fields: [task_hazard_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([task_hazard_id], map: "ix_photos_task_hazard")
+  @@index([temp_token], map: "ix_photos_temp_token")
+}
+
+model reports {
+  id            String       @id @db.Uuid @default(uuid())
+  task_id       String       @unique @db.Uuid
+  word_path     String?      @db.VarChar(500)
+  pdf_path      String?      @db.VarChar(500)
+  status        String       @db.VarChar(20)
+  error_message String?      @db.VarChar
+  generated_at  DateTime?    @db.Timestamptz(6)
+  created_at    DateTime?    @db.Timestamptz(6)
+  review_tasks  review_tasks @relation(fields: [task_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model review_tasks {
+  id           String         @id @db.Uuid @default(uuid())
+  name         String         @db.VarChar(200)
+  creator_id   String         @db.Uuid
+  status       String         @db.VarChar(20)
+  created_at   DateTime?      @db.Timestamptz(6)
+  completed_at DateTime?      @db.Timestamptz(6)
+  deleted_at   DateTime?      @db.Timestamptz(6)
+  hazards      hazards[]
+  reports      reports?
+  users        users          @relation(fields: [creator_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  task_hazards task_hazards[]
+}
+
+model statistics_daily {
+  id            String       @id @db.Uuid @default(uuid())
+  stat_date     DateTime     @db.Date
+  enterprise_id String?      @db.Uuid
+  batch_id      String?      @db.Uuid
+  inspector_id  String?      @db.Uuid
+  total_hazards Int?
+  pending_count Int?
+  passed_count  Int?
+  failed_count  Int?
+  review_count  Int?
+  task_count    Int?
+  created_at    DateTime?    @db.Timestamptz(6)
+  updated_at    DateTime?    @db.Timestamptz(6)
+  batches       batches?     @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enterprises   enterprises? @relation(fields: [enterprise_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users         users?       @relation(fields: [inspector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([stat_date, enterprise_id, batch_id, inspector_id], map: "uix_stats_daily")
+}
+
+model statistics_monthly {
+  id            String       @id @db.Uuid @default(uuid())
+  stat_month    String       @db.VarChar(7)
+  enterprise_id String?      @db.Uuid
+  batch_id      String?      @db.Uuid
+  inspector_id  String?      @db.Uuid
+  total_hazards Int?
+  pending_count Int?
+  passed_count  Int?
+  failed_count  Int?
+  review_count  Int?
+  task_count    Int?
+  created_at    DateTime?    @db.Timestamptz(6)
+  updated_at    DateTime?    @db.Timestamptz(6)
+  batches       batches?     @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enterprises   enterprises? @relation(fields: [enterprise_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users         users?       @relation(fields: [inspector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([stat_month, enterprise_id, batch_id, inspector_id], map: "uix_stats_monthly")
+}
+
+model task_hazards {
+  id             String       @id @db.Uuid @default(uuid())
+  task_id        String       @db.Uuid
+  hazard_id      String       @db.Uuid
+  conclusion     String?      @db.VarChar
+  status_in_task String?      @db.VarChar(20)
+  reviewed_at    DateTime?    @db.Timestamptz(6)
+  reviewer_id    String?      @db.Uuid
+  deleted_at     DateTime?    @db.Timestamptz(6)
+  photos         photos[]
+  hazards        hazards      @relation(fields: [hazard_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users          users?       @relation(fields: [reviewer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  review_tasks   review_tasks @relation(fields: [task_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([task_id, hazard_id], map: "uix_task_hazard")
+}
+
+model users {
+  id                    String                  @id @db.Uuid @default(uuid())
+  username              String                  @unique @db.VarChar(50)
+  full_name             String?                 @db.VarChar(100)
+  phone                 String?                 @db.VarChar(20)
+  password_hash         String                  @db.VarChar(255)
+  role                  String                  @db.VarChar(20)
+  is_active             Boolean                 @default(true)
+  created_at            DateTime?               @db.Timestamptz(6)
+  deleted_at            DateTime?               @db.Timestamptz(6)
+  audit_logs            audit_logs[]
+  batches               batches[]
+  hazard_status_history hazard_status_history[]
+  notifications         notifications[]
+  review_tasks          review_tasks[]
+  statistics_daily      statistics_daily[]
+  statistics_monthly    statistics_monthly[]
+  task_hazards          task_hazards[]
+}
