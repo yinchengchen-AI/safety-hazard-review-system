@@ -19,7 +19,7 @@ model audit_logs {
   path        String?   @db.VarChar(200)
   status_code Int?
   user_agent  String?   @db.VarChar(500)
-  created_at  DateTime? @db.Timestamptz(6)
+  created_at  DateTime? @db.Timestamptz(6) @default(now())
   users       users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([action, created_at], map: "ix_audit_logs_action")
@@ -32,13 +32,10 @@ model batches {
   name               String               @db.VarChar(100)
   import_time        DateTime?            @db.Timestamptz(6)
   file_name          String?              @db.VarChar(255)
-  total_count        Int?
-  success_count      Int?
-  fail_count         Int?
-  creator_id         String?              @db.Uuid
+  total_count  Int? @default(0) success_count  Int? @default(0) fail_count  Int? @default(0) creator_id         String?              @db.Uuid
   original_file_path String?              @db.VarChar(500)
   reporting_unit     String?              @db.VarChar(100)
-  created_at         DateTime?            @db.Timestamptz(6)
+  created_at  DateTime? @db.Timestamptz(6) @default(now())
   deleted_at         DateTime?            @db.Timestamptz(6)
   users              users?               @relation(fields: [creator_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   hazards            hazards[]
@@ -56,7 +53,7 @@ model enterprises {
   contact_person     String?              @db.VarChar(100)
   industry_sector    String?              @db.VarChar(100)
   enterprise_type    String?              @db.VarChar(50)
-  created_at         DateTime?            @db.Timestamptz(6)
+  created_at  DateTime? @db.Timestamptz(6) @default(now())
   deleted_at         DateTime?            @db.Timestamptz(6)
   hazards            hazards[]
   statistics_daily   statistics_daily[]
@@ -96,9 +93,8 @@ model hazards {
   reporting_unit            String?                 @db.VarChar(100)
   status                    String                  @db.VarChar(20)
   current_task_id           String?                 @db.Uuid
-  review_count              Int?
-  created_at                DateTime?               @db.Timestamptz(6)
-  updated_at                DateTime?               @db.Timestamptz(6)
+  review_count  Int? @default(0) created_at  DateTime? @db.Timestamptz(6) @default(now())
+  updated_at  DateTime? @db.Timestamptz(6) @default(now()) @updatedAt
   deleted_at                DateTime?               @db.Timestamptz(6)
   hazard_status_history     hazard_status_history[]
   batches                   batches                 @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -117,7 +113,7 @@ model import_errors {
   row_index  Int
   raw_data   String?   @db.VarChar
   reason     String    @db.VarChar(500)
-  created_at DateTime? @db.Timestamptz(6)
+  created_at  DateTime? @db.Timestamptz(6) @default(now())
   batches    batches   @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([batch_id], map: "ix_import_errors_batch")
@@ -133,8 +129,8 @@ model notifications {
   related_id   String?   @db.Uuid
   is_read      Boolean
   read_at      DateTime? @db.Timestamptz(6)
-  created_at   DateTime? @db.Timestamptz(6)
-  updated_at   DateTime? @db.Timestamptz(6)
+  created_at  DateTime? @db.Timestamptz(6) @default(now())
+  updated_at  DateTime? @db.Timestamptz(6) @default(now()) @updatedAt
   deleted_at   DateTime? @db.Timestamptz(6)
   users        users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -171,7 +167,7 @@ model reports {
   status        String       @db.VarChar(20)
   error_message String?      @db.VarChar
   generated_at  DateTime?    @db.Timestamptz(6)
-  created_at    DateTime?    @db.Timestamptz(6)
+  created_at  DateTime? @db.Timestamptz(6) @default(now())
   review_tasks  review_tasks @relation(fields: [task_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -180,7 +176,7 @@ model review_tasks {
   name         String         @db.VarChar(200)
   creator_id   String         @db.Uuid
   status       String         @db.VarChar(20)
-  created_at   DateTime?      @db.Timestamptz(6)
+  created_at  DateTime? @db.Timestamptz(6) @default(now())
   completed_at DateTime?      @db.Timestamptz(6)
   deleted_at   DateTime?      @db.Timestamptz(6)
   hazards      hazards[]
@@ -199,10 +195,9 @@ model statistics_daily {
   pending_count Int?
   passed_count  Int?
   failed_count  Int?
-  review_count  Int?
-  task_count    Int?
-  created_at    DateTime?    @db.Timestamptz(6)
-  updated_at    DateTime?    @db.Timestamptz(6)
+  review_count  Int? @default(0) task_count    Int?
+  created_at  DateTime? @db.Timestamptz(6) @default(now())
+  updated_at  DateTime? @db.Timestamptz(6) @default(now()) @updatedAt
   batches       batches?     @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   enterprises   enterprises? @relation(fields: [enterprise_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users         users?       @relation(fields: [inspector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -220,10 +215,9 @@ model statistics_monthly {
   pending_count Int?
   passed_count  Int?
   failed_count  Int?
-  review_count  Int?
-  task_count    Int?
-  created_at    DateTime?    @db.Timestamptz(6)
-  updated_at    DateTime?    @db.Timestamptz(6)
+  review_count  Int? @default(0) task_count    Int?
+  created_at  DateTime? @db.Timestamptz(6) @default(now())
+  updated_at  DateTime? @db.Timestamptz(6) @default(now()) @updatedAt
   batches       batches?     @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   enterprises   enterprises? @relation(fields: [enterprise_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users         users?       @relation(fields: [inspector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -256,7 +250,7 @@ model users {
   password_hash         String                  @db.VarChar(255)
   role                  String                  @db.VarChar(20)
   is_active             Boolean                 @default(true)
-  created_at            DateTime?               @db.Timestamptz(6)
+  created_at  DateTime? @db.Timestamptz(6) @default(now())
   deleted_at            DateTime?               @db.Timestamptz(6)
   audit_logs            audit_logs[]
   batches               batches[]

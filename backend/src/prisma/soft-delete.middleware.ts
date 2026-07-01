@@ -6,6 +6,18 @@ import { Prisma } from '@prisma/client';
  */
 export const SOFT_DELETE_MODELS = new Set<string>([
   'users',
+  'enterprises',
+  'batches',
+  'hazards',
+  'review_tasks',
+  'task_hazards',
+  'notifications',
+  'audit_logs',
+  'photos',
+  'hazard_status_history',
+  'reports',
+  'statistics_daily',
+  'statistics_monthly',
 ]);
 
 function appendDeletedAtNull(where: Record<string, unknown> | undefined): Record<string, unknown> {

@@ -8,6 +8,10 @@ import { RequestLoggingInterceptor } from './common/interceptors/request-logging
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { HealthModule } from './modules/health/health.module';
+import { EnterprisesModule } from './modules/enterprises/enterprises.module';
+import { HazardsModule } from './modules/hazards/hazards.module';
+import { BatchesModule } from './modules/batches/batches.module';
+import { ReviewTasksModule } from './modules/review-tasks/review-tasks.module';
 
 @Module({
   imports: [
@@ -17,6 +21,10 @@ import { HealthModule } from './modules/health/health.module';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     AuthModule,
     UsersModule,
+    EnterprisesModule,
+    HazardsModule,
+    BatchesModule,
+    ReviewTasksModule,
     HealthModule,
   ],
   providers: [

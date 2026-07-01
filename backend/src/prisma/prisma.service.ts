@@ -11,9 +11,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit(): Promise<void> {
-    console.log('[PrismaService] onModuleInit, registering soft-delete middleware');
     this.$use(softDeleteMiddleware);
-    console.log('[PrismaService] middleware registered, count:', (this as any)._middlewareParams?.count ?? 'unknown');
     await this.$connect();
   }
 
