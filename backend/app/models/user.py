@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -16,6 +16,7 @@ class User(Base):
     phone = Column(String(20), nullable=True)
     password_hash = Column(String(255), nullable=False)
     role = Column(String(20), nullable=False, default="inspector")
+    is_active = Column(Boolean, nullable=False, default=True, server_default="true")
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(ZoneInfo("Asia/Shanghai")))
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 

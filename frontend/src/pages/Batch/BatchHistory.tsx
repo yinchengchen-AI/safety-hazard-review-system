@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Table, Button, Space, Popconfirm, message, Pagination } from 'antd'
 import { HistoryOutlined, DeleteOutlined, DownloadOutlined, FileExcelOutlined } from '@ant-design/icons'
 import { getBatches, deleteBatch, downloadBatchFile, getImportErrors } from '../../api/batch'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 interface Batch {
   id: string
@@ -70,16 +70,32 @@ function BatchHistory() {
         message.info('该批次无失败明细')
         return
       }
-      const ws = XLSX.utils.json_to_sheet(
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('失败明细')
+      worksheet.columns = [
+        { header: '行号', key: 'row_index', width: 10 },
+        { header: '原始数据', key: 'raw_data', width: 50 },
+        { header: '错误原因', key: 'reason', width: 40 },
+      ]
+      worksheet.addRows(
         errors.map((e: any) => ({
-          行号: e.row_index,
-          原始数据: e.raw_data,
-          错误原因: e.reason,
+          row_index: e.row_index,
+          raw_data: e.raw_data,
+          reason: e.reason,
         }))
       )
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, '失败明细')
-      XLSX.writeFile(wb, `${batch.name}_失败明细.xlsx`)
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${batch.name}_失败明细.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
     } catch {
       message.error('下载失败')
     }

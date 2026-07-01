@@ -69,6 +69,7 @@ services:
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
       - MINIO_BUCKET=${MINIO_BUCKET:-hazard-photos}
       - SECRET_KEY=${SECRET_KEY}
+      - ENV=production
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost}
       - AUTO_CREATE_TABLES=false
     depends_on:
@@ -94,6 +95,7 @@ services:
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
       - MINIO_BUCKET=${MINIO_BUCKET:-hazard-photos}
       - SECRET_KEY=${SECRET_KEY}
+      - ENV=production
     depends_on:
       postgres:
         condition: service_healthy
@@ -115,6 +117,7 @@ services:
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
       - MINIO_BUCKET=${MINIO_BUCKET:-hazard-photos}
       - SECRET_KEY=${SECRET_KEY}
+      - ENV=production
     depends_on:
       postgres:
         condition: service_healthy

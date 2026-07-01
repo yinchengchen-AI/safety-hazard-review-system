@@ -64,6 +64,23 @@ EOF
 sudo docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
 
+
+
+## 环境变量
+
+| 变量 | 必填 | 说明 |
+|------|------|------|
+| `ENV` | 是 | `dev` / `test` / `staging` / `production`。`staging` 与 `production` 启动期会硬阻断：默认 `your-secret-key-change-in-production`、长度 < 32 的 SECRET_KEY、默认 `admin/admin123` 账号。`deploy-remote.sh` 自动写入 `ENV=production`。 |
+| `SECRET_KEY` | 是 | JWT 签名密钥与 HMAC 照片 URL 签名密钥。生产环境必须 `openssl rand -hex 32` 生成。 |
+| `PHOTO_SIGNATURE_TTL` | 否 | 照片 HMAC 签名 URL 有效期（秒），默认 900。 |
+| `LOGIN_RATE_LIMIT` | 否 | slowapi 限流阈值，默认 `5/minute`。 |
+
+启动期阻断的具体行为：
+- 容器启动后 `assert_safe_for_runtime` 立即连接数据库。
+- 若 `ENV` 为 `staging` / `production` 且 `SECRET_KEY` 是默认占位串或长度 < 32：直接抛 `RuntimeError`，容器退出码非 0。
+- 若 `ENV` 为 `staging` / `production` 且 `users` 表里 `admin` 账号的密码仍为 `admin123`：同样抛 `RuntimeError`。
+- 解决：`openssl rand -hex 32` 生成新 SECRET_KEY；通过 API 或一次性脚本修改 admin 密码。
+
 ## 日常运维
 
 ### 查看日志
