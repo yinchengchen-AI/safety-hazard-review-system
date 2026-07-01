@@ -40,15 +40,14 @@ export const envSchema = z
       if (data.SECRET_KEY === 'your-secret-key-change-in-production') {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            'SECRET_KEY is set to the documented insecure fallback. Generate a real one with: openssl rand -hex 32',
+          message: 'SECRET_KEY is set to the documented insecure fallback.',
           path: ['SECRET_KEY'],
         });
       }
       if (data.SECRET_KEY.length < 32) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `SECRET_KEY must be at least 32 characters in ${data.ENV} (got ${data.SECRET_KEY.length})`,
+          message: `SECRET_KEY must be at least 32 characters in ${data.ENV}`,
           path: ['SECRET_KEY'],
         });
       }

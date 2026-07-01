@@ -12,6 +12,15 @@ import { EnterprisesModule } from './modules/enterprises/enterprises.module';
 import { HazardsModule } from './modules/hazards/hazards.module';
 import { BatchesModule } from './modules/batches/batches.module';
 import { ReviewTasksModule } from './modules/review-tasks/review-tasks.module';
+import { PhotosModule } from './modules/photos/photos.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { StatisticsModule } from './modules/statistics/statistics.module';
+import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
+import { StorageModule } from './storage/storage.module';
+import { BullmqModule } from './queues/bullmq.module';
+import { ReportProcessor } from './queues/report.processor';
+import { ReportRenderer } from './queues/report-renderer';
 
 @Module({
   imports: [
@@ -21,13 +30,22 @@ import { ReviewTasksModule } from './modules/review-tasks/review-tasks.module';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     AuthModule,
     UsersModule,
+    StorageModule,
+    BullmqModule,
     EnterprisesModule,
     HazardsModule,
     BatchesModule,
     ReviewTasksModule,
+    PhotosModule,
+    ReportsModule,
+    NotificationsModule,
+    StatisticsModule,
+    AuditLogsModule,
     HealthModule,
   ],
   providers: [
+    ReportProcessor,
+    ReportRenderer,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: RequestLoggingInterceptor },
   ],
