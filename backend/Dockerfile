@@ -1,41 +1,19 @@
-FROM docker.m.daocloud.io/python:3.12-slim
-
+# Build stage
+FROM docker.m.daocloud.io/node:20-alpine AS builder
 WORKDIR /app
-
-# Install system dependencies for Playwright, Pillow, and WeasyPrint fallback
-# Use Aliyun mirror for stable downloads (avoids Fastly CDN 502 errors in China)
-RUN printf 'Types: deb\nURIs: http://mirrors.aliyun.com/debian/\nSuites: trixie trixie-updates\nComponents: main\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\n' \
-    > /etc/apt/sources.list.d/debian.sources
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    libpng-dev \
-    libfreetype6-dev \
-    liblcms2-dev \
-    libopenjp2-7-dev \
-    libtiff5-dev \
-    libwebp-dev \
-    libharfbuzz-dev \
-    libfribidi-dev \
-    libx11-dev \
-    libxext-dev \
-    libxrender-dev \
-                  wget \
-    gnupg \
-    fonts-noto-cjk \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install Playwright browsers
-RUN playwright install chromium
-RUN playwright install-deps chromium
-
+COPY package*.json ./
+RUN npm ci
 COPY . .
+COPY ../prisma ./prisma
+RUN npx prisma generate && npm run build
 
+# Runtime stage
+FROM docker.m.daocloud.io/node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
 EXPOSE 8000
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips=127.0.0.1"]
+# Re-run prisma generate at runtime in case node_modules layout differs
+CMD ["sh", "-c", "npx prisma generate && node dist/src/main.js"]

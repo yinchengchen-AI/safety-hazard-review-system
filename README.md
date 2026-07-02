@@ -1,188 +1,97 @@
-# 安全生产隐患复核系统
+# 安全生产隐患复核系统 (Safety Hazard Review System)
 
-企业安全生产隐患排查、任务分配与复核闭环管理平台。
+管理企业安全生产隐患排查 → 任务分派 → 复核 → 报告生成的企业内部系统。
 
-## 技术栈
+## 技术栈（2026-Q3 切流后）
 
-| 层级 | 技术 |
-|------|------|
-| 后端 | Python 3.12、FastAPI、SQLAlchemy 2.0（异步）、Alembic |
-| 数据库 | PostgreSQL 15、Redis 7 |
-| 对象存储 | MinIO |
-| 任务队列 | Celery（Worker + Beat） |
-| 前端 | React 18、TypeScript、Vite 5、Ant Design 5 |
-| 基础设施 | Docker Compose、Nginx |
+| 层 | 技术 |
+|---|---|
+| 后端 | **NestJS 10** + Prisma 5 + TypeScript 5 |
+| 前端 | **Next.js 14 App Router** + React 18 + Ant Design 5 + Zustand |
+| 队列 | **@nestjs/bullmq** + Redis 7 |
+| 数据库 | PostgreSQL 15 |
+| 对象存储 | MinIO (S3 兼容) |
+| 部署 | Docker Compose + Nginx |
 
-## 功能模块
+历史栈 (Python/FastAPI + React/Vite) 已退役，源码保留在
+`backend-legacy/` 30 天作为回滚预案。
 
-- **企业管理** — 多企业、多区域支持
-- **隐患管理** — 批量导入、分级分类、图片上传
-- **复核任务** — 任务分配、状态流转、闭环跟踪
-- **报告生成** — 异步生成 PDF / Word 报告（Playwright + python-docx）
-- **统计分析** — 日/月维度数据汇总
-- **用户权限** — JWT 认证、管理员/普通用户角色
-- **操作审计** — 全链路操作日志
-- **系统提醒** — 任务/复核/报告状态变更实时通知（铃铛下拉 + 通知中心）
+## 快速开始
 
-## 快速开始（本地开发）
-
-### 前提条件
-
-- Docker & Docker Compose
-- Python 3.12+（仅后端独立运行时需要）
-- Node.js 20+（仅前端独立运行时需要）
-
-### 启动全部服务
-
+### 本地开发
 ```bash
-docker compose up --build
-```
-
-服务启动后访问：
-- 前端：http://localhost:5173
-- API 文档：http://localhost:8000/docs
-
-### 初始化管理员账号
-
-```bash
-cd backend && python scripts/seed_admin.py
-```
-
-默认账号：`admin` / `admin123`（首次登录后请立即修改密码）
-
-### 单独启动后端
-
-```bash
+# 后端
 cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
+cp .env.example .env  # 然后填实际值
+npm install
+npx prisma generate
+npx prisma migrate deploy
+npm run dev          # http://localhost:8000
 
-### 单独启动前端
-
-```bash
+# 前端 (另一个终端)
 cd frontend
 npm install
-npm run dev   # 端口 5173，自动代理 /api 到 localhost:8000
+npm run dev          # http://localhost:3000
 ```
 
-## 常用命令
+默认管理员账号 `admin / admin123`，首次登录后请立即修改。
 
+### 测试
 ```bash
-# 运行测试
-cd backend && pytest
+# 后端 (单测 + E2E)
+cd backend
+npm test
+npm run test:e2e       # 需要本地 Postgres / Redis / MinIO
 
-# 生成数据库迁移
-cd backend && alembic revision --autogenerate -m "描述"
-
-# 应用迁移
-cd backend && alembic upgrade head
-
-# 前端构建
-cd frontend && npm run build
-
-# 前端代码检查
-cd frontend && npm run lint
+# 前端
+cd frontend
+npm run build
+npm run lint
+npm run test:e2e       # Playwright（需要先 npx playwright install）
 ```
 
-## 生产部署（腾讯云 / 云服务器）
+### 生产部署
+见 [DEPLOY.md](DEPLOY.md)。`./init-env.sh` 生成强随机密码，
+`./deploy-remote.sh` 拉代码、build 镜像、跑 Prisma migrate、
+重启 stack。
 
-### 一键部署
-
-在本地执行：
-
-```bash
-python auto-deploy.py
-```
-
-脚本会通过 SSH 连接服务器，自动完成：代码拉取、Docker 构建、数据库初始化、Nginx 配置。
-
-### 服务器端口规划
-
-| 用途 | 对外端口 | 容器内部端口 |
-|------|----------|-------------|
-| 前端（Nginx 代理） | 80 | 127.0.0.1:8080 |
-| 后端 API（Nginx 代理） | — | 127.0.0.1:8000 |
-| Postgres | 不对外 | 127.0.0.1:5432 |
-| Redis | 不对外 | 127.0.0.1:6379 |
-| MinIO | 不对外 | 127.0.0.1:9000/9001 |
-
-### 腾讯云安全组最小开放规则
-
-| 端口 | 协议 | 说明 |
-|------|------|------|
-| 22 | TCP | SSH 管理 |
-| 80 | TCP | HTTP 访问 |
-| 443 | TCP | HTTPS（配置 SSL 后） |
-
-> 其余端口（8000、5432、6379 等）绑定到 127.0.0.1，不对外暴露。
-
-### 多项目部署
-
-同一台服务器部署第二个项目，使用 `project2-template/` 目录下的模板：
-
-1. 修改 `project2-template/deploy-remote.sh` 顶部的项目配置变量
-2. 在腾讯云安全组开放端口 81
-3. 执行 `python auto-deploy-project2.py`
-
-第二个项目使用端口 81，容器端口 8100（后端）、8180（前端），与项目1完全隔离。
-
-## 项目结构
+## 目录结构
 
 ```
-├── backend/                  # FastAPI 后端
-│   ├── app/
-│   │   ├── routers/          # API 路由
-│   │   ├── models/           # SQLAlchemy 模型
-│   │   ├── schemas/          # Pydantic 请求/响应模型
-│   │   ├── services/         # 业务逻辑
-│   │   ├── tasks/            # Celery 任务
-│   │   ├── core/             # 配置、数据库、安全
-│   │   ├── dependencies/     # 认证与权限依赖
-│   │   └── notification/     # 通知服务（触发 + 清理）
-│   ├── alembic/              # 数据库迁移
-│   ├── scripts/              # 初始化脚本
-│   └── tests/                # 测试套件
-├── frontend/                 # React 前端
-│   └── src/
-│       ├── pages/            # 页面组件
-│       ├── components/       # 共享组件
-│       ├── api/              # Axios 请求封装
-│       └── store/            # 状态管理
-├── project2-template/        # 第二项目部署模板
-├── auto-deploy.py            # 项目1 一键部署脚本
-├── auto-deploy-project2.py   # 项目2 一键部署脚本
-├── deploy-remote.sh          # 服务器端部署脚本
-├── docker-compose.yml        # 本地开发
-├── docker-compose.prod.yml   # 生产部署
-└── nginx.conf                # Nginx 配置参考
+.
+├── backend/              # NestJS API + worker entrypoint
+│   ├── src/
+│   │   ├── modules/      # auth / users / enterprises / hazards / batches / ...
+│   │   ├── queues/       # BullMQ producer + consumer + cron jobs
+│   │   ├── storage/      # S3/MinIO 客户端 + URL signer
+│   │   └── common/       # guards / interceptors / filters / decorators
+│   ├── prisma/           # schema.prisma + migrations/0_init
+│   └── test/             # jest E2E
+├── frontend/             # Next.js 14 SPA
+│   ├── src/app/          # (dashboard) 路由组 + /login
+│   ├── src/lib/          # api / auth / userStore / notificationStore
+│   └── e2e/              # Playwright 端到端
+├── backend-legacy/       # 旧 Python 栈（仅回滚用，30 天内清理）
+├── docker-compose.prod.yml
+├── docker-compose.legacy.yml
+├── nginx.conf
+├── init-env.sh           # 一次性：生成 /etc/safety-hazard.env
+├── migrate.sh            # 跑 prisma migrate deploy
+└── deploy-remote.sh      # 拉代码 → build → migrate → restart
 ```
 
-## 环境变量
+## API 契约
 
-后端通过 `backend/.env` 读取配置（本地开发），生产环境由部署脚本自动生成至 `/etc/safety-hazard.env`。
+`/api/v1/*` 与原 Python 端 1:1 兼容；详见 `docs/superpowers/specs/2026-06-22-fullstack-migration-design.md`。
 
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `DATABASE_URL` | PostgreSQL 连接串 | — |
-| `REDIS_URL` | Redis 连接串 | `redis://localhost:6379/0` |
-| `SECRET_KEY` | JWT 签名密钥 | — |
-| `MINIO_ENDPOINT` | MinIO 地址 | `localhost:9000` |
-| `ALLOWED_ORIGINS` | CORS 允许来源 | `http://localhost` |
-| `AUTO_CREATE_TABLES` | 启动时自动建表 | `false` |
+## 安全
 
-## 系统提醒功能
+- 鉴权：JWT in httpOnly cookie（`SameSite=Lax`，生产 `Secure`），bcrypt cost=12 透明 rehash
+- 启动期 `assert_safe_for_runtime`：staging/production 阻断默认 admin / 弱密钥
+- 图片：HMAC-SHA256 签名 URL（`?sig=&exp=`），15 分钟 TTL
+- 限流：slowapi 5/min/IP（login）、60/min（其他）
+- Nginx 安全头：CSP / X-Frame-Options / X-Content-Type-Options / Referrer-Policy / Permissions-Policy
 
-通知在以下场景自动触发：
+## License
 
-| 场景 | 触发条件 | 接收人 |
-|------|----------|--------|
-| 任务创建 | 管理员创建复核任务 | 全部检查员（不含创建者） |
-| 任务完成 | 任务所有隐患复核完毕 | 任务创建者 + 全部管理员（不含完成者） |
-| 任务取消 | 管理员取消进行中的任务 | 任务创建者 + 已参与复核的检查员（不含取消者） |
-| 隐患复核 | 隐患被复核通过/不通过 | 隐患批次导入者（不含复核人） |
-| 报告生成 | 复核报告 PDF/Word 生成完毕 | 任务创建者 |
-
-**前端交互**：导航栏铃铛图标显示未读数，下拉展示最近 5 条通知（30 秒轮询），点击进入完整通知中心页面，支持行点击跳转关联页面。
-
-**后端机制**：通知与业务操作在同一数据库事务中提交，失败不阻断主流程；Celery Beat 每日凌晨 3 点自动清理 30 天前的已读通知（软删除）。
+Internal use only.
