@@ -9,7 +9,7 @@
 | 后端 | **NestJS 10** + Prisma 5 + TypeScript 5 |
 | 前端 | **Next.js 14 App Router** + React 18 + Ant Design 5 + Zustand |
 | 队列 | **@nestjs/bullmq** + Redis 7 |
-| 数据库 | PostgreSQL 15 |
+| 数据库 | PostgreSQL 16 |
 | 对象存储 | MinIO (S3 兼容) |
 | 部署 | Docker Compose + Nginx |
 
@@ -59,7 +59,7 @@ npm run test:e2e       # Playwright（需要先 npx playwright install）
 
 ```
 .
-├── backend/              # NestJS API + worker entrypoint
+├── apps/backend/         # NestJS API + worker entrypoint
 │   ├── src/
 │   │   ├── modules/      # auth / users / enterprises / hazards / batches / ...
 │   │   ├── queues/       # BullMQ producer + consumer + cron jobs
@@ -67,7 +67,7 @@ npm run test:e2e       # Playwright（需要先 npx playwright install）
 │   │   └── common/       # guards / interceptors / filters / decorators
 │   ├── prisma/           # schema.prisma + migrations/0_init
 │   └── test/             # jest E2E
-├── frontend/             # Next.js 14 SPA
+├── apps/frontend/        # Next.js 14 SPA
 │   ├── src/app/          # (dashboard) 路由组 + /login
 │   ├── src/lib/          # api / auth / userStore / notificationStore
 │   └── e2e/              # Playwright 端到端

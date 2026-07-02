@@ -14,7 +14,7 @@
 | 层级 | 技术 |
 |------|------|
 | 后端 | Python 3.11 + FastAPI + SQLAlchemy 2.0（异步） |
-| 数据库/迁移 | PostgreSQL 15 + Alembic |
+| 数据库/迁移 | PostgreSQL 16 + Alembic |
 | 缓存/队列 | Redis 7 + Celery 5 |
 | 对象存储 | MinIO |
 | 报告生成 | Playwright + python-docx |

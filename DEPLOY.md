@@ -41,7 +41,7 @@ docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -
 ./migrate.sh
 ```
 
-`backend/prisma/migrations/0_init/` 已经在切换时由 `prisma migrate
+`apps/backend/prisma/migrations/0_init/` 已经在切换时由 `prisma migrate
 resolve --applied 0_init` 标 baseline；本脚本对未来的 `migrate dev`
 新增迁移幂等。
 
@@ -72,6 +72,6 @@ resolve --applied 0_init` 标 baseline；本脚本对未来的 `migrate dev`
 ## 6. CI
 
 GitHub Actions 跑：
-- 后端：`cd backend && pytest`（沿用 Phase 1 写好的 76 个测试）
-- 前端：`cd frontend && npm run build && npm run lint`
-- E2E：`cd frontend && npx playwright install --with-deps && npx playwright test`（本地 docker compose 起来 backend + frontend + minio + postgres + redis + worker）
+- 后端：`cd apps/backend && npm test`（沿用 Phase 1 写好的 76 个测试）
+- 前端：`cd apps/frontend && npm run build && npm run lint`
+- E2E：`cd apps/frontend && npx playwright install --with-deps && npx playwright test`（本地 docker compose 起来 backend + frontend + minio + postgres + redis + worker）

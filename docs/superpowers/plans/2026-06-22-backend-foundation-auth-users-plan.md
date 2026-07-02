@@ -6,7 +6,7 @@
 
 **Architecture:** 采用 NestJS 模块化架构，每个领域对应一个 Module；Prisma 通过 `db pull` 映射现有 PostgreSQL schema，并挂载 `$use` middleware 实现软删除；认证使用 `passport-local` + `passport-jwt`；环境变量用 `zod` 校验，保留生产弱密钥阻断逻辑。
 
-**Tech Stack:** NestJS 10, Prisma 5, TypeScript 5, PostgreSQL 15, Redis 7, bcrypt, passport-jwt, @nestjs/throttler, pino/nestjs-pino, Jest, supertest.
+**Tech Stack:** NestJS 10, Prisma 5, TypeScript 5, PostgreSQL 16, Redis 7, bcrypt, passport-jwt, @nestjs/throttler, pino/nestjs-pino, Jest, supertest.
 
 > **范围说明**：本计划是 6 阶段全栈迁移中的 **Phase 1**，仅聚焦后端基础与 Auth/Users。Phase 2~6 将覆盖企业/隐患/批次/复核任务、照片/报告/队列、前端 Next.js 重写、统计/部署/生产切换，各自会单独产出 implementation plan。
 

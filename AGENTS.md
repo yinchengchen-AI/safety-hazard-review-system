@@ -25,7 +25,7 @@
 | 层级 | 技术 |
 |------|------|
 | 后端 | Python 3.12、FastAPI 0.121、SQLAlchemy 2.0（异步）、Alembic 1.13 |
-| 数据库 | PostgreSQL 15、Redis 7 |
+| 数据库 | PostgreSQL 16、Redis 7 |
 | 对象存储 | MinIO |
 | 任务队列 | Celery 5.3（Worker + Beat） |
 | 前端 | React 18、TypeScript 5.9、Vite 5、Ant Design 5、React Router 6 |
@@ -36,7 +36,8 @@
 ## 项目结构
 
 ```
-├── backend/                  # FastAPI 后端
+├── apps/                   # TypeScript monorepo
+│   ├── backend/            # NestJS 10 后端（apps/backend/）
 │   ├── app/
 │   │   ├── main.py           # FastAPI 应用入口，注册路由与中间件
 │   │   ├── routers/          # API 路由（按领域划分：auth, users, enterprises, batches, hazards, review_tasks, photos, reports, statistics, audit_logs, notifications）
@@ -258,7 +259,7 @@ cd backend && pytest tests/test_auth.py
 
 ## 环境变量
 
-后端通过 `pydantic-settings` 读取 `backend/.env`（本地开发），生产环境由部署脚本自动生成至 `/etc/safety-hazard.env`。
+后端通过 `pydantic-settings` 读取 `apps/backend/.env`（本地开发），生产环境由部署脚本自动生成至 `/etc/safety-hazard.env`。
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|

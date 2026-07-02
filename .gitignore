@@ -12,11 +12,13 @@ venv/
 .env
 .env.*
 !.env.example
-backend/.env
+apps/backend/.env
+backend-legacy/.env
 
 # Logs
 *.log
-backend/*.log
+apps/backend/*.log
+backend-legacy/*.log
 
 # Test artifacts
 backend/test_*.pdf
@@ -68,3 +70,6 @@ frontend/.vite/
 package*.json
 /package.json
 /package-lock.json
+apps/backend/.next/
+apps/backend/dist/
+apps/backend/.vite/

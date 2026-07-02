@@ -41,9 +41,9 @@ if command -v pg_dump >/dev/null 2>&1; then
 else
   docker run --rm \
     -e PGPASSWORD="$(echo "$DATABASE_URL" | sed -E 's|^postgresql://[^:]+:([^@]+)@.*|\1|')" \
-    postgres:15-alpine \
+    postgres:16-alpine \
     sh -c "pg_dump --no-owner --clean --if-exists --format=custom \"\${DATABASE_URL}\" | gzip > /tmp/backup.sql.gz"
-  docker run --rm -v "$BACKUP_DIR:/out" postgres:15-alpine \
+  docker run --rm -v "$BACKUP_DIR:/out" postgres:16-alpine \
     cp /tmp/backup.sql.gz "/out/$FILENAME"
 fi
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Apply Prisma migrations to the running database.
 # Phase 1 baseline (0_init) is already applied; this script is
-# idempotent for future migrations added to backend/prisma/migrations/.
+# idempotent for future migrations added to apps/backend/prisma/migrations/.
 
 set -euo pipefail
 
@@ -22,9 +22,9 @@ echo "[migrate] DATABASE_URL=$DATABASE_URL"
 
 docker run --rm \
   -e DATABASE_URL="$DATABASE_URL" \
-  -v "$(pwd)/backend/prisma:/app/prisma" \
-  -v "$(pwd)/backend/node_modules/.prisma:/app/node_modules/.prisma" \
-  -w /app/backend \
+  -v "$(pwd)/apps/backend/prisma:/app/prisma" \
+  -v "$(pwd)/apps/backend/node_modules/.prisma:/app/node_modules/.prisma" \
+  -w /app/apps/backend \
   --network host \
   node:20-alpine \
   sh -c "npx prisma migrate deploy"

@@ -79,5 +79,5 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 环境配置
 
-- 后端通过 `pydantic-settings` 读取 `backend/.env`。
-- 默认本地凭据已在 `docker-compose.yml` 和 `backend/.env` 中配置。
+- 后端通过 `pydantic-settings` 读取 `apps/backend/.env`。
+- 默认本地凭据已在 `docker-compose.yml` 和 `apps/backend/.env` 中配置。

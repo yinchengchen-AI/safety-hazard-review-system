@@ -5,7 +5,7 @@ version: "3.8"
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: safety-pg
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -58,7 +58,7 @@ services:
   # NestJS API
   backend:
     build:
-      context: .
+      context: ./apps/backend
       dockerfile: backend/Dockerfile
     container_name: safety-backend
     ports:
@@ -83,7 +83,7 @@ services:
   # BullMQ worker (report generation, notification cleanup, statistics jobs)
   worker:
     build:
-      context: .
+      context: ./apps/backend
       dockerfile: backend/Dockerfile.worker
     container_name: safety-worker
     environment:
@@ -104,7 +104,7 @@ services:
   # Next.js frontend (standalone build)
   frontend:
     build:
-      context: .
+      context: ./apps/backend
       dockerfile: frontend/Dockerfile
     container_name: safety-frontend
     ports:

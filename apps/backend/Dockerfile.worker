@@ -1,11 +1,12 @@
-# Worker stage - same as backend, different CMD
+# BullMQ worker (report generation, notification cleanup, statistics jobs).
+# Same base image as the API; runs a NestApplicationContext instead of
+# an HTTP server.
 FROM docker.m.daocloud.io/node:20-alpine AS builder
 WORKDIR /app
-# Need Playwright for report rendering (Playwright + Chromium for PDFs)
-# Phase 5: switch to @sparticuz/chromium or similar
-COPY backend/package*.json ./
+COPY package*.json ./
 RUN npm ci
-COPY backend/ .
+COPY tsconfig*.json ./
+COPY src ./src
 COPY prisma ./prisma
 RUN npx prisma generate && npm run build
 

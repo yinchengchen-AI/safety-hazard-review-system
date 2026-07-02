@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   postgres:
-    image: docker.m.daocloud.io/postgres:15-alpine
+    image: docker.m.daocloud.io/postgres:16-alpine
     container_name: safety-postgres
     environment:
       POSTGRES_USER: postgres
