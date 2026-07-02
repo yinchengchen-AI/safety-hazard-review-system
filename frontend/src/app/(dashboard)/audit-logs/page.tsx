@@ -43,7 +43,8 @@ export default function AuditLogsPage() {
     }
   }
 
-  useEffect(() => { if (user?.role === 'admin') load() }, [user, action])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { if (user?.role === 'admin') load() }, [user, action])
 
   return (
     <div>

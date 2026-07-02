@@ -65,3 +65,6 @@ frontend/.vite/
 # Local env templates (keep .example, ignore real .env)
 !.env.example
 .claude/
+package*.json
+/package.json
+/package-lock.json

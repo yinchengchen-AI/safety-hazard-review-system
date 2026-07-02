@@ -66,7 +66,6 @@ export class UsersService {
 
   async findOne(id: string): Promise<UserResponseDto> {
     const u = await this.prisma.users.findFirst({ where: { id } });
-    console.log('[DEBUG findOne]', id, '→', u ? `${u.username} (deleted_at=${u.deleted_at})` : 'null');
     if (!u) throw new NotFoundException('User not found');
     return toResponse(u);
   }

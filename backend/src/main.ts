@@ -18,7 +18,7 @@ async function bootstrap(): Promise<void> {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalGuards(new JwtAuthGuard(app.get(Reflector)));
   app.enableCors({
-    origin: config.get<string>('ALLOWED_ORIGINS', 'http://localhost:5173')
+    origin: config.get<string>('ALLOWED_ORIGINS', 'http://localhost:3000')
       .split(',').map((s) => s.trim()).filter(Boolean),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

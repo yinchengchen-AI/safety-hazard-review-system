@@ -41,7 +41,8 @@ export default function HazardsPage() {
     }
   }
 
-  useEffect(() => { load() }, [page, pageSize, status])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { load() }, [page, pageSize, status])
 
   return (
     <div>

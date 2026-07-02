@@ -12,7 +12,9 @@ import {
   ImportErrorResponseDto,
 } from './dto/batch.dto';
 
-function toBatchResponse(b: any, availableHazardCount = 0, creatorUsername: string | null = null): BatchResponseDto {
+// BatchJoined = batches row + users join (creator).
+type BatchJoined = any
+function toBatchResponse(b: BatchJoined, availableHazardCount = 0, creatorUsername: string | null = null): BatchResponseDto {
   return {
     id: b.id,
     name: b.name,
@@ -172,7 +174,6 @@ export class BatchesService {
         created_at: { gte: cutoff },
       },
     });
-    console.log('[DEBUG dedup]', JSON.stringify({ enterprise_id: enterpriseId, description: row.description, location: row.location, dup: dup?.id }));
     if (dup) return { reason: '重复数据（最近1个月内已存在）' };
 
     await tx.hazards.create({

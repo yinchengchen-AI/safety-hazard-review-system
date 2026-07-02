@@ -22,7 +22,7 @@ export const envSchema = z
       .default('480')
       .transform((v) => parseInt(v, 10))
       .pipe(z.number().int().positive()),
-    ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
+    ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
     PHOTO_SIGNATURE_TTL: z
       .string()
       .default('900')

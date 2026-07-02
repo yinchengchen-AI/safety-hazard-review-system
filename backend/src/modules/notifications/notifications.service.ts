@@ -5,7 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class NotificationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(userId: string, page: number, pageSize: number) {
+  async list(userId: string, page: number, pageSize: number): Promise<{ items: any[]; total: number; unread_count: number }> {
     const [items, total, unreadCount] = await Promise.all([
       this.prisma.notifications.findMany({
         where: { user_id: userId },

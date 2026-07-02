@@ -14,7 +14,10 @@ import {
   UpdateHazardDto,
 } from './dto/hazard.dto';
 
-function toResponse(h: any): HazardResponseDto {
+// HazardJoined = hazards row + enterprises + batches joins (lazy-typed
+// to avoid the long Prisma generic in every helper signature).
+type HazardJoined = any
+function toResponse(h: HazardJoined): HazardResponseDto {
   return {
     id: h.id,
     enterprise_id: h.enterprise_id,

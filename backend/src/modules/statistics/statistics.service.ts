@@ -9,7 +9,7 @@ export class StatisticsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async overview() {
+  async overview(): Promise<{ total_hazards: number; pending_count: number; passed_count: number; failed_count: number; reviewed_count: number; review_count: number; task_count: number; coverage_rate: number; pass_rate: number }> {
     const grouped = await this.prisma.hazards.groupBy({
       by: ['status'],
       _count: { _all: true },
@@ -43,7 +43,7 @@ export class StatisticsService {
     };
   }
 
-  async trend(start?: Date, end?: Date) {
+  async trend(start?: Date, end?: Date): Promise<Array<{ stat_date: Date; total_hazards: number | null; pending_count: number | null; passed_count: number | null; failed_count: number | null; review_count: number | null; task_count: number | null }>> {
     const where: { stat_date?: { gte?: Date; lte?: Date } } = {};
     if (start) where.stat_date = { ...(where.stat_date ?? {}), gte: start };
     if (end) where.stat_date = { ...(where.stat_date ?? {}), lte: end };

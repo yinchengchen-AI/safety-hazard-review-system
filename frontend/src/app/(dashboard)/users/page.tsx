@@ -39,7 +39,8 @@ export default function UsersPage() {
     }
   }
 
-  useEffect(() => { if (me?.role === 'admin') load() }, [me])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { if (me?.role === 'admin') load() }, [me])
 
   const onCreate = async () => {
     try {

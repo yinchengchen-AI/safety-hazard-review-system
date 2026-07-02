@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
+import { ReportsService } from '../reports/reports.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   BatchReviewRequestDto,
@@ -10,7 +11,9 @@ import {
   ReviewSingleHazardDto,
 } from './dto/review-task.dto';
 
-function toDto(t: any, extras: Partial<ReviewTaskResponseDto> = {}): ReviewTaskResponseDto {
+// ReviewTaskJoined = review_tasks row + users join.
+type ReviewTaskJoined = any
+function toDto(t: ReviewTaskJoined, extras: Partial<ReviewTaskResponseDto> = {}): ReviewTaskResponseDto {
   return {
     id: t.id,
     name: t.name,
@@ -25,7 +28,10 @@ function toDto(t: any, extras: Partial<ReviewTaskResponseDto> = {}): ReviewTaskR
 
 @Injectable()
 export class ReviewTasksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly reports: ReportsService,
+  ) {}
 
   async create(dto: CreateReviewTaskDto, creatorId: string): Promise<ReviewTaskResponseDto> {
     const hazardIds = new Set<string>(dto.hazard_ids ?? []);
@@ -257,7 +263,9 @@ export class ReviewTasksService {
       throw new BadRequestException('Only pending tasks can be reviewed');
     }
 
-    const out: any[] = [];
+    // TaskHazardJoined = task_hazards row + hazards + enterprises + batches joins.
+type TaskHazardJoined = any
+const out: TaskHazardJoined[] = [];
     for (const item of dto.items) {
       const result = await this.reviewHazard(taskId, item.hazard_id, item, reviewerId);
       out.push(result);
@@ -265,7 +273,7 @@ export class ReviewTasksService {
     return out;
   }
 
-  async complete(taskId: string, userId: string) {
+  async complete(taskId: string, userId: string): Promise<{ id: string; name: string; creator_id: string; status: string; created_at: Date | null; completed_at: Date | null }> {
     const task = await this.prisma.review_tasks.findFirst({ where: { id: taskId } });
     if (!task) throw new NotFoundException('Review task not found');
     if (task.status !== 'pending') {
@@ -290,13 +298,24 @@ export class ReviewTasksService {
       data: { status: 'completed', completed_at: new Date() },
     });
 
-    // Phase 3 hook: enqueue report generation. The orchestrator lives
-    // in Phase 3 — for now we mark a stub so the integration test path
-    // is exercised end-to-end.
-    return updated;
+    // Enqueue a PDF + Word report. The orchestrator dedupes by
+    // report status (pending/processing/failed/completed); a brand-new
+    // task gets a fresh pending row, a re-complete of a failed one
+    // re-runs, and a completed one is a no-op unless the operator
+    // explicitly re-triggers via POST /reports/.../generate.
+    try {
+      await this.reports.createAndEnqueue(task.id, { force: false })
+    } catch (err) {
+      // Never fail the completion because the report couldn't be
+      // enqueued — the user can always POST /reports/.../generate
+      // manually. Log and move on.
+      console.error('[review-tasks.complete] failed to enqueue report:', (err as Error).message)
+    }
+
+    return updated
   }
 
-  async cancel(taskId: string, userId: string) {
+  async cancel(taskId: string, userId: string): Promise<{ id: string; name: string; creator_id: string; status: string; created_at: Date | null; completed_at: Date | null }> {
     const task = await this.prisma.review_tasks.findFirst({ where: { id: taskId } });
     if (!task) throw new NotFoundException('Review task not found');
 

@@ -33,7 +33,8 @@ export default function EnterprisesPage() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { load() }, [])
 
   const onCreate = async () => {
     try {
