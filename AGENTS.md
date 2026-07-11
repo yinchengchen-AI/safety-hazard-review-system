@@ -2,6 +2,10 @@
 
 本文件面向 AI 编程助手，提供项目的完整上下文、架构说明与开发规范。
 
+> 历史栈（Python/FastAPI + React/Vite）的源码保留在 `backend-legacy/` /
+> `frontend-legacy/`，仅作为 2026-Q3 切流后 30 天内的回滚预案使用。
+> 活跃代码全部位于 `apps/`，其余路径均已被替换或删除。
+
 ---
 
 ## 项目概述
@@ -12,11 +16,11 @@
 - **企业管理** — 多企业、多区域支持
 - **隐患管理** — 批量导入（Excel）、分级分类、图片上传
 - **复核任务** — 任务分配、状态流转、闭环跟踪
-- **报告生成** — 异步生成 PDF / Word 报告（Playwright + python-docx）
+- **报告生成** — BullMQ 异步生成 PDF / Word 报告（Playwright + docx）
 - **统计分析** — 日/月维度数据汇总与图表展示
-- **用户权限** — JWT 认证、管理员/普通用户角色分离
-- **操作审计** — 全链路操作日志记录
-- **系统通知** — 任务/复核/报告状态变更实时通知（铃铛下拉 + 通知中心）
+- **用户权限** — JWT cookie 认证、管理员/普通用户角色分离
+- **操作审计** — 全链路操作日志记录（`audit_logs` 表）
+- **系统通知** — 任务/复核/报告状态变更实时通知（导航栏铃铛 + 通知中心）
 
 ---
 
@@ -24,307 +28,355 @@
 
 | 层级 | 技术 |
 |------|------|
-| 后端 | Python 3.12、FastAPI 0.121、SQLAlchemy 2.0（异步）、Alembic 1.13 |
-| 数据库 | PostgreSQL 16、Redis 7 |
-| 对象存储 | MinIO |
-| 任务队列 | Celery 5.3（Worker + Beat） |
-| 前端 | React 18、TypeScript 5.9、Vite 5、Ant Design 5、React Router 6 |
-| 基础设施 | Docker Compose、Nginx |
+| 后端 | Node.js 20 / TypeScript 5、NestJS 10、Prisma 5（async client） |
+| 前端 | Next.js 14（App Router）、React 18、TypeScript 5、Ant Design 5 |
+| 状态管理 | Zustand |
+| 后台任务 | BullMQ 5（@nestjs/bullmq）+ Redis 7 |
+| 数据库 | PostgreSQL 16 |
+| 对象存储 | MinIO（S3 兼容，使用 AWS SDK v3） |
+| 部署 | Docker Compose + Nginx |
+| 测试 | Jest 29（后端 E2E），Playwright（前端 E2E） |
+| 监控 | @willsoto/nestjs-prometheus（`/metrics`） |
 
 ---
 
 ## 项目结构
 
 ```
-├── apps/                   # TypeScript monorepo
-│   ├── backend/            # NestJS 10 后端（apps/backend/）
-│   ├── app/
-│   │   ├── main.py           # FastAPI 应用入口，注册路由与中间件
-│   │   ├── routers/          # API 路由（按领域划分：auth, users, enterprises, batches, hazards, review_tasks, photos, reports, statistics, audit_logs, notifications）
-│   │   ├── models/           # SQLAlchemy ORM 模型（declarative_base）
-│   │   ├── schemas/          # Pydantic 请求/响应模型
-│   │   ├── services/         # 业务逻辑（导入、报告生成、存储、审计日志、通知）
-│   │   ├── tasks/            # Celery 后台任务（报告生成、照片清理、通知清理）
-│   │   ├── core/             # 配置（config.py）、数据库引擎（database.py）、安全工具（security.py）、异常处理（exception_handlers.py）
-│   │   └── dependencies/     # 认证（auth.py）与权限（permissions.py）依赖
-│   ├── alembic/              # 数据库迁移脚本与配置
-│   ├── scripts/              # 初始化脚本（seed_admin.py, enable_pgcrypto.py）
-│   ├── tests/                # pytest 异步测试套件
-│   ├── requirements.txt      # Python 依赖
-│   ├── pytest.ini            # pytest 配置（asyncio_mode = auto）
-│   ├── .env                  # 本地开发环境变量
-│   ├── Dockerfile            # 后端服务容器镜像（含 Playwright Chromium）
-│   └── Dockerfile.celery     # Celery Worker / Beat 容器镜像
-├── frontend/                 # React 前端
-│   ├── src/
-│   │   ├── App.tsx           # 路由配置与认证守卫
-│   │   ├── pages/            # 页面级组件（Dashboard, Hazard, Task, Batch, Statistics, User, AuditLog, Notification, Enterprise）
-│   │   ├── components/       # 共享 UI 组件（Layout/）
-│   │   ├── api/              # Axios 请求封装（按领域分文件：request.ts 统一处理认证、错误翻译、401 拦截）
-│   │   ├── store/            # Zustand 状态管理（userStore.ts, notificationStore.ts）
-│   │   └── styles/           # 全局样式（theme.css）
-│   ├── package.json          # Node 依赖与脚本
-│   ├── vite.config.ts        # Vite 配置（开发代理 /api → localhost:8000，生产代码分割）
-│   ├── tsconfig.json         # TypeScript 配置（严格模式，路径别名 @/* → src/*）
-│   ├── .eslintrc.cjs         # ESLint 配置
-│   ├── Dockerfile            # 前端构建 + Nginx 多阶段镜像
-│   └── nginx.conf            # 容器内 Nginx 配置
-├── docker-compose.yml        # 本地开发编排（所有端口对外暴露）
-├── docker-compose.prod.yml   # 生产环境编排（仅 80 对外，其余绑定 127.0.0.1）
-├── nginx.conf                # 生产 Nginx 反向代理配置参考
-├── auto-deploy.py            # 本地一键部署脚本（SSH → 腾讯云服务器）
-├── deploy-remote.sh          # 服务器端部署脚本（Docker + Nginx + 数据库初始化）
-├── DEPLOY.md                 # 生产部署详细文档
-└── README.md                 # 项目介绍与快速开始
+.
+├── apps/
+│   ├── backend/                         # NestJS 10 API + Worker
+│   │   ├── src/
+│   │   │   ├── main.ts                  # HTTP 入口（NestFactory.create + Cookie + CORS）
+│   │   │   ├── app.module.ts            # 根模块，组装所有业务模块
+│   │   │   ├── common/                  # 过滤器、守卫、拦截器、装饰器、startup-checks
+│   │   │   ├── config/                  # 环境变量校验（zod schema）+ ConfigModule
+│   │   │   ├── prisma/                  # PrismaClient 注入 + 软删除扩展
+│   │   │   ├── storage/                 # MinIO/S3 客户端 + URL 签名器
+│   │   │   ├── queues/                  # BullMQ producer + consumer + worker entrypoint
+│   │   │   └── modules/                 # 业务模块（每个含 controller/service/dto）
+│   │   │       ├── auth/                # 登录、JWT、当前用户、密码 rehash
+│   │   │       ├── users/               # 用户 CRUD + 管理员重置密码
+│   │   │       ├── enterprises/         # 企业 / 区域
+│   │   │       ├── hazards/             # 隐患 CRUD + Excel 导入
+│   │   │       ├── batches/             # 批次历史 + Excel 失败明细
+│   │   │       ├── review-tasks/        # 复核任务分配 + 状态流转
+│   │   │       ├── photos/              # 图片上传 + HMAC 签名短链
+│   │   │       ├── reports/             # 报告生成（PDF + Word）
+│   │   │       ├── notifications/       # 站内通知 CRUD + 已读
+│   │   │       ├── statistics/          # 日 / 月统计 + 概览
+│   │   │       ├── audit-logs/          # 审计日志查询
+│   │   │       └── health/              # /health 探活（prisma $queryRaw SELECT 1）
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma            # 数据库 schema（13 张表）
+│   │   │   ├── migrations/0_init        # baseline 迁移
+│   │   │   └── seed.ts                  # 初始管理员种子
+│   │   ├── test/                        # Jest E2E（每个模块一个 *.e2e-spec.ts）
+│   │   ├── Dockerfile                   # API 镜像（dist/src/main.js）
+│   │   ├── Dockerfile.worker            # BullMQ worker 镜像（dist/queues/worker.js）
+│   │   └── package.json
+│   └── frontend/                        # Next.js 14 App Router
+│       ├── src/
+│       │   ├── app/                     # App Router 路由
+│       │   │   ├── layout.tsx           # 全局 AntD 主题 + Providers
+│       │   │   ├── login/page.tsx       # 登录页
+│       │   │   └── (dashboard)/         # 已登录路由组（含共享 layout）
+│       │   │       ├── page.tsx         # 仪表盘
+│       │   │       ├── hazards/         # 隐患列表 + 详情
+│       │   │       ├── batches/         # 批次列表 + 导入页 + 历史
+│       │   │       ├── tasks/           # 复核任务列表 + 详情
+│       │   │       ├── enterprises/     # 企业管理
+│       │   │       ├── statistics/      # 统计 + 图表
+│       │   │       ├── users/           # 用户管理（管理员）
+│       │   │       ├── audit-logs/      # 审计日志（管理员）
+│       │   │       └── notifications/   # 通知中心
+│       │   └── lib/
+│       │       ├── api.ts               # axios 实例：拦截 401，统一错误处理
+│       │       ├── auth.ts              # login / getMe / logout
+│       │       ├── errors.ts            # 英文错误 → 中文提示映射表
+│       │       ├── userStore.ts         # Zustand：当前用户
+│       │       └── notificationStore.ts # Zustand：未读通知 + 轮询
+│       ├── e2e/                         # Playwright 用例
+│       ├── Dockerfile                   # Next.js standalone build
+│       └── package.json
+├── backend-legacy/                      # 旧 FastAPI 栈（仅 30 天回滚预案）
+├── frontend-legacy/                     # 旧 React/Vite 栈（同上）
+├── docs/                                # 设计稿 / 演练 runbook / 计划文档
+│   ├── PHASE6_STATUS.md                 # 6 阶段迁移收尾状态表
+│   ├── runbooks/2026-07-02-ts-cutover.md
+│   └── superpowers/{plans,specs}/...
+├── docker-compose.yml                   # 本地开发（端口全暴露）
+├── docker-compose.prod.yml              # 生产（仅 80 对外，其余 127.0.0.1）
+├── docker-compose.legacy.yml            # 回滚预案（指向 backend-legacy）
+├── nginx.conf                           # 生产反代（注入安全头）
+├── migrate.sh                           # prisma migrate deploy（基于容器化 node:20-alpine）
+├── init-env.sh                          # 一次性生成 /etc/safety-hazard.env
+├── deploy-remote.sh                     # 拉代码 + build + migrate + restart
+├── auto-deploy.py                       # 本地 SSH 一键部署到腾讯云
+├── DEPLOY.md                            # 生产部署指南
+└── README.md                            # 项目介绍 + 快速开始
 ```
 
 ---
 
 ## 后端架构细节
 
-### 异步数据库
-- 使用 `create_async_engine` + `asyncpg`。
-- `app/core/database.py` 在运行时将 `postgresql+psycopg2://` URL 动态替换为 `postgresql+asyncpg://`。
-- 数据库会话通过 `get_db()` 依赖注入，使用 `async_sessionmaker(expire_on_commit=False, autoflush=False)`。
+### 模块化拆分
+- 每个业务领域是一个独立 NestJS Module（`modules/<domain>/<domain>.module.ts`）
+- Module 内部遵循 `controller → service → repository` 三层
+- Controller 仅做参数校验（`@Body()` + `class-validator`）和权限守卫
+- Service 持有业务逻辑，跨模块依赖通过其它 Module 的 service 注入
+
+### 数据库（Prisma）
+- 所有表在 `apps/backend/prisma/schema.prisma` 定义，使用 UUID 主键 + `created_at` / `updated_at` / `deleted_at`（软删除）。
+- PrismaClient 由 `PrismaModule` 提供给全应用，**不在 service 里直接 new**。
+- 测试库使用 `postgresql://postgres:postgres@localhost:5433/safety_hazard_test`（5433 端口与本地开发库 5432 隔离）。
+- 切换 schema 后必须新建迁移：`cd apps/backend && npx prisma migrate dev -m "<description>"`。
+- 生产部署用 `migrate.sh`（`npx prisma migrate deploy`）；baseline 迁移 `0_init` 已在切换时通过 `prisma migrate resolve --applied` 标 baseline。
 
 ### 认证与授权
-- **OAuth2 密码流程 + JWT**：Token 接口为 `POST /api/v1/auth/login`。
-- Token 有效期 8 小时（`ACCESS_TOKEN_EXPIRE_MINUTES = 480`）。
-- `get_current_user` 依赖从 Header `Authorization: Bearer <token>` 或 Query 参数 `?token=` 中提取 token。
-- 仅管理员可访问的路由使用 `require_admin` 依赖（`app/dependencies/permissions.py`）。
+- **JWT in httpOnly cookie**（`SameSite=Lax`，生产 `Secure`），密码 bcrypt cost=12，登录成功后透明 rehash。
+- `JwtAuthGuard` 全局守卫，从 cookie 或 `Authorization: Bearer` 提取 token。
+- 角色守卫在 controller 上以 `@Roles('admin')` + 局部 `RolesGuard` 实现。
+- 启动期 `assert_safe_for_runtime`：staging/production 阻断默认 `admin/admin123` 与弱 `SECRET_KEY`（< 32 字符或占位串），dev 仅打印 WARNING。
 
 ### 软删除
-- 大多数模型都有 `deleted_at` 字段；查询时必须过滤 `deleted_at.is_(None)`。
-- 被软删除的记录不会出现在常规列表查询中。
+- 13 张表均带 `deleted_at`（nullable）。Service 查询统一过滤 `where: { deleted_at: null }`；删除走 `update({ deleted_at: new Date() })`。
+
+### 后台任务（BullMQ）
+- 队列在 `src/queues/bullmq.module.ts` 注册：`report_queue`、`notification_cleanup_queue`、`statistics_queue`。
+- Worker 与 API 共享同一份代码，通过 `dist/queues/worker.js` 启动 `NestApplicationContext`。
+- Producer 在 service 内通过 `@InjectQueue('report_queue')` 入队；`report.processor.ts` 用 Playwright（Chromium）+ `docx` 生成 PDF / Word。
+- 启动器由 `nestjs-schedule` 提供 cron（每日 03:00 清理 30 天前的已读通知）。
 
 ### 报告生成
-- Celery 任务（`app/tasks/report_tasks.py`）使用 Playwright 将 HTML 渲染为 PDF，并用 `python-docx` 生成 Word 文档。
-- 报告模板通过 `app/services/template_service.py` 管理。
+- `QueuesModule` + `ReportProcessor`（BullMQ consumer）。
+- `ReportRenderer` 用 Playwright Chromium headless 把 HTML 渲染为 PDF；Word 用 `docx` 库拼装。
+- 模板集中在 `reports/reports.service.ts` 内的字符串拼接，避免模板引擎依赖。
 
 ### 图片存储
-- `StorageService`（`app/services/storage_service.py`）使用 MinIO 作为对象存储。
-- 图片上传前用 Pillow 生成缩略图。
-- 上传限制：文件大小 10MB，仅允许图片格式（JPEG/PNG/GIF/WebP）。
+- `StorageModule` 使用 `@aws-sdk/client-s3` 连 MinIO（S3 兼容）。
+- 上传：`PUT` 到 `hazard-photos/UUID.jpg`，上传成功后写 `photos` 表。
+- 下载：`UrlSignerService` 生成 HMAC-SHA256 签名 URL（`?sig=&exp=`），TTL 默认 900s；旧 `?token=<jwt>` 作为 1 个发布周期的回退（响应头 `X-Photo-Auth-Deprecated: true`）。
 
 ### 时区
-- 后端统一使用 `ZoneInfo("Asia/Shanghai")` 作为系统时区。
-- 数据库存储在 `DateTime(timezone=True)` 字段中。
+- 后端统一使用 `Asia/Shanghai`（`dayjs`/`Date` + process.env.TZ=Asia/Shanghai）。
+- 数据库 `DateTime` 字段为 `timestamptz`，存 UTC；前端用 dayjs 转 Asia/Shanghai 渲染。
 
 ### 通知机制
-- 通知与业务操作在同一数据库事务中提交，失败不阻断主流程。
-- Celery Beat 每日凌晨 3 点自动清理 30 天前的已读通知（软删除）。
-- 触发场景：任务创建、任务完成、任务取消、隐患复核、报告生成。
+- 通知写入与业务操作在同一 Prisma 事务中提交。
+- 触发场景：任务创建 / 完成 / 取消、隐患复核、报告生成完成。
+- 失败不阻断主流程：try/catch + logger.warn 输出。
+- 每 30 天自动清理已读通知（`notification_cleanup.processor.ts`）。
 
 ### 审计日志
-- `AuditableHTTPException` 自定义异常用于需要记录审计日志的失败场景（如登录失败）。
-- 通过 `audit_exception_handler` 统一处理并记录失败日志。
-- 正常业务操作的成功日志通过 `audit_log_service` 在路由或服务层主动记录。
+- `audit_logs` 表记录 `{ user_id, action, target_type, target_id, detail, ip_address, method, path, status_code, user_agent, created_at }`。
+- 业务操作的成功日志在 service 里手动调用 `AuditLogService.log(...)`。
+- 失败场景（登录失败）通过 `AuthService.recordFailure(...)` 或全站 `AllExceptionsFilter` 统一记录。
+
+### 限流
+- `@nestjs/throttler` 在 `AppModule` 全局注册 `ThrottlerGuard`：`60/minute` 默认。
+- `/auth/login` 单独走 `slowapi`-等价的 Throttler 装饰器 `5/minute`（Redis 共享计数器）。
+
+### 健康检查 / 指标
+- `GET /health` → `TerminusHealthCheck`，探测 Prisma 连通。返回 `{ status: 'ok', info: { db: { status: 'up' } } }`。
+- `GET /metrics` → Prometheus，输出 `nestjs_*` + Prisma 客户端指标（`@willsoto/nestjs-prometheus`）。
 
 ---
 
 ## 前端架构细节
 
-### API 代理
-- Vite 开发服务器将 `/api` 代理到 `http://localhost:8000`。
-- 前端调用使用 `/api/v1/...` 前缀。
-- 生产环境中由 Nginx 将 `/api/` 反向代理到后端服务。
+### 路由与分组
+- App Router，`(dashboard)/` 路由组承载登录后页面，共享 `layout.tsx`（侧边栏 + 顶栏 + 内容区）。
+- 登录页 `app/login/page.tsx` 是独立路由，不在 dashboard 组里。
 
-### 认证状态
-- Token 存储在 `localStorage` 的 `token` 键中。
-- `request.ts` 拦截 401 响应：非登录请求会清除 token 并重定向到 `/login`。
-- `App.tsx` 通过 `storage` 事件监听实现多标签页登录状态同步。
-
-### 路由与懒加载
-- 所有页面组件使用 `React.lazy()` 懒加载，减少首屏包体积。
-- 路由守卫：未认证用户访问 `/` 会被重定向到 `/login`，已认证用户访问 `/login` 正常显示。
+### 认证
+- 登录成功后服务端通过 `Set-Cookie` 写入 httpOnly JWT；前端 `lib/api.ts` 的 axios 实例开启 `withCredentials`。
+- 401 拦截：非登录请求直接 `window.location.href = '/login'`。已登录页面的 401 也走同一路径（依赖后端做 cookie 失效）。
 
 ### 状态管理
-- 使用 Zustand（而非 Redux）。
-- `userStore.ts`：管理当前登录用户信息。
-- `notificationStore.ts`：管理通知铃铛的未读数与轮询状态。
+- Zustand 单例 store：`userStore`（`me` / `refetch`）、`notificationStore`（`unreadCount` + 30s 轮询 `GET /notifications/unread-count`）。
+- 不引入 Redux；跨页面共享状态统一走 store + hook。
 
-### 界面语言
-- 所有用户可见的标签、提示信息、错误消息均使用中文。
-- `request.ts` 中维护了一张英文错误消息 → 中文的映射表，用于翻译后端返回的英文错误。
+### API 错误翻译
+- 后端返回英文错误消息，前端 `lib/errors.ts` 维护映射表（`key` 字符串 → 中文提示）。
+- 兜底：未匹配到则展示英文原文。
+
+### UI 库使用约定
+- AntD 5 组件直接使用，所有交互文本、提示、表单 label 都是中文。
+- 图标优先用 `@ant-design/icons`，其次 lucide-react；不内置 SVG 手画。
+- 颜色用 AntD `theme.token`，避免一注色独大（详见 `theme.css`）。
+
+### 国际化
+- 单一语言（中文）。错误码与服务端约定的英文字符串 → 前端映射中文。
+
+### 测试
+- Playwright 在 `e2e/`，默认 baseURL `http://localhost:3000`，webServer 配置同时启动 backend（`dist/src/main.js`）+ `next dev`。
+- 跑前：`cd apps/backend && npm run build`，再 `cd apps/frontend && npx playwright test`。
 
 ---
 
 ## 构建与运行命令
 
-### 一键启动全部服务（本地开发）
+### 本地开发（推荐）
+```bash
+cd apps/backend
+cp .env.example .env   # 视需要修改（默认 SECRET_KEY 仅 dev 接受）
+npm install
+npx prisma generate
+npx prisma migrate deploy
+npm run start:dev      # http://localhost:8000
+
+cd apps/frontend
+npm install
+npm run dev            # http://localhost:3000
+```
+
+### 一键本地全栈（Docker）
 ```bash
 docker compose up --build
 ```
-启动后访问：
-- 前端：http://localhost:5173
-- API 文档：http://localhost:8000/docs
+包含：postgres + redis + minio + backend + worker + frontend。访问：
+- 前端 http://localhost:3000
+- 后端 API http://localhost:8000/api/v1
+- MinIO console http://localhost:9001
+- 后端 metrics http://localhost:8000/metrics
 
-### 单独启动后端
+### 单测 / E2E
 ```bash
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+# 后端 Jest（依赖本地 Postgres 5433 / Redis）
+cd apps/backend
+npm test                # 全部 *.e2e-spec.ts
+
+# 前端 Playwright（依赖 backend 已起 + npm run build 已跑）
+cd apps/frontend
+npm run build
+npx playwright test
 ```
 
-### 单独启动前端
+### 代码检查与构建
 ```bash
-cd frontend
-npm install
-npm run dev   # 端口 5173，自动代理 /api 到 localhost:8000
+cd apps/frontend
+npm run lint
+npm run build
 ```
-
-### 初始化管理员账号
-```bash
-cd backend && python scripts/seed_admin.py
-```
-默认账号：`admin` / `admin123`（首次登录后请立即修改密码）
-
-### 前端构建
-```bash
-cd frontend && npm run build
-```
-
-### 前端代码检查
-```bash
-cd frontend && npm run lint
-```
-
----
-
-## 测试
-
-### 运行测试
-```bash
-cd backend && pytest
-```
-
-运行单个测试文件：
-```bash
-cd backend && pytest tests/test_auth.py
-```
-
-### 测试架构
-- 使用 `pytest-asyncio`（`asyncio_mode = auto`），测试函数无需显式标记 `async` 为协程（pytest.ini 已配置）。
-- 测试使用 `httpx.AsyncClient` + `ASGITransport` 直接调用 FastAPI 应用。
-- `conftest.py` 提供以下 fixtures：
-  - `event_loop`（session 级别）
-  - `setup_database`（session 级别）：在测试 session 开始时创建/删除所有表，并启用 `pgcrypto` 扩展。
-  - `seed_admin_user`（session 级别）：注入管理员账号 `admin` / `admin123`。
-  - `db_session`（function 级别）：提供独立的数据库会话。
-  - `client`（function 级别）：覆盖 `get_db` 依赖以使用测试数据库，测试结束后清理 overrides。
-
-### 测试数据库要求
-- 需要本地 PostgreSQL 数据库：`postgresql+asyncpg://postgres:postgres@localhost:5433/safety_hazard_test`（conftest 硬编码为 5433，与本地开发库 5432 隔离）
-- 测试使用 `NullPool` 避免连接池缓存问题。
 
 ---
 
 ## 数据库变更规范
 
-**更新数据库结构后，必须及时进行数据库迁移。**
+**修改 `prisma/schema.prisma` 后必须马上新建迁移。**
 
-- 项目使用 Alembic 进行迁移管理。
-- 修改 `app/models/` 下的模型后，执行：
-  ```bash
-  cd backend && alembic revision --autogenerate -m "描述"
-  cd backend && alembic upgrade head
-  ```
-- 开发环境中如果尚未配置 Alembic，可临时设置 `AUTO_CREATE_TABLES=true` 让 SQLAlchemy 自动建表，但**生产环境严禁这样做**。
-- 修改模型后，如果运行的后端进程是旧版本，新路由可能不生效（表现为 405 Method Not Allowed），需要重启 `uvicorn`。
-- Alembic 环境文件 `alembic/env.py` 在 `run_async_migrations` 中使用 `asyncpg` 执行异步迁移；离线模式使用同步 URL。
+```bash
+cd apps/backend
+npx prisma migrate dev -m "description"     # 本地
+# 提交后由 migrate.sh（生产）执行 npx prisma migrate deploy
+```
+
+迁移文件提交到仓库，不要在生产环境直接编辑 schema。
 
 ---
 
-## 代码风格指南
+## 代码风格
 
-### Python 后端
-- 使用 Python 3.12+ 语法特性。
-- 异步优先：数据库操作、HTTP 请求均使用 `async/await`。
-- 类型注解：函数参数和返回值应标注类型。
-- 导入顺序：标准库 → 第三方库 → 项目内部模块。
-- 模型查询时注意过滤 `deleted_at.is_(None)` 以遵守软删除约定。
-- 错误消息使用英文（由前端 `request.ts` 翻译为中文展示给用户）。
-- 需要记录审计日志的失败场景抛出 `AuditableHTTPException` 而非普通 `HTTPException`。
+### 后端（TypeScript / NestJS）
+- `strict: true`，禁止 `any`（必要时用 `unknown` + 收窄）。
+- DI 优先于 new；所有 service 通过构造注入。
+- 异步统一 Promise 返回，不混用 callback；错误抛 `HttpException` 子类或 NestJS 内置异常。
+- 模块边界：跨模块依赖只通过 service，不通过 Prisma 直查另一模块的表。
+- DTO 用 `class-validator`，Controller 上 `@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))`。
 
-### TypeScript 前端
-- TypeScript 严格模式开启（`strict: true`）。
-- 未使用的局部变量和参数会报错（`noUnusedLocals`, `noUnusedParameters`）。
-- 使用路径别名 `@/*` 引用 `src/*` 下的模块。
-- React 组件使用函数组件 + Hooks。
-- 页面组件放在 `src/pages/` 下，按功能模块分子目录。
-- API 调用按领域分文件（`src/api/hazard.ts`, `src/api/task.ts` 等），统一通过 `request.ts` 实例发起请求。
-- ESLint 规则中关闭了 `@typescript-eslint/no-explicit-any`、`react-hooks/exhaustive-deps` 和 `no-empty`，允许适度灵活。
+### 前端（TypeScript / React）
+- `strict: true`，禁止 `any`。
+- 函数组件 + Hooks，页面组件放 `src/app/(dashboard)/<page>/page.tsx`。
+- API 调用封装在 `src/lib/*.ts`，组件不直接调 axios。
+- ESLint 规则中关闭 `no-explicit-any`（项目层约定：`unknown` 优先，禁止 `any`）。
+
+### 通用
+- 错误消息后端英文（由前端 `errors.ts` 翻译中文展示）。
+- 注释只解释意图，不复述代码。
+- 引入新依赖前先确认是否已有等价包；不要重复造轮子。
 
 ---
 
-## 环境变量
-
-后端通过 `pydantic-settings` 读取 `apps/backend/.env`（本地开发），生产环境由部署脚本自动生成至 `/etc/safety-hazard.env`。
+## 环境变量（`apps/backend/.env`）
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `DATABASE_URL` | PostgreSQL 连接串（使用 psycopg2 格式，运行时自动转 asyncpg） | `postgresql+psycopg2://postgres:postgres@localhost:5432/safety_hazard` |
+| `DATABASE_URL` | PostgreSQL 连接串 | `postgresql://postgres:postgres@localhost:5432/safety_hazard` |
 | `REDIS_URL` | Redis 连接串 | `redis://localhost:6379/0` |
-| `SECRET_KEY` | JWT 签名密钥 | 随机生成（建议生产环境显式设置） |
+| `SECRET_KEY` | JWT 签名密钥 | dev 占位（启动期 `assert_safe_for_runtime` 强校验 staging/production） |
 | `MINIO_ENDPOINT` | MinIO 地址 | `localhost:9000` |
 | `MINIO_ACCESS_KEY` | MinIO 访问密钥 | `minioadmin` |
 | `MINIO_SECRET_KEY` | MinIO 秘密密钥 | `minioadmin` |
 | `MINIO_BUCKET` | MinIO 存储桶名 | `hazard-photos` |
-| `ALLOWED_ORIGINS` | CORS 允许来源（逗号分隔） | `http://localhost:5173` |
-| `AUTO_CREATE_TABLES` | 启动时自动建表（仅开发） | `false` |
+| `MINIO_SECURE` | 是否 HTTPS | `false` |
+| `ALLOWED_ORIGINS` | CORS 允许来源（逗号分隔） | `http://localhost:3000` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | JWT 有效期（分钟） | `480` |
+| `PHOTO_SIGNATURE_TTL` | 图片签名 URL TTL（秒） | `900` |
+| `LOGIN_RATE_LIMIT` | 登录限流 | `5/minute` |
+| `PORT` | API 端口 | `8000` |
+| `ENV` | 运行环境 | `dev` / `test` / `staging` / `production` |
+
+前端仅需 `NEXT_PUBLIC_API_BASE`（默认 `/api/v1`，走同源 nginx 反代）。
 
 ---
 
 ## 部署
 
-### 本地开发
-使用 `docker-compose.yml`，所有服务端口直接暴露到宿主机。
-
-### 生产环境（腾讯云 / 云服务器）
-
-#### 一键部署
+### 一键部署
 ```bash
 python auto-deploy.py
 ```
-脚本通过 SSH 连接服务器，自动完成：代码拉取、Docker 构建、数据库初始化、Nginx 配置。
+SSH 连腾讯云，自动完成：代码拉取、Docker 构建、`migrate.sh`、Nginx reload。
 
-#### 手动更新（已部署后）
+### 手动更新
 ```bash
 cd /opt/safety-hazard-review-system
 git pull
 sudo docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -d --build
+sudo ./migrate.sh
 ```
-> ⚠️ 必须带 `--env-file` 加载保存的密码，否则容器会使用默认密码，导致数据库认证失败。
+> 必须带 `--env-file /etc/safety-hazard.env`，否则容器会用默认弱密码，DB 认证失败。
 
-#### 端口规划
-| 用途 | 对外端口 | 容器内部端口 |
-|------|----------|-------------|
-| 前端（Nginx 代理） | 80 | 127.0.0.1:8080 |
-| 后端 API（Nginx 代理） | — | 127.0.0.1:8000 |
-| Postgres | 不对外 | 127.0.0.1:5432 |
-| Redis | 不对外 | 127.0.0.1:6379 |
-| MinIO | 不对外 | 127.0.0.1:9000/9001 |
+### 端口规划（prod）
+| 用途 | 对外 | 容器内 |
+|------|------|--------|
+| Nginx（前端 + API 反代） | 80 | — |
+| Backend (NestJS) | — | 127.0.0.1:8000 |
+| Frontend (Next.js) | — | 127.0.0.1:3000 |
+| Postgres | — | 127.0.0.1:5432 |
+| Redis | — | 127.0.0.1:6379 |
+| MinIO | — | 127.0.0.1:9000/9001 |
 
-#### 安全组最小开放规则
+### 安全组最小开放
 | 端口 | 协议 | 说明 |
 |------|------|------|
-| 22 | TCP | SSH 管理 |
-| 80 | TCP | HTTP 访问 |
-| 443 | TCP | HTTPS（配置 SSL 后） |
+| 22 | TCP | SSH |
+| 80 | TCP | HTTP |
+| 443 | TCP | HTTPS（启用 SSL 后） |
 
 ---
 
 ## 安全注意事项
 
-- **ENV 变量**：启动期必须设置。`dev` / `test` 允许弱 SECRET_KEY；`staging` / `production` 硬阻断默认 `your-secret-key-change-in-production` 与长度 < 32 的密钥。docker-compose 已分别设置 `ENV=dev` 与 `ENV=production`。
-- **启动期默认账号检查**：在 `staging` / `production` 下若 `admin/admin123` 仍存在，应用直接抛出 `RuntimeError` 拒绝启动。dev 环境仅打印 WARNING。
-- **SECRET_KEY**：生产环境必须通过环境变量设置强随机密钥（`openssl rand -hex 32`），不要依赖默认生成的随机值。`deploy-remote.sh` 会自动生成并写入 `/etc/safety-hazard.env`。
-- **数据库密码**：生产环境使用强密码，并通过 `--env-file` 持久化到 `/etc/safety-hazard.env`。
-- **MinIO**：生产环境绑定到 `127.0.0.1`，不对外暴露 9000/9001 端口。
-- **CORS**：`ALLOWED_ORIGINS` 在生产环境应严格限制为实际域名，不要使用 `*`。后端启动期不再接受 `*`，methods / headers 也已收紧为白名单。
-- **JWT 不再出现在 URL**：图片访问通过 HMAC 签名短链（`?sig=&exp=`），TTL 默认 15 分钟，TTL 内可被浏览器缓存复用。`?token=\<jwt\>` 路径仅作为 1 个发布周期的兼容回退，响应头 `X-Photo-Auth-Deprecated: true`。
-- **登录限流**：[slowapi](https://github.com/laurentS/slowapi) 基于 Redis 存储，`5/minute` 每 IP。生产环境请确保 Redis 与应用同区域，并考虑把限流 key 升级为 IP+username。
-- **文件上传**：后端限制文件大小 10MB，并通过文件头校验图片格式，防止恶意文件上传。
-- **管理员密码**：首次部署后默认账号为 `admin` / `admin123`，必须在首次登录后立即修改（生产环境不修改会被启动期硬阻断）。
-- **Nginx**：`nginx.conf` 注入 CSP / X-Frame-Options / X-Content-Type-Options / Referrer-Policy / Permissions-Policy / HSTS（仅 HTTPS）；生产配置设置 `client_max_body_size 50M` 以支持批量图片上传。
-- **依赖**：passlib 已移除（不再维护），改用 `bcrypt==4.2.0`；旧 passlib 格式 `b$` hash 仍能 verify，登录成功后透明 rehash。`xlsx@0.18.5`（CVE-2023-30533）已在前端用 `exceljs@^4.4.0` 替换，仅 `BatchHistory.tsx` 的“下载失败明细”使用。
+- **启动期硬阻断**：`apps/backend/src/common/startup-checks.ts` 在 `staging/production` 阻断 `admin/admin123` 仍存在与 `SECRET_KEY` 弱；dev 仅 `console.warn`。
+- **JWT cookie**：httpOnly + `SameSite=Lax`（prod 加 `Secure`）。前端不再把 JWT 写 localStorage；老代码残留请改用 `/api/v1/auth/me` + cookie。
+- **图片访问**：HMAC-SHA256 签名短链（`?sig=&exp=`），TTL 默认 15 分钟，TTL 内浏览器缓存可复用。`?token=<jwt>` 仅作为 1 个发布周期的兼容回退，响应头 `X-Photo-Auth-Deprecated: true`。
+- **登录限流**：Throttler（Redis 共享），`5/minute/IP`，生产建议升级到 `IP+username` 双键。
+- **文件上传**：`PhotosController` 限制 10MB，按文件头魔数校验 MIME（JPEG/PNG/WebP/GIF）。
+- **管理员密码**：`seed.ts` 写入 `admin/admin123`，生产环境必须 `npm run change-password` 或 UI 上改；不修改则启动期硬阻断。
+- **Nginx 头**（`nginx.conf`）：CSP / `X-Frame-Options` / `X-Content-Type-Options` / `Referrer-Policy` / `Permissions-Policy`；HTTPS 时加 `Strict-Transport-Security`。
+- **CORS**：`main.ts` 解析 `ALLOWED_ORIGINS` 逗号分隔生成白名单；启动期不再接受 `*`。
+- **依赖**：用 `bcrypt@5`（active 维护）；Excel 用 `exceljs@^4`（已替代有 CVE 的 `xlsx@0.18.5`，仅 BatchHistory 下载失败明细仍用）。
+- **回滚预案**：`backend-legacy/` + `frontend-legacy/` + `docker-compose.legacy.yml` 保留 30 天；切流后任何 P0 事故可在 5 分钟内 `docker compose -f docker-compose.legacy.yml up -d` 回退（旧 Python 镜像直接复用同一个 Postgres 实例，不涉及数据迁移）。
+
+---
+
+## 已知 / 未完成项（不影响当前代码提交）
+
+详见 `docs/PHASE6_STATUS.md`，主要为运营动作：
+- staging 演练 2 轮（需要真实 staging 环境）
+- 真实生产切换窗口（依赖上述演练）
+- 切流后 24h P0/P1 监控盯盘
+- 30 天后清理 `backend-legacy/` / `frontend-legacy/` / `docker-compose.legacy.yml` / 旧 Python 镜像 tag

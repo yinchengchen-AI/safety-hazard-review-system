@@ -1,5 +1,11 @@
 version: "3.8"
 
+# Local development compose for the TypeScript full-stack.
+# Production-equivalent stack with all ports on localhost — see
+# docker-compose.prod.yml for the locked-down prod variant, and
+# docker-compose.legacy.yml for the rollback plan during the
+# 30-day post-cutover window.
+
 services:
   postgres:
     image: docker.m.daocloud.io/postgres:16-alpine
@@ -50,19 +56,23 @@ services:
       retries: 5
 
   backend:
-    build: ./backend
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
     container_name: safety-backend
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/safety_hazard
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/safety_hazard
       - REDIS_URL=redis://redis:6379/0
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET=hazard-photos
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-32chars-minimum-placeholder-x}
+      - ALLOWED_ORIGINS=http://localhost:3000
       - ENV=dev
+      - PORT=8000
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,44 +82,19 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  celery-worker:
+  worker:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.celery
-    container_name: safety-celery
-    command: celery -A app.tasks.celery_app worker --loglevel=info
+      context: ./apps/backend
+      dockerfile: Dockerfile.worker
+    container_name: safety-worker
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/safety_hazard
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/safety_hazard
       - REDIS_URL=redis://redis:6379/0
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET=hazard-photos
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
-      - ENV=dev
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    restart: unless-stopped
-
-  celery-beat:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.celery
-    container_name: safety-celery-beat
-    command: celery -A app.tasks.celery_app beat --loglevel=info
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/safety_hazard
-      - REDIS_URL=redis://redis:6379/0
-      - MINIO_ENDPOINT=minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-      - MINIO_BUCKET=hazard-photos
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-32chars-minimum-placeholder-x}
       - ENV=dev
     depends_on:
       postgres:
@@ -121,10 +106,16 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
     container_name: safety-frontend
     ports:
-      - "80:80"
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_BASE=/api/v1
+      - PORT=3000
     depends_on:
       - backend
     restart: unless-stopped

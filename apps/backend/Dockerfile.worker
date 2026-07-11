@@ -16,4 +16,4 @@ ENV NODE_ENV=production
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
-CMD ["node", "dist/queues/worker.js"]
+CMD ["node", "dist/src/queues/worker.js"]

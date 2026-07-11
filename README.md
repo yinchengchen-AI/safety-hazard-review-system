@@ -21,7 +21,7 @@
 ### 本地开发
 ```bash
 # 后端
-cd backend
+cd apps/backend
 cp .env.example .env  # 然后填实际值
 npm install
 npx prisma generate
@@ -29,7 +29,7 @@ npx prisma migrate deploy
 npm run dev          # http://localhost:8000
 
 # 前端 (另一个终端)
-cd frontend
+cd apps/frontend
 npm install
 npm run dev          # http://localhost:3000
 ```
@@ -39,12 +39,12 @@ npm run dev          # http://localhost:3000
 ### 测试
 ```bash
 # 后端 (单测 + E2E)
-cd backend
+cd apps/backend
 npm test
 npm run test:e2e       # 需要本地 Postgres / Redis / MinIO
 
 # 前端
-cd frontend
+cd apps/frontend
 npm run build
 npm run lint
 npm run test:e2e       # Playwright（需要先 npx playwright install）
