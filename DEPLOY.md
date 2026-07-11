@@ -1,8 +1,7 @@
 # 生产部署指南（TypeScript 全栈）
 
-本文描述 2026-Q3 切流后的 TypeScript 全栈部署流程。旧 Python
-栈（`backend-legacy/` + `docker-compose.legacy.yml`）保留 30 天
-作为回滚预案。
+本文描述本仓库的生产部署流程。部署基于 Docker Compose + Nginx，
+后端是 NestJS 10 + Prisma 5（Node 20），前端是 Next.js 14 App Router。
 
 ## 1. 一次性初始化
 
@@ -25,7 +24,7 @@ docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -
 ```
 
 启动的服务：
-- `postgres` (15-alpine, 5432)
+- `postgres` (16-alpine, 5432)
 - `redis` (7-alpine, 6379)
 - `minio` (latest, 9000/9001)
 - `backend` (NestJS 10, 8000)
@@ -35,43 +34,31 @@ docker compose -f docker-compose.prod.yml --env-file /etc/safety-hazard.env up -
 
 仅 80 端口对外；其它端口绑定 `127.0.0.1`。
 
-## 3. 迁移
+## 3. 数据库迁移
 
 ```bash
 ./migrate.sh
 ```
 
-`apps/backend/prisma/migrations/0_init/` 已经在切换时由 `prisma migrate
-resolve --applied 0_init` 标 baseline；本脚本对未来的 `migrate dev`
-新增迁移幂等。
+`apps/backend/prisma/migrations/0_init/` 是 baseline 迁移（已在初始部署时通过 `prisma migrate resolve --applied` 标 baseline）；后续 `migrate dev` 生成的迁移由本脚本幂等执行 `prisma migrate deploy`。
 
 ## 4. 健康检查 / 监控
 
-- `GET /health` → `{"status":"ok"}`，探测 DB 连通。
-- `GET /metrics` → Prometheus 格式（nodejs 默认指标 +
-  Prisma 客户端指标），由 PrometheusModule 注册。`@willsoto/nestjs-prometheus` 的 `defaultMetrics.enabled` 默认开。
-- 监控接入建议：Nginx 暴露 `/metrics` 给内网 Prometheus scraper；用 BullMQ 队列长度告警（`report_queue.waiting` / `active` / `completed` / `failed`）。
+- `GET /health` → `{"status":"ok"}`，探测 DB 连通（Prisma `$queryRaw SELECT 1`）。
+- `GET /metrics` → Prometheus 格式（nodejs 默认指标 + Prisma 客户端指标），由 `@willsoto/nestjs-prometheus` 注册。`defaultMetrics.enabled` 默认开。
+- 监控接入建议：Nginx 暴露 `/metrics` 给内网 Prometheus scraper；同时按 BullMQ 队列长度告警（`report_queue.waiting` / `active` / `completed` / `failed`）。
 
-## 5. 切流（Phase 6）
+## 5. 常规运维
 
-切流窗口（staging 演练过 2 轮后执行）：
-
-1. 备份数据库：`pg_dump -Fc safety_hazard > backups/pre-ts-migration-$(date +%s).sql.gz`
-2. 关停旧服务：`docker compose -f docker-compose.legacy.yml stop`
-3. 起新服务：`./deploy-remote.sh`（`docker compose -f docker-compose.prod.yml up -d` + migrate）
-4. 验证：登录、创建企业、Excel 导入 50 行、创建复核任务、批量通过、生成报告、下载 PDF/Word
-5. 切 Nginx upstream（如使用外部 Nginx）：从 `backend-py:8000` 改到 `backend:8000`
-
-回滚预案：
-- 保留 `docker-compose.legacy.yml`（绑定 8000）+ 旧 Python 镜像 tag
-- 若 5 分钟内 P95 > 2× baseline 或 P0 事故，立即停 prod stack、起
-  legacy stack、保留数据库不变。
-- 30 天后清理 `backend-legacy/`、`docker-compose.legacy.yml`、
-  Python 镜像 tag。
+日常操作：
+- **更新代码**：`git pull` 后 `./deploy-remote.sh`（自动 build + migrate + restart）。详见该脚本说明。
+- **回看日志**：`docker compose -f docker-compose.prod.yml logs -f <service>`，常见 service：`backend` / `worker` / `nginx`。
+- **备份数据库**：`backup.sh` 已挂在生产 cron，每日凌晨 02:30 `pg_dump --no-owner --clean --if-exists -Fc` 落到 `backups/`，30 天轮转。
+- **撤销一次发布**：参考 `docs/runbooks/` 下的应急响应文档。
 
 ## 6. CI
 
-GitHub Actions 跑：
-- 后端：`cd apps/backend && npm test`（沿用 Phase 1 写好的 76 个测试）
-- 前端：`cd apps/frontend && npm run build && npm run lint`
-- E2E：`cd apps/frontend && npx playwright install --with-deps && npx playwright test`（本地 docker compose 起来 backend + frontend + minio + postgres + redis + worker）
+GitHub Actions `.github/workflows/ci.yml` 跑：
+- 后端：`cd apps/backend && npm ci && npx prisma migrate deploy && npm test && npm run build`（需要 Postgres 5433 + Redis，CI service 容器提供）
+- 前端：`cd apps/frontend && npm ci && npm run build && npm run lint`
+- 触发：push / PR 到 `master` 与 `feat/fullstack-ts`。

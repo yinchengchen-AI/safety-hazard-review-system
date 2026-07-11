@@ -2,10 +2,6 @@
 
 本文件面向 AI 编程助手，提供项目的完整上下文、架构说明与开发规范。
 
-> 历史栈（Python/FastAPI + React/Vite）的源码保留在 `backend-legacy/` /
-> `frontend-legacy/`，仅作为 2026-Q3 切流后 30 天内的回滚预案使用。
-> 活跃代码全部位于 `apps/`，其余路径均已被替换或删除。
-
 ---
 
 ## 项目概述
@@ -99,15 +95,12 @@
 │       ├── e2e/                         # Playwright 用例
 │       ├── Dockerfile                   # Next.js standalone build
 │       └── package.json
-├── backend-legacy/                      # 旧 FastAPI 栈（仅 30 天回滚预案）
-├── frontend-legacy/                     # 旧 React/Vite 栈（同上）
 ├── docs/                                # 设计稿 / 演练 runbook / 计划文档
 │   ├── PHASE6_STATUS.md                 # 6 阶段迁移收尾状态表
 │   ├── runbooks/2026-07-02-ts-cutover.md
 │   └── superpowers/{plans,specs}/...
 ├── docker-compose.yml                   # 本地开发（端口全暴露）
 ├── docker-compose.prod.yml              # 生产（仅 80 对外，其余 127.0.0.1）
-├── docker-compose.legacy.yml            # 回滚预案（指向 backend-legacy）
 ├── nginx.conf                           # 生产反代（注入安全头）
 ├── migrate.sh                           # prisma migrate deploy（基于容器化 node:20-alpine）
 ├── init-env.sh                          # 一次性生成 /etc/safety-hazard.env
@@ -369,8 +362,6 @@ sudo ./migrate.sh
 - **Nginx 头**（`nginx.conf`）：CSP / `X-Frame-Options` / `X-Content-Type-Options` / `Referrer-Policy` / `Permissions-Policy`；HTTPS 时加 `Strict-Transport-Security`。
 - **CORS**：`main.ts` 解析 `ALLOWED_ORIGINS` 逗号分隔生成白名单；启动期不再接受 `*`。
 - **依赖**：用 `bcrypt@5`（active 维护）；Excel 用 `exceljs@^4`（已替代有 CVE 的 `xlsx@0.18.5`，仅 BatchHistory 下载失败明细仍用）。
-- **回滚预案**：`backend-legacy/` + `frontend-legacy/` + `docker-compose.legacy.yml` 保留 30 天；切流后任何 P0 事故可在 5 分钟内 `docker compose -f docker-compose.legacy.yml up -d` 回退（旧 Python 镜像直接复用同一个 Postgres 实例，不涉及数据迁移）。
-
 ---
 
 ## 已知 / 未完成项（不影响当前代码提交）
@@ -379,4 +370,3 @@ sudo ./migrate.sh
 - staging 演练 2 轮（需要真实 staging 环境）
 - 真实生产切换窗口（依赖上述演练）
 - 切流后 24h P0/P1 监控盯盘
-- 30 天后清理 `backend-legacy/` / `frontend-legacy/` / `docker-compose.legacy.yml` / 旧 Python 镜像 tag

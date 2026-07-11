@@ -1,42 +1,31 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-
 # Environment & secrets
 .env
 .env.*
 !.env.example
 apps/backend/.env
-backend-legacy/.env
 
 # Logs
 *.log
-apps/backend/*.log
-backend-legacy/*.log
 
-# Test artifacts
-backend/test_*.pdf
-backend/test_*.jpg
-backend/test_*.png
-backend/test_*.xlsx
-
-# OMC state
-.omc/
-backend/.omc/
-frontend/.omc/
+# Python (left over from legacy; harmless)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
 
 # Node.js
 node_modules/
-frontend/node_modules/
 
-# Build output (keep dist for deployment)
-# frontend/dist/
+# Build output
+apps/backend/dist/
+apps/backend/.next/
+
+# OMC state
+.omc/
+frontend/.omc/
 
 # IDE
 .vscode/
@@ -47,6 +36,10 @@ frontend/node_modules/
 # OS
 .DS_Store
 Thumbs.db
+
+# Tool / runtime caches
+.playwright-mcp/
+frontend/.vite/
 
 # Generated test data
 generated_hazards_*/
@@ -59,17 +52,5 @@ seed_admin[2-9]*.py
 seed_admin_*.py
 generate_hazards_*.py
 
-# Tool / runtime caches
-.playwright-mcp/
-backend/.vite/
-frontend/.vite/
-
-# Local env templates (keep .example, ignore real .env)
-!.env.example
+# Local-only Claude artifacts
 .claude/
-package*.json
-/package.json
-/package-lock.json
-apps/backend/.next/
-apps/backend/dist/
-apps/backend/.vite/

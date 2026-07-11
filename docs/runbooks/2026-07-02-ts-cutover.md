@@ -6,6 +6,12 @@
 > 涉及系统：safety-hazard-review-system（生产）  
 > 切流方式：硬切（hard cut），不回滚到中间状态。
 
+> ⚠️ 2026-07-11 修订：`backend-legacy/` + `docker-compose.legacy.yml`
+> 已提前删除，§2、§7 中所有对 legacy 服务的回滚步骤均已失效。
+> 当前若切流失败只能通过线上热修 + 必要时重发镜像，无法快速回退到
+> Python 栈。本文件保留作为切流过程的历史记录，新增回滚预案请写到
+> `docs/runbooks/incident-response.md`。
+
 ## 0. 前置条件（执行前 24 小时）
 
 - [ ] staging 完成 2 轮切流演练，回滚 < 5 min ✅

@@ -13,9 +13,6 @@
 | 对象存储 | MinIO (S3 兼容) |
 | 部署 | Docker Compose + Nginx |
 
-历史栈 (Python/FastAPI + React/Vite) 已退役，源码保留在
-`backend-legacy/` 30 天作为回滚预案。
-
 ## 快速开始
 
 ### 本地开发
@@ -71,9 +68,7 @@ npm run test:e2e       # Playwright（需要先 npx playwright install）
 │   ├── src/app/          # (dashboard) 路由组 + /login
 │   ├── src/lib/          # api / auth / userStore / notificationStore
 │   └── e2e/              # Playwright 端到端
-├── backend-legacy/       # 旧 Python 栈（仅回滚用，30 天内清理）
 ├── docker-compose.prod.yml
-├── docker-compose.legacy.yml
 ├── nginx.conf
 ├── init-env.sh           # 一次性：生成 /etc/safety-hazard.env
 ├── migrate.sh            # 跑 prisma migrate deploy
