@@ -1,14 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
-  BatchImportRequestDto,
   BatchImportResultDto,
   BatchPreviewItemDto,
   BatchPreviewRequestDto,
   BatchPreviewResponseDto,
   BatchResponseDto,
+  HazardImportRow,
   ImportErrorResponseDto,
 } from './dto/batch.dto';
 
@@ -29,6 +29,68 @@ function toBatchResponse(b: BatchJoined, availableHazardCount = 0, creatorUserna
     created_at: b.created_at,
     available_hazard_count: availableHazardCount,
   };
+}
+
+// Map a worksheet row object (keys from header row) to HazardImportRow.
+const HEADER_MAP: Record<string, keyof HazardImportRow> = {
+  '上报单位': 'reporting_unit',
+  '行业领域': 'industry_sector',
+  '企业类型': 'enterprise_type',
+  '企业名称': 'enterprise_name',
+  '统一社会信用代码': 'credit_code',
+  '属地': 'region',
+  '详细地址': 'address',
+  '负责人': 'contact_person',
+  '隐患分类': 'category',
+  '隐患描述': 'description',
+  '隐患位置': 'location',
+  '检查方式': 'inspection_method',
+  '检查人': 'inspector',
+  '检查时间': 'inspection_date',
+  '判定依据': 'judgment_basis',
+  '违反判定依据具体条款': 'violation_clause',
+  '是否整改': 'is_rectified',
+  '实际整改完成时间': 'rectification_date',
+  '整改责任部门/责任人': 'rectification_responsible',
+  '整改措施': 'rectification_measures',
+  '举报情况备注': 'report_remarks',
+};
+
+function normalizeHeader(header: string): string {
+  return header.replace(/\s+/g, '').trim();
+}
+
+// Minimal CSV line parser that handles quoted fields.
+function parseCsvLine(line: string): string[] {
+  const values: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        values.push(current);
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+  }
+  values.push(current);
+  return values;
 }
 
 @Injectable()
@@ -71,13 +133,16 @@ export class BatchesService {
     return { total: dto.rows.length, items };
   }
 
-  async import(dto: BatchImportRequestDto, userId: string): Promise<BatchImportResultDto> {
-      const batch = await this.prisma.batches.create({
+  async import(buffer: Buffer, filename: string, userId: string): Promise<BatchImportResultDto> {
+    const rows = await this.parseExcelOrCsv(buffer, filename);
+    const name = filename.replace(/\.[^.]+$/, '') || `import_${new Date().toISOString().slice(0, 10)}`;
+
+    const batch = await this.prisma.batches.create({
       data: {
         id: randomUUID(),
-        name: dto.name,
-        file_name: dto.filename,
-        total_count: dto.rows.length,
+        name,
+        file_name: filename,
+        total_count: rows.length,
         success_count: 0,
         fail_count: 0,
         creator_id: userId,
@@ -87,9 +152,9 @@ export class BatchesService {
     const errors: { row_index: number; reason: string }[] = [];
     let success = 0;
 
-    for (let i = 0; i < dto.rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
       const rowNum = i + 2;
-      const row = dto.rows[i];
+      const row = rows[i];
       const result = await this._processRow(batch.id, row);
       if (result.reason) {
         errors.push({ row_index: rowNum, reason: result.reason });
@@ -117,6 +182,57 @@ export class BatchesService {
       fail_count: errors.length,
       errors,
     };
+  }
+
+  private async parseExcelOrCsv(buffer: Buffer, filename: string): Promise<HazardImportRow[]> {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    if (ext === 'csv') {
+      // Minimal CSV parser: split lines, first line is header.
+      const text = buffer.toString('utf-8');
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      if (lines.length < 2) return [];
+      const headers = lines[0].split(',').map((h) => normalizeHeader(h.replace(/^"|"$/g, '')));
+      return lines.slice(1).map((line) => this.mapRow(parseCsvLine(line), headers));
+    }
+
+    const ExcelJS = await import('exceljs');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buffer as any);
+    const ws = wb.worksheets[0];
+    if (!ws) throw new BadRequestException('Excel 文件没有工作表');
+
+    const headers: string[] = [];
+    ws.getRow(1).eachCell((cell, colNumber) => {
+      headers[colNumber - 1] = normalizeHeader(String(cell.value ?? ''));
+    });
+
+    const rows: HazardImportRow[] = [];
+    ws.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      const values: (string | number | Date | null)[] = [];
+      for (let i = 0; i < headers.length; i++) {
+        const cell = row.getCell(i + 1);
+        values[i] = cell.value as string | number | Date | null;
+      }
+      rows.push(this.mapRow(values, headers));
+    });
+    return rows;
+  }
+
+  private mapRow(values: (string | number | Date | null)[], headers: string[]): HazardImportRow {
+    const row: Record<string, unknown> = {};
+    for (let i = 0; i < headers.length; i++) {
+      const key = HEADER_MAP[headers[i]];
+      if (!key) continue;
+      const raw = values[i];
+      if (raw === null || raw === undefined) continue;
+      if (raw instanceof Date) {
+        row[key] = raw.toISOString().slice(0, 10);
+      } else {
+        row[key] = String(raw).trim();
+      }
+    }
+    return row as unknown as HazardImportRow;
   }
 
   /**
@@ -218,11 +334,21 @@ export class BatchesService {
   async remove(batchId: string): Promise<void> {
     const b = await this.prisma.batches.findFirst({ where: { id: batchId } });
     if (!b) throw new NotFoundException('批次不存在');
+
+    // Prevent deletion if any hazard in this batch is currently locked in a
+    // pending review task. Completed/cancelled tasks already release the lock.
+    const lockedCount = await this.prisma.hazards.count({
+      where: { batch_id: b.id, deleted_at: null, current_task_id: { not: null } },
+    });
+    if (lockedCount > 0) {
+      throw new BadRequestException('该批次中存在正在复核中的隐患，无法删除');
+    }
+
     const now = new Date();
     await this.prisma.batches.update({ where: { id: b.id }, data: { deleted_at: now } });
     await this.prisma.hazards.updateMany({
       where: { batch_id: b.id, deleted_at: null },
-      data: { deleted_at: now },
+      data: { deleted_at: now, current_task_id: null },
     });
     await this.prisma.import_errors.deleteMany({
       where: { batch_id: b.id },

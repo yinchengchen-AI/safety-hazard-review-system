@@ -52,45 +52,44 @@ export class ReviewTasksService {
     }
 
     const ids = [...hazardIds];
-    const hazards = await this.prisma.$transaction(async (tx) => {
-      // Lock the rows we plan to attach.
-      return await tx.hazards.findMany({
-        where: { id: { in: ids } },
-        // Note: FOR UPDATE requires raw SQL or interactive transaction.
-        // For Phase 2 we accept best-effort locking; the soft-delete
-        // middleware already ensures deleted_at IS NULL.
-      });
-    });
 
-    if (hazards.length !== ids.length) {
-      throw new BadRequestException('Some hazards not found');
-    }
-    for (const h of hazards) {
-      if (h.current_task_id) {
-        throw new BadRequestException(`Hazard ${h.id} is already in another review task`);
+    return await this.prisma.$transaction(async (tx) => {
+      // Lock the selected hazard rows with SELECT FOR UPDATE to prevent
+      // concurrent tasks from assigning the same hazards.
+      const lockedHazards = await tx.$queryRaw<
+        { id: string; current_task_id: string | null }[]
+      >(Prisma.sql`SELECT id, current_task_id FROM hazards WHERE id = ANY(${ids}::uuid[]) AND deleted_at IS NULL FOR UPDATE`);
+
+      if (lockedHazards.length !== ids.length) {
+        throw new BadRequestException('Some hazards not found or deleted');
       }
-    }
+      for (const h of lockedHazards) {
+        if (h.current_task_id) {
+          throw new BadRequestException(`Hazard ${h.id} is already in another review task`);
+        }
+      }
 
-    const task = await this.prisma.review_tasks.create({
-      data: {
-        id: randomUUID(),
-        name: dto.name,
-        creator_id: creatorId,
-        status: 'pending',
-      },
+      const task = await tx.review_tasks.create({
+        data: {
+          id: randomUUID(),
+          name: dto.name,
+          creator_id: creatorId,
+          status: 'pending',
+        },
+      });
+
+      for (const hazardId of ids) {
+        await tx.hazards.update({
+          where: { id: hazardId },
+          data: { current_task_id: task.id },
+        });
+        await tx.task_hazards.create({
+          data: { task_id: task.id, hazard_id: hazardId },
+        });
+      }
+
+      return toDto(task, { hazard_count: ids.length, reviewed_count: 0 });
     });
-
-    for (const h of hazards) {
-      await this.prisma.hazards.update({
-        where: { id: h.id },
-        data: { current_task_id: task.id },
-      });
-      await this.prisma.task_hazards.create({
-        data: { task_id: task.id, hazard_id: h.id },
-      });
-    }
-
-    return toDto(task, { hazard_count: hazards.length, reviewed_count: 0 });
   }
 
   async list(): Promise<ReviewTaskResponseDto[]> {
@@ -318,54 +317,70 @@ const out: TaskHazardJoined[] = [];
   async cancel(taskId: string, userId: string): Promise<{ id: string; name: string; creator_id: string; status: string; created_at: Date | null; completed_at: Date | null }> {
     const task = await this.prisma.review_tasks.findFirst({ where: { id: taskId } });
     if (!task) throw new NotFoundException('Review task not found');
-
-    // Revert reviewed hazards: status -> pending, review_count -= 1,
-    // history row. This mirrors the Python ``cancel_task`` behaviour
-    // that was added during the data-integrity review.
-    const taskHazards = await this.prisma.task_hazards.findMany({
-      where: { task_id: task.id },
-    });
-    const reviewed = taskHazards.filter((th) => th.status_in_task !== null);
-    if (reviewed.length > 0) {
-      const hazards = await this.prisma.hazards.findMany({
-        where: { id: { in: reviewed.map((th) => th.hazard_id) } },
-      });
-      const byId = new Map(hazards.map((h) => [h.id, h]));
-      for (const th of reviewed) {
-        const h = byId.get(th.hazard_id);
-        if (!h) continue;
-        const oldStatus = h.status;
-        await this.prisma.hazards.update({
-          where: { id: h.id },
-          data: {
-            status: 'pending',
-            review_count:
-              (oldStatus === 'passed' || oldStatus === 'failed') && (h.review_count ?? 0) > 0
-                ? { decrement: 1 }
-                : undefined,
-          },
-        });
-        await this.prisma.hazard_status_history.create({
-          data: {
-            hazard_id: h.id,
-            from_status: oldStatus,
-            to_status: 'pending',
-            changed_by: userId,
-            reason: `Task ${taskId} cancelled`,
-          },
-        });
-      }
+    if (task.status !== 'pending') {
+      throw new BadRequestException('Only pending tasks can be cancelled');
     }
 
-    // Release the task lock for every hazard.
-    await this.prisma.hazards.updateMany({
-      where: { current_task_id: task.id },
-      data: { current_task_id: null },
-    });
+    const user = await this.prisma.users.findFirst({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    if (task.creator_id !== userId && user.role !== 'admin') {
+      throw new BadRequestException('Only the task creator or an admin can cancel this task');
+    }
 
-    return this.prisma.review_tasks.update({
-      where: { id: task.id },
-      data: { status: 'cancelled' },
+    return await this.prisma.$transaction(async (tx) => {
+      // Re-lock the task inside the transaction to prevent races.
+      const lockedTask = await tx.review_tasks.findFirst({ where: { id: taskId } });
+      if (!lockedTask || lockedTask.status !== 'pending') {
+        throw new BadRequestException('Task is no longer pending');
+      }
+
+      // Revert reviewed hazards: status -> pending, review_count -= 1,
+      // history row. This mirrors the Python ``cancel_task`` behaviour
+      // that was added during the data-integrity review.
+      const taskHazards = await tx.task_hazards.findMany({
+        where: { task_id: task.id },
+      });
+      const reviewed = taskHazards.filter((th) => th.status_in_task !== null);
+      if (reviewed.length > 0) {
+        const hazards = await tx.hazards.findMany({
+          where: { id: { in: reviewed.map((th) => th.hazard_id) } },
+        });
+        const byId = new Map(hazards.map((h) => [h.id, h]));
+        for (const th of reviewed) {
+          const h = byId.get(th.hazard_id);
+          if (!h) continue;
+          const oldStatus = h.status;
+          const shouldDecrement =
+            (oldStatus === 'passed' || oldStatus === 'failed') && (h.review_count ?? 0) > 0;
+          await tx.hazards.update({
+            where: { id: h.id },
+            data: {
+              status: 'pending',
+              review_count: shouldDecrement ? { decrement: 1 } : undefined,
+            },
+          });
+          await tx.hazard_status_history.create({
+            data: {
+              hazard_id: h.id,
+              from_status: oldStatus,
+              to_status: 'pending',
+              changed_by: userId,
+              reason: `Task ${taskId} cancelled`,
+            },
+          });
+        }
+      }
+
+      // Release the task lock for every hazard.
+      await tx.hazards.updateMany({
+        where: { current_task_id: task.id },
+        data: { current_task_id: null },
+      });
+
+      return tx.review_tasks.update({
+        where: { id: task.id },
+        data: { status: 'cancelled' },
+      });
     });
   }
 }

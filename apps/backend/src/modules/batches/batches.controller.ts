@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -9,12 +10,14 @@ import {
   Post,
   Query,
   Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { BatchesService } from './batches.service';
 import {
-  BatchImportRequestDto,
   BatchImportResultDto,
   BatchPreviewRequestDto,
   BatchPreviewResponseDto,
@@ -45,11 +48,13 @@ export class BatchesController {
   }
 
   @Post('import')
-  import(
-    @Body() dto: BatchImportRequestDto,
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 50 * 1024 * 1024 } }))
+  async import(
+    @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: users,
   ): Promise<BatchImportResultDto> {
-    return this.batches.import(dto, user.id);
+    if (!file) throw new BadRequestException('file is required');
+    return this.batches.import(file.buffer, file.originalname ?? 'import.xlsx', user.id);
   }
 
   @Get('template')

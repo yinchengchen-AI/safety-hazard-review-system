@@ -110,6 +110,10 @@ export class HazardsService {
     const h = await this.prisma.hazards.findFirst({ where: { id } });
     if (!h) throw new NotFoundException('Hazard not found');
 
+    if (h.current_task_id) {
+      throw new BadRequestException('该隐患已被分配到复核任务中，任务完成或取消前不可编辑');
+    }
+
     // Reject updates to fields that are already set (only-NULL fields are
     // editable, mirroring the Python backend's behaviour).
     for (const [field, newValue] of Object.entries(dto)) {
