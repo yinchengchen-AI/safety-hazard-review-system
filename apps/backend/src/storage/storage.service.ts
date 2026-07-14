@@ -12,8 +12,10 @@ export class StorageService implements OnModuleInit {
   constructor(private readonly config: ConfigService) {}
 
   async onModuleInit(): Promise<void> {
+    const secure = this.config.get<boolean>('MINIO_SECURE', false);
+    const protocol = secure ? 'https' : 'http';
     this.client = new S3Client({
-      endpoint: `http://${this.config.get<string>('MINIO_ENDPOINT')}`,
+      endpoint: `${protocol}://${this.config.get<string>('MINIO_ENDPOINT')}`,
       region: 'us-east-1',
       forcePathStyle: true,
       credentials: {

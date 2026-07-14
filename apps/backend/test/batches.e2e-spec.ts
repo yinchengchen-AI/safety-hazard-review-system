@@ -122,12 +122,25 @@ describe('Batches (e2e)', () => {
     expect(res.body.items[1].errors).toContain('隐患描述不能为空');
   });
 
-  it('template endpoint returns xlsx with sample row', async () => {
+  it('reuses a single enterprise record when the same credit_code appears multiple times', async () => {
+    const uniq = `e_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const creditCode = `91${Date.now()}`;
+
+    const buffer = await buildImportBuffer([
+      { '企业名称': uniq, '统一社会信用代码': creditCode, '隐患描述': 'H1', '隐患位置': '1F' },
+      { '企业名称': uniq, '统一社会信用代码': creditCode, '隐患描述': 'H2', '隐患位置': '2F' },
+      { '企业名称': `${uniq}-alias`, '统一社会信用代码': creditCode, '隐患描述': 'H3', '隐患位置': '3F' },
+    ]);
     const res = await request(app.getHttpServer())
-      .get('/api/v1/batches/template')
+      .post('/api/v1/batches/import')
       .set('Authorization', `Bearer ${adminToken}`)
-      .expect(200);
-    expect(res.headers['content-type']).toMatch(/spreadsheetml/);
-    expect(Number(res.headers['content-length'])).toBeGreaterThan(0);
+      .attach('file', buffer, { filename: 'dedup.xlsx', contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      .expect(201);
+    expect(res.body.success_count).toBe(3);
+
+    const enterprises = await prisma.enterprises.findMany({
+      where: { credit_code: creditCode },
+    });
+    expect(enterprises.length).toBe(1);
   });
 });

@@ -16,6 +16,7 @@ export const envSchema = z
       .default('false')
       .transform((v) => v === 'true'),
     SECRET_KEY: z.string().min(1),
+    PHOTO_SIGNATURE_SECRET: z.string().min(1).optional(),
     ALGORITHM: z.string().default('HS256'),
     ACCESS_TOKEN_EXPIRE_MINUTES: z
       .string()

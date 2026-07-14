@@ -11,7 +11,7 @@ export class UrlSignerService {
   private readonly ttl: number;
 
   constructor(config: ConfigService) {
-    this.secret = config.get<string>('SECRET_KEY') ?? '';
+    this.secret = config.get<string>('PHOTO_SIGNATURE_SECRET') ?? config.get<string>('SECRET_KEY') ?? '';
     this.ttl = config.get<number>('PHOTO_SIGNATURE_TTL', 900);
   }
 

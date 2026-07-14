@@ -189,12 +189,24 @@ export class ReviewTasksService {
     dto: ReviewSingleHazardDto,
     reviewerId: string,
   ) {
-    const taskHazard = await this.prisma.task_hazards.findFirst({
+    return await this.prisma.$transaction(async (tx) => {
+      return await this._reviewHazardTx(tx, taskId, hazardId, dto, reviewerId);
+    });
+  }
+
+  private async _reviewHazardTx(
+    tx: Prisma.TransactionClient,
+    taskId: string,
+    hazardId: string,
+    dto: ReviewSingleHazardDto,
+    reviewerId: string,
+  ) {
+    const taskHazard = await tx.task_hazards.findFirst({
       where: { task_id: taskId, hazard_id: hazardId },
     });
     if (!taskHazard) throw new NotFoundException('Task hazard not found');
 
-    const task = await this.prisma.review_tasks.findFirst({ where: { id: taskId } });
+    const task = await tx.review_tasks.findFirst({ where: { id: taskId } });
     if (!task) throw new NotFoundException('Review task not found');
     if (task.status !== 'pending') {
       throw new BadRequestException('Only pending tasks can be reviewed');
@@ -202,7 +214,7 @@ export class ReviewTasksService {
 
     const isEdit = taskHazard.status_in_task !== null;
     const now = new Date();
-    await this.prisma.task_hazards.update({
+    await tx.task_hazards.update({
       where: { id: taskHazard.id },
       data: {
         conclusion: dto.conclusion,
@@ -212,14 +224,14 @@ export class ReviewTasksService {
       },
     });
 
-    const hazard = await this.prisma.hazards.findFirst({ where: { id: hazardId } });
+    const hazard = await tx.hazards.findFirst({ where: { id: hazardId } });
     if (!hazard) throw new NotFoundException('Hazard not found');
 
     const oldStatus = hazard.status;
     const shouldIncrement =
       !isEdit && oldStatus === 'pending' &&
       (dto.status_in_task === 'passed' || dto.status_in_task === 'failed');
-    await this.prisma.hazards.update({
+    await tx.hazards.update({
       where: { id: hazard.id },
       data: {
         status: dto.status_in_task,
@@ -229,7 +241,7 @@ export class ReviewTasksService {
 
     // Status history row.
     const reasonSuffix = isEdit ? ' (edited)' : '';
-    await this.prisma.hazard_status_history.create({
+    await tx.hazard_status_history.create({
       data: {
         hazard_id: hazard.id,
         from_status: oldStatus,
@@ -242,13 +254,13 @@ export class ReviewTasksService {
     // Phase 3 hook: photo token binding. For now we just clear the
     // tokens (Phase 3 wires up the photo storage).
     if (dto.photo_tokens?.length) {
-      await this.prisma.photos.updateMany({
+      await tx.photos.updateMany({
         where: { temp_token: { in: dto.photo_tokens } },
         data: { task_hazard_id: taskHazard.id, temp_token: null },
       });
     }
 
-    return this.prisma.task_hazards.findFirst({ where: { id: taskHazard.id } });
+    return tx.task_hazards.findFirst({ where: { id: taskHazard.id } });
   }
 
   async batchReview(
@@ -256,20 +268,20 @@ export class ReviewTasksService {
     dto: BatchReviewRequestDto,
     reviewerId: string,
   ) {
-    const task = await this.prisma.review_tasks.findFirst({ where: { id: taskId } });
-    if (!task) throw new NotFoundException('Review task not found');
-    if (task.status !== 'pending') {
-      throw new BadRequestException('Only pending tasks can be reviewed');
-    }
+    return await this.prisma.$transaction(async (tx) => {
+      const task = await tx.review_tasks.findFirst({ where: { id: taskId } });
+      if (!task) throw new NotFoundException('Review task not found');
+      if (task.status !== 'pending') {
+        throw new BadRequestException('Only pending tasks can be reviewed');
+      }
 
-    // TaskHazardJoined = task_hazards row + hazards + enterprises + batches joins.
-type TaskHazardJoined = any
-const out: TaskHazardJoined[] = [];
-    for (const item of dto.items) {
-      const result = await this.reviewHazard(taskId, item.hazard_id, item, reviewerId);
-      out.push(result);
-    }
-    return out;
+      const out: any[] = [];
+      for (const item of dto.items) {
+        const result = await this._reviewHazardTx(tx, taskId, item.hazard_id, item, reviewerId);
+        out.push(result);
+      }
+      return out;
+    });
   }
 
   async complete(taskId: string, userId: string): Promise<{ id: string; name: string; creator_id: string; status: string; created_at: Date | null; completed_at: Date | null }> {

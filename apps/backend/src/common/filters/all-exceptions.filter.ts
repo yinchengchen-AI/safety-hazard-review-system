@@ -1,3 +1,4 @@
+import { MulterError } from 'multer';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
 
@@ -17,7 +18,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let detail: string | string[] = 'Internal server error';
 
-    if (exception instanceof HttpException) {
+    if (exception instanceof MulterError && exception.code === 'LIMIT_FILE_SIZE') {
+      status = HttpStatus.PAYLOAD_TOO_LARGE;
+      detail = '文件大小超过限制（最大 10MB）';
+    } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const body = exception.getResponse();
       if (typeof body === 'string') {

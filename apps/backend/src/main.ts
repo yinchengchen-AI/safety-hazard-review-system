@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { json, urlencoded } from 'express';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const cookieParser = require('cookie-parser');
 import { AppModule } from './app.module';
@@ -14,6 +15,8 @@ async function bootstrap(): Promise<void> {
   const env = config.get<string>('ENV', 'dev');
 
   app.use(cookieParser());
+  app.use(json({ limit: '1mb' }));
+  app.use(urlencoded({ limit: '1mb', extended: true }));
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: false }));
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalGuards(new JwtAuthGuard(app.get(Reflector)));

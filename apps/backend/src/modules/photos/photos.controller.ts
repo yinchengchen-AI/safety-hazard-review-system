@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -27,11 +28,11 @@ export class PhotosController {
 
   @UseGuards(JwtAuthGuard, ActiveUserGuard)
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
   async upload(
     @UploadedFile() file: Express.Multer.File,
   ): Promise<PhotoUploadResponseDto> {
-    if (!file) throw new Error('file is required');
+    if (!file) throw new BadRequestException('file is required');
     return this.photos.upload(file.buffer, file.originalname ?? 'image.jpg', file.mimetype ?? 'image/jpeg');
   }
 

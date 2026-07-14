@@ -151,11 +151,16 @@ export class BatchesService {
 
     const errors: { row_index: number; reason: string }[] = [];
     let success = 0;
+    // Batch-scoped enterprise cache: same enterprise within one import
+    // should yield a single enterprise record. The cache is shared across
+    // row SAVEPOINTs because each savepoint commits into the same database
+    // transaction scope.
+    const enterpriseCache = new Map<string, string>();
 
     for (let i = 0; i < rows.length; i++) {
       const rowNum = i + 2;
       const row = rows[i];
-      const result = await this._processRow(batch.id, row);
+      const result = await this._processRow(batch.id, row, enterpriseCache);
       if (result.reason) {
         errors.push({ row_index: rowNum, reason: result.reason });
         await this.prisma.import_errors.create({
@@ -244,9 +249,10 @@ export class BatchesService {
   private async _processRow(
     batchId: string,
     row: import('./dto/batch.dto').HazardImportRow,
+    enterpriseCache: Map<string, string>,
   ): Promise<{ reason?: string }> {
     const savepoint = await this.prisma.$transaction(async (tx) => {
-      return await this._processRowInner(tx, batchId, row);
+      return await this._processRowInner(tx, batchId, row, enterpriseCache);
     });
     return savepoint ?? {};
   }
@@ -255,28 +261,39 @@ export class BatchesService {
     tx: Prisma.TransactionClient,
     batchId: string,
     row: import('./dto/batch.dto').HazardImportRow,
+    enterpriseCache: Map<string, string>,
   ): Promise<{ reason?: string } | null> {
     if (!row.enterprise_name) return { reason: '企业名称不能为空' };
     if (!row.description) return { reason: '隐患描述不能为空' };
 
-    // Find or create enterprise.
-    const enterprise = await tx.enterprises.findFirst({ where: { name: row.enterprise_name } });
-    let enterpriseId: string;
-    if (!enterprise) {
-      const created = await tx.enterprises.create({
-        data: {
-          name: row.enterprise_name,
-          credit_code: row.credit_code ?? null,
-          region: row.region ?? null,
-          address: row.address ?? null,
-          contact_person: row.contact_person ?? null,
-          industry_sector: row.industry_sector ?? null,
-          enterprise_type: row.enterprise_type ?? null,
-        },
-      });
-      enterpriseId = created.id;
-    } else {
-      enterpriseId = enterprise.id;
+    // Find or create enterprise, preferring credit_code match when available.
+    const cacheKey = row.credit_code
+      ? `credit:${row.credit_code}`
+      : `name:${row.enterprise_name}`;
+    let enterpriseId = enterpriseCache.get(cacheKey);
+    if (!enterpriseId) {
+      const enterprise = row.credit_code
+        ? await tx.enterprises.findFirst({ where: { credit_code: row.credit_code } })
+        : await tx.enterprises.findFirst({ where: { name: row.enterprise_name } });
+      if (enterprise) {
+        enterpriseId = enterprise.id;
+      } else {
+        const created = await tx.enterprises.create({
+          data: {
+            name: row.enterprise_name,
+            credit_code: row.credit_code ?? null,
+            region: row.region ?? null,
+            address: row.address ?? null,
+            contact_person: row.contact_person ?? null,
+            industry_sector: row.industry_sector ?? null,
+            enterprise_type: row.enterprise_type ?? null,
+          },
+        });
+        enterpriseId = created.id;
+      }
+      enterpriseCache.set(cacheKey, enterpriseId);
+      // Also index by name so subsequent rows without credit_code hit the cache.
+      enterpriseCache.set(`name:${row.enterprise_name}`, enterpriseId);
     }
 
     // Dedup: same enterprise + description + location within 30 days.

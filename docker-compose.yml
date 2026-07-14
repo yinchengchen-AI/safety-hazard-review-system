@@ -69,6 +69,7 @@ services:
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET=hazard-photos
+      - MINIO_SECURE=false
       - SECRET_KEY=${SECRET_KEY:-dev-secret-32chars-minimum-placeholder-x}
       - ALLOWED_ORIGINS=http://localhost:3000
       - ENV=dev
@@ -94,6 +95,7 @@ services:
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET=hazard-photos
+      - MINIO_SECURE=false
       - SECRET_KEY=${SECRET_KEY:-dev-secret-32chars-minimum-placeholder-x}
       - ENV=dev
     depends_on:
