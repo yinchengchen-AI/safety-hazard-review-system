@@ -72,6 +72,8 @@ services:
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?}
       MINIO_BUCKET: ${MINIO_BUCKET:-hazard-photos}
       SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY to a 32+ char string}
+      PHOTO_SIGNATURE_SECRET: ${PHOTO_SIGNATURE_SECRET:?set PHOTO_SIGNATURE_SECRET to a 32+ char string, distinct from SECRET_KEY}
+      ROLE: api
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost}
       PORT: "8000"
     depends_on:
@@ -95,6 +97,8 @@ services:
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?}
       MINIO_BUCKET: ${MINIO_BUCKET:-hazard-photos}
       SECRET_KEY: ${SECRET_KEY:?}
+      PHOTO_SIGNATURE_SECRET: ${PHOTO_SIGNATURE_SECRET:?}
+      ROLE: worker
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

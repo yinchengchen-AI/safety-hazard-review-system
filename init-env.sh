@@ -27,6 +27,7 @@ ensure MINIO_ROOT_USER minioadmin
 ensure MINIO_ROOT_PASSWORD "$(openssl rand -hex 16)"
 ensure MINIO_BUCKET hazard-photos
 ensure SECRET_KEY "$(openssl rand -hex 32)"
+ensure PHOTO_SIGNATURE_SECRET "$(openssl rand -hex 32)"
 ensure ALLOWED_ORIGINS http://localhost
 
 echo "[init] done. env at $ENV_FILE"
