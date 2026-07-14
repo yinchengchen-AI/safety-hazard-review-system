@@ -36,12 +36,9 @@ export class AuditLogsController {
   }
 
   @Get(':id')
-  one(@Param('id') id: string) {
-    return this.audit.list({ page: 1, pageSize: 1 }).then(async (res) => {
-      // The list query filters; we just want one by id.
-      const all = await this.audit['prisma'].audit_logs.findFirst({ where: { id } });
-      if (!all) return { detail: 'Audit log not found', status_code: 404 };
-      return all;
-    });
+  async one(@Param('id') id: string) {
+    const log = await this.audit.findById(id);
+    if (!log) return { detail: 'Audit log not found', status_code: 404 };
+    return log;
   }
 }

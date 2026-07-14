@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -28,13 +28,17 @@ export class NotificationsService {
   }
 
   async markAsRead(userId: string, notificationId: string): Promise<void> {
-    const result = await this.prisma.notifications.updateMany({
-      where: { id: notificationId, user_id: userId },
+    const n = await this.prisma.notifications.findFirst({ where: { id: notificationId } });
+    if (!n) {
+      throw new NotFoundException('通知不存在');
+    }
+    if (n.user_id !== userId) {
+      throw new ForbiddenException('无权操作该通知');
+    }
+    await this.prisma.notifications.update({
+      where: { id: notificationId },
       data: { is_read: true, read_at: new Date(), updated_at: new Date() },
     });
-    if (result.count === 0) {
-      throw new Error('Notification not found');
-    }
   }
 
   async markAllAsRead(userId: string): Promise<void> {

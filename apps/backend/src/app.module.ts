@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppConfigModule } from './config/config.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { StartupChecksModule } from './common/startup-checks.module';
@@ -23,8 +24,11 @@ import { BullmqModule } from './queues/bullmq.module';
 import { ReportProcessor } from './queues/report.processor';
 import { ReportRenderer } from './queues/report-renderer';
 
+const enableCron = process.env.ENABLE_CRON !== 'false';
+
 @Module({
   imports: [
+    ...(enableCron ? [ScheduleModule.forRoot()] : []),
     AppConfigModule,
     PrismaModule,
     StartupChecksModule,

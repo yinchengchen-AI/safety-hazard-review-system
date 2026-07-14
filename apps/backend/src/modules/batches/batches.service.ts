@@ -139,6 +139,10 @@ export class BatchesService {
 
   async import(buffer: Buffer, filename: string, userId: string): Promise<BatchImportResultDto> {
     const rows = await this.parseExcelOrCsv(buffer, filename);
+    const MAX_ROWS = 5000;
+    if (rows.length > MAX_ROWS) {
+      throw new BadRequestException(`导入行数超过限制（最多 ${MAX_ROWS} 行）`);
+    }
     const name = filename.replace(/\.[^.]+$/, '') || `import_${new Date().toISOString().slice(0, 10)}`;
 
     const batch = await this.prisma.batches.create({

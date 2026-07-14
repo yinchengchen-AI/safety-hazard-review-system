@@ -61,6 +61,10 @@ export class AuditLogsService {
     }
   }
 
+  async findById(id: string) {
+    return this.prisma.audit_logs.findFirst({ where: { id } });
+  }
+
   async list(filters: {
     userId?: string;
     action?: string;

@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  ArrayMaxSize,
   ValidateNested,
 } from 'class-validator';
 
@@ -39,7 +40,7 @@ export class HazardImportRow {
 export class BatchImportRequestDto {
   @IsString() @Length(1, 100) name!: string;
   @IsString() @Length(1, 255) filename!: string;
-  @IsArray() @ValidateNested({ each: true }) @Type(() => HazardImportRow)
+  @IsArray() @ArrayMaxSize(5000) @ValidateNested({ each: true }) @Type(() => HazardImportRow)
   rows!: HazardImportRow[];
 }
 

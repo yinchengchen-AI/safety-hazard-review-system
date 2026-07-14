@@ -98,6 +98,7 @@ services:
       - MINIO_SECURE=false
       - SECRET_KEY=${SECRET_KEY:-dev-secret-32chars-minimum-placeholder-x}
       - ENV=dev
+      - ENABLE_CRON=false
     depends_on:
       postgres:
         condition: service_healthy
