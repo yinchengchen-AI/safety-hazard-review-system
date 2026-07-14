@@ -36,7 +36,9 @@ describe('Batches (e2e)', () => {
       .post('/api/v1/auth/login')
       .send({ username: 'admin', password: 'admin123' })
       .expect(200);
-    adminToken = login.body.access_token;
+    const setCookie = login.headers['set-cookie']?.[0] ?? '';
+    const match = setCookie.match(/access_token=([^;]+)/);
+    adminToken = match ? decodeURIComponent(match[1]) : '';
   });
 
   afterAll(async () => {

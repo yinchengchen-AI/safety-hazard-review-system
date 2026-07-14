@@ -11,7 +11,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import { LoginRequest, TokenResponse } from './dto/token.dto';
+import { LoginRequest } from './dto/token.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 import { ActiveUserGuard } from '../../common/guards/active-user.guard';
@@ -29,12 +29,12 @@ export class AuthController {
   async login(
     @Body() body: LoginRequest,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<TokenResponse> {
+  ): Promise<{ message: string }> {
     const result = await this.auth.login(body.username, body.password);
-    // Set httpOnly cookie so the browser SPA does not need to manage
-    // the JWT itself. Direct API consumers can still use the body.
+    // Auth token is delivered exclusively via httpOnly SameSite=Strict cookie.
+    // The browser SPA reads it through the cookie, not the response body.
     res.setHeader('Set-Cookie', this.auth.buildAuthCookie(result.access_token, this.auth.isProd()));
-    return { access_token: result.access_token, token_type: 'bearer' };
+    return { message: 'Login successful' };
   }
 
   @Public()

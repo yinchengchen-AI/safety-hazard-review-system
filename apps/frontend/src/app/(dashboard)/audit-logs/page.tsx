@@ -1,9 +1,8 @@
 "use client"
 import { useEffect, useState } from 'react'
 import { Table, Tag, Input, message } from 'antd'
-import { useUserStore } from '@/lib/userStore'
-import { useRouter } from 'next/navigation'
 import request from '@/lib/api'
+import { getErrorMessage } from '@/lib/api'
 
 interface AuditLog {
   id: string
@@ -19,32 +18,24 @@ interface AuditLog {
 }
 
 export default function AuditLogsPage() {
-  const user = useUserStore((s) => s.user)
-  const router = useRouter()
   const [items, setItems] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(false)
   const [action, setAction] = useState('')
 
   useEffect(() => {
-    if (user && user.role !== 'admin') {
-      router.push('/')
+    const load = async () => {
+      setLoading(true)
+      try {
+        const r = (await request.get('/audit-logs', { params: { page: 1, page_size: 50, ...(action ? { action } : {}) } })) as { items: AuditLog[]; total: number }
+        setItems(r.items)
+      } catch (err: any) {
+        message.error(getErrorMessage(err) || '加载失败')
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [user, router])
-
-  const load = async () => {
-    setLoading(true)
-    try {
-      const r = (await request.get('/audit-logs', { params: { page: 1, page_size: 50, ...(action ? { action } : {}) } })) as { items: AuditLog[]; total: number }
-      setItems(r.items)
-    } catch (err: any) {
-      message.error(err?.detail || '加载失败')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { if (user?.role === 'admin') load() }, [user, action])
+    load()
+  }, [action])
 
   return (
     <div>

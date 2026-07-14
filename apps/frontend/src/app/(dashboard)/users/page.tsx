@@ -2,9 +2,8 @@
 import { useEffect, useState } from 'react'
 import { Table, Tag, Button, Space, Modal, Form, Input, Select, message } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { useRouter } from 'next/navigation'
-import { useUserStore } from '@/lib/userStore'
 import request from '@/lib/api'
+import { getErrorMessage } from '@/lib/api'
 
 interface UserRow {
   id: string
@@ -16,16 +15,10 @@ interface UserRow {
 }
 
 export default function UsersPage() {
-  const me = useUserStore((s) => s.user)
-  const router = useRouter()
   const [items, setItems] = useState<UserRow[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
-
-  useEffect(() => {
-    if (me && me.role !== 'admin') router.push('/')
-  }, [me, router])
 
   const load = async () => {
     setLoading(true)
@@ -33,14 +26,13 @@ export default function UsersPage() {
       const r = (await request.get('/users', { params: { page: 1, page_size: 50 } })) as { items: UserRow[]; total: number }
       setItems(r.items)
     } catch (err: any) {
-      message.error(err?.detail || '加载失败')
+      message.error(getErrorMessage(err) || '加载失败')
     } finally {
       setLoading(false)
     }
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { if (me?.role === 'admin') load() }, [me])
+  useEffect(() => { load() }, [])
 
   const onCreate = async () => {
     try {
@@ -51,7 +43,7 @@ export default function UsersPage() {
       form.resetFields()
       load()
     } catch (err: any) {
-      message.error(err?.detail || '创建失败')
+      message.error(getErrorMessage(err) || '创建失败')
     }
   }
 

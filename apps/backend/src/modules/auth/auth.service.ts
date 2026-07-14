@@ -52,7 +52,7 @@ export class AuthService {
 
   async login(username: string, password: string): Promise<LoginResult> {
     const user = await this.validateCredentials(username, password);
-    const access_token = await this.jwt.signAsync({ sub: user.id });
+    const access_token = await this.jwt.signAsync({ sub: user.id, role: user.role });
     return {
       access_token,
       token_type: 'bearer',
@@ -76,7 +76,7 @@ export class AuthService {
       'Path=/',
       `Max-Age=${Math.floor(this.cookieMaxAgeMs / 1000)}`,
       'HttpOnly',
-      'SameSite=Lax',
+      'SameSite=Strict',
     ];
     if (isProd) flags.push('Secure');
     return flags.join('; ');
@@ -88,7 +88,7 @@ export class AuthService {
       'Path=/',
       'Max-Age=0',
       'HttpOnly',
-      'SameSite=Lax',
+      'SameSite=Strict',
     ];
     if (isProd) flags.push('Secure');
     return flags.join('; ');

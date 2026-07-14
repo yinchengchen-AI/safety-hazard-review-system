@@ -29,7 +29,9 @@ describe('Reports (e2e)', () => {
       await prisma.users.create({ data: { username: 'admin', password_hash: hash, role: 'admin', is_active: true } });
     }
     const login = await request(app.getHttpServer()).post('/api/v1/auth/login').send({ username: 'admin', password: 'admin123' }).expect(200);
-    adminToken = login.body.access_token;
+    const setCookie = login.headers['set-cookie']?.[0] ?? '';
+    const match = setCookie.match(/access_token=([^;]+)/);
+    adminToken = match ? decodeURIComponent(match[1]) : '';
   });
 
   afterAll(async () => { await app.close(); });

@@ -22,6 +22,8 @@ import {
 } from './dto/user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ActiveUserGuard, AdminGuard } from '../../common/guards';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { users } from '@prisma/client';
 
 @Controller('api/v1/users')
 @UseGuards(JwtAuthGuard, ActiveUserGuard, AdminGuard)
@@ -52,8 +54,9 @@ export class UsersController {
   update(
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
+    @CurrentUser() currentUser: users,
   ): Promise<UserResponseDto> {
-    return this.users.update(id, dto);
+    return this.users.update(id, dto, currentUser.id);
   }
 
   @Post(':id/reset-password')

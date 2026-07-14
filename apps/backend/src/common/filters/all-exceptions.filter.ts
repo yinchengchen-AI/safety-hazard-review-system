@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 
 /**
  * Translate every error to the legacy FastAPI shape: ``{ detail: string, status_code: number }``.
- * This keeps the front-end error mapping (en → zh) working unchanged.
+ * Internal errors are never exposed to the client unless ``EXPOSE_INTERNAL_ERRORS`` is set.
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -30,8 +30,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
         else detail = exception.message;
       }
     } else if (exception instanceof Error) {
-      detail = exception.message;
       this.logger.error(`unhandled error on ${request.method} ${request.url}: ${exception.message}`, exception.stack);
+      if (process.env.EXPOSE_INTERNAL_ERRORS === 'true') {
+        status = HttpStatus.INTERNAL_SERVER_ERROR;
+        detail = exception.message;
+      }
     }
 
     response.status(status).json({

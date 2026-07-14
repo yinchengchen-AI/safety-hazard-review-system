@@ -70,9 +70,29 @@ export class UsersService {
     return toResponse(u);
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<UserResponseDto> {
+  async update(id: string, dto: UpdateUserDto, currentUserId?: string): Promise<UserResponseDto> {
     const u = await this.prisma.users.findFirst({ where: { id } });
     if (!u) throw new NotFoundException('User not found');
+
+    // Prevent admins from locking themselves out or demoting themselves.
+    if (currentUserId && id === currentUserId) {
+      if (dto.is_active === false) {
+        throw new BadRequestException('You cannot deactivate your own account');
+      }
+      if (dto.role && dto.role !== 'admin') {
+        throw new BadRequestException('You cannot remove your own admin role');
+      }
+    }
+
+    // Ensure at least one active admin remains in the system.
+    if (u.role === 'admin' && (dto.is_active === false || dto.role === 'inspector')) {
+      const remainingAdminCount = await this.prisma.users.count({
+        where: { role: 'admin', is_active: true, deleted_at: null },
+      });
+      if (remainingAdminCount <= 1) {
+        throw new BadRequestException('At least one active admin must remain');
+      }
+    }
 
     const data: Record<string, unknown> = {};
     if (dto.role !== undefined) data.role = dto.role;

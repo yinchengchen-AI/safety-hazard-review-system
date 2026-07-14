@@ -5,6 +5,7 @@ import { SafetyOutlined, UserOutlined, LockOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import { login } from '@/lib/auth'
 import { useUserStore } from '@/lib/userStore'
+import { getErrorMessage } from '@/lib/api'
 
 const { Title, Text } = Typography
 
@@ -21,7 +22,7 @@ export default function LoginPage() {
       await fetchUser()
       router.push('/')
     } catch (err: any) {
-      message.error(err?.detail || '登录失败')
+      message.error(getErrorMessage(err) || '登录失败')
     } finally {
       setLoading(false)
     }
@@ -76,11 +77,6 @@ export default function LoginPage() {
             </Button>
           </Form.Item>
         </Form>
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            默认管理员账号：admin / admin123
-          </Text>
-        </div>
       </Card>
     </div>
   )

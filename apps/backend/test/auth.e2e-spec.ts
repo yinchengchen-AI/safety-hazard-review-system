@@ -41,17 +41,19 @@ describe('Auth (e2e)', () => {
     await app.close();
   });
 
-  it('logs in and returns access_token + httpOnly cookie', async () => {
+  it('logs in and sets httpOnly SameSite=Strict cookie', async () => {
     const res = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({ username: 'admin', password: 'admin123' })
       .expect(200);
-    expect(res.body.access_token).toBeDefined();
-    adminToken = res.body.access_token;
+    expect(res.body.message).toBe('Login successful');
     const setCookie = res.headers['set-cookie']?.[0] ?? '';
     expect(setCookie).toMatch(/access_token=/);
     expect(setCookie).toMatch(/HttpOnly/i);
-    expect(setCookie).toMatch(/SameSite=Lax/i);
+    expect(setCookie).toMatch(/SameSite=Strict/i);
+    // Extract token from cookie for tests that need the Authorization header.
+    const match = setCookie.match(/access_token=([^;]+)/);
+    adminToken = match ? decodeURIComponent(match[1]) : '';
   });
 
   it('rejects wrong password with 401', async () => {
