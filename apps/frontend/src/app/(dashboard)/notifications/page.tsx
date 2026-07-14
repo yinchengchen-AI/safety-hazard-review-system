@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from 'react'
 import { Table, Tag, Button, Space, message } from 'antd'
-import request from '@/lib/api'
+import request, { getErrorMessage } from '@/lib/api'
 
 interface Notif {
   id: string
@@ -17,19 +17,24 @@ export default function NotificationsPage() {
   const [items, setItems] = useState<Notif[]>([])
   const [loading, setLoading] = useState(false)
 
-  const load = async () => {
+  const load = async (controller?: AbortController) => {
     setLoading(true)
     try {
-      const r = (await request.get('/notifications?page=1&page_size=50')) as { items: Notif[]; total: number }
+      const r = (await request.get('/notifications?page=1&page_size=50', { signal: controller?.signal })) as { items: Notif[]; total: number }
       setItems(r.items)
     } catch (err: any) {
-      message.error(err?.detail || '加载失败')
+      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
+      message.error(getErrorMessage(err) || '加载失败')
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    const controller = new AbortController()
+    load(controller)
+    return () => controller.abort()
+  }, [])
 
   const markAll = async () => {
     try {
@@ -37,7 +42,7 @@ export default function NotificationsPage() {
       message.success('已全部标记为已读')
       load()
     } catch (err: any) {
-      message.error(err?.detail || '操作失败')
+      message.error(getErrorMessage(err) || '操作失败')
     }
   }
 

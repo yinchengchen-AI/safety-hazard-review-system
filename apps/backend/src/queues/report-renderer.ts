@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { chromium } from 'playwright';
 import {
   Document,
   Packer,
@@ -12,17 +13,6 @@ import {
   TextRun,
 } from 'docx';
 
-/**
- * Render the review report as PDF (HTML -> PDF via Playwright) and
- * Word (.docx) without leaving Node. The PDF path is implemented as
- * HTML since Phase 3 ships without Playwright dependencies in
- * NestJS: a minimal html-pdf-node style placeholder that writes
- * ``<html>...the report...</html>`` to a ``.pdf`` named file is
- * not what the user wants; for now we just produce a single-page
- * ``text/html`` buffer and store the rendered HTML in the ``pdf_path``
- * field, while the .docx path is the canonical binary. Phase 5
- * will swap in Playwright for the PDF.
- */
 @Injectable()
 export class ReportRenderer {
   private readonly logger = new Logger(ReportRenderer.name);
@@ -30,9 +20,8 @@ export class ReportRenderer {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Render the PDF. Until Playwright is wired in (Phase 5), the PDF
-   * path stores a single-page HTML document so downstream tools can
-   * still consume it. The .docx path is the canonical binary.
+   * Render the PDF by converting the report HTML to a binary PDF via
+   * Playwright. The caller stores the resulting buffer in MinIO.
    */
   async renderPdf(
     task: { id: string; name: string; created_at: Date | null; users: { username: string } | null },
@@ -47,7 +36,17 @@ ${taskHazards
   .map((th, i) => `<tr><td>${i + 1}</td><td>${this.escape(th.hazards?.content ?? '')}</td><td>${this.escape(th.hazards?.location ?? '')}</td><td>${this.escape(th.hazards?.status ?? '')}</td></tr>`)
   .join('')}
 </table></body></html>`;
-    return Buffer.from(html, 'utf-8');
+
+    let browser;
+    try {
+      browser = await chromium.launch({ headless: true });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle' });
+      const pdf = await page.pdf({ format: 'A4', printBackground: true });
+      return Buffer.from(pdf);
+    } finally {
+      await browser?.close().catch((err) => this.logger.warn(`failed to close browser: ${err.message}`));
+    }
   }
 
   async renderDocx(

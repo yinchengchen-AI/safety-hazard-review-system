@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,
+  reactStrictMode: true,
   transpilePackages: ['antd', '@ant-design/icons', '@ant-design/charts', 'rc-util', 'rc-pagination', 'rc-picker'],
   output: 'standalone',
 };

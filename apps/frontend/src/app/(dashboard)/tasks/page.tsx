@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Table, Tag, Space, Button, message } from 'antd'
 import { useRouter } from 'next/navigation'
-import request from '@/lib/api'
+import request, { getErrorMessage } from '@/lib/api'
 
 interface Task {
   id: string
@@ -22,20 +22,24 @@ export default function TasksPage() {
   const [items, setItems] = useState<Task[]>([])
   const [loading, setLoading] = useState(false)
 
-  const load = async () => {
+  const load = async (controller?: AbortController) => {
     setLoading(true)
     try {
-      const r = (await request.get('/review-tasks')) as Task[]
+      const r = (await request.get('/review-tasks', { signal: controller?.signal })) as Task[]
       setItems(r)
     } catch (err: any) {
-      message.error(err?.detail || '加载失败')
+      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
+      message.error(getErrorMessage(err) || '加载失败')
     } finally {
       setLoading(false)
     }
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { load() }, [])
+  useEffect(() => {
+    const controller = new AbortController()
+    load(controller)
+    return () => controller.abort()
+  }, [])
 
   return (
     <div>

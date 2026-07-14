@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/lib/userStore'
-import request from '@/lib/api'
+import request, { getErrorMessage } from '@/lib/api'
 
 interface Overview {
   total_hazards: number
@@ -38,16 +38,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) return
+    const controller = new AbortController()
     ;(async () => {
       try {
-        const r = (await request.get('/statistics/overview')) as Overview
+        const r = (await request.get('/statistics/overview', { signal: controller.signal })) as Overview
         setData(r)
       } catch (err: any) {
-        message.error(err?.detail || '加载失败')
+        if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
+        message.error(getErrorMessage(err) || '加载失败')
       } finally {
         setDataLoading(false)
       }
     })()
+    return () => controller.abort()
   }, [user])
 
   if (isLoading || !user) {

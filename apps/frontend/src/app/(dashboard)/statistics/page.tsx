@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Card, Col, Row, Statistic, Spin, message } from 'antd'
 import { Line } from '@ant-design/charts'
-import request from '@/lib/api'
+import request, { getErrorMessage } from '@/lib/api'
 
 interface Overview {
   total_hazards: number
@@ -28,20 +28,23 @@ export default function StatisticsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    (async () => {
+    const controller = new AbortController()
+    ;(async () => {
       try {
         const [ov, tr] = await Promise.all([
-          request.get('/statistics/overview') as Promise<Overview>,
-          request.get('/statistics/trend') as Promise<TrendPoint[]>,
+          request.get('/statistics/overview', { signal: controller.signal }) as Promise<Overview>,
+          request.get('/statistics/trend', { signal: controller.signal }) as Promise<TrendPoint[]>,
         ])
         setOverview(ov)
         setTrend(tr)
       } catch (err: any) {
-        message.error(err?.detail || '加载失败')
+        if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
+        message.error(getErrorMessage(err) || '加载失败')
       } finally {
         setLoading(false)
       }
     })()
+    return () => controller.abort()
   }, [])
 
   if (loading) return <Spin size="large" />

@@ -8,9 +8,11 @@ import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter
 import { PrismaService } from '../src/prisma/prisma.service';
 import { UrlSignerService } from '../src/storage/url-signer.service';
 
-/** Build a 200x200 PNG in memory. */
+import * as path from 'path';
+
+/** Build a 200x200 PNG from the committed fixture. */
 function makePng(): Buffer {
-  return require('fs').readFileSync('/tmp/200x200.png');
+  return require('fs').readFileSync(path.join(__dirname, 'fixtures', '200x200.png'));
 }
 
 describe('Photos (e2e)', () => {

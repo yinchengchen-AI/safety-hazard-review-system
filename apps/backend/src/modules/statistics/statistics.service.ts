@@ -43,11 +43,20 @@ export class StatisticsService {
     };
   }
 
-  async trend(start?: Date, end?: Date): Promise<Array<{ stat_date: Date; total_hazards: number | null; pending_count: number | null; passed_count: number | null; failed_count: number | null; review_count: number | null; task_count: number | null }>> {
+  async trend(start?: Date, end?: Date): Promise<Array<{ period: string; total_hazards: number | null; pending_count: number | null; passed_count: number | null; failed_count: number | null; review_count: number | null; task_count: number | null }>> {
     const where: { stat_date?: { gte?: Date; lte?: Date } } = {};
     if (start) where.stat_date = { ...(where.stat_date ?? {}), gte: start };
     if (end) where.stat_date = { ...(where.stat_date ?? {}), lte: end };
-    return this.prisma.statistics_daily.findMany({ where, orderBy: { stat_date: 'asc' } });
+    const rows = await this.prisma.statistics_daily.findMany({ where, orderBy: { stat_date: 'asc' } });
+    return rows.map((r) => ({
+      period: r.stat_date ? r.stat_date.toISOString().slice(0, 10) : '',
+      total_hazards: r.total_hazards,
+      pending_count: r.pending_count,
+      passed_count: r.passed_count,
+      failed_count: r.failed_count,
+      review_count: r.review_count,
+      task_count: r.task_count,
+    }));
   }
 
   /**

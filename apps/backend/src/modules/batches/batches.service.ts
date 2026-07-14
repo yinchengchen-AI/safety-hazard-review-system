@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
+import { StorageService } from '../../storage/storage.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   BatchImportResultDto,
@@ -95,7 +96,10 @@ function parseCsvLine(line: string): string[] {
 
 @Injectable()
 export class BatchesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   async list(page: number, pageSize: number): Promise<BatchResponseDto[]> {
     const rows = await this.prisma.batches.findMany({
@@ -149,6 +153,14 @@ export class BatchesService {
       },
     });
 
+    // Persist the original file so it can be re-downloaded from the
+    // batch history page.
+    const originalKey = `batches/${batch.id}/original/${filename}`;
+    const contentType = filename.toLowerCase().endsWith('.csv')
+      ? 'text/csv'
+      : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    await this.storage.putObject(originalKey, buffer, contentType);
+
     const errors: { row_index: number; reason: string }[] = [];
     let success = 0;
     // Batch-scoped enterprise cache: same enterprise within one import
@@ -178,7 +190,7 @@ export class BatchesService {
 
     const updated = await this.prisma.batches.update({
       where: { id: batch.id },
-      data: { success_count: success, fail_count: errors.length },
+      data: { success_count: success, fail_count: errors.length, original_file_path: originalKey },
     });
 
     return {
@@ -375,10 +387,11 @@ export class BatchesService {
   async downloadFile(batchId: string): Promise<{ name: string; contentType: string; data: Buffer }> {
     const b = await this.prisma.batches.findFirst({ where: { id: batchId } });
     if (!b || !b.original_file_path) throw new NotFoundException('文件不存在');
-    // For the legacy Python backend the file is in MinIO. Phase 2 ships
-    // the JSON-based import; the original-file download endpoint is a
-    // placeholder until the binary upload pipeline lands in Phase 3.
-    throw new NotFoundException('original file download not available in Phase 2; use the JSON import path');
+    const data = await this.storage.getObject(b.original_file_path);
+    const contentType = b.file_name?.toLowerCase().endsWith('.csv')
+      ? 'text/csv'
+      : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    return { name: b.file_name ?? 'download.xlsx', contentType, data };
   }
 
   async exportTemplateBuffer(): Promise<Buffer> {

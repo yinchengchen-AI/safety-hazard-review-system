@@ -3,7 +3,7 @@ import { Button, Upload, message, Card, Space, Typography } from 'antd'
 import { InboxOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import request from '@/lib/api'
+import request, { getErrorMessage } from '@/lib/api'
 
 const { Dragger } = Upload
 
@@ -41,7 +41,7 @@ export default function BatchImportPage() {
         message.success('导入完成')
         options.onSuccess?.(r)
       } catch (err: any) {
-        message.error(err?.detail || '导入失败')
+        message.error(getErrorMessage(err) || '导入失败')
         options.onError?.(err)
       } finally {
         setUploading(false)

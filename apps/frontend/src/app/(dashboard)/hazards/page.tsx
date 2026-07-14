@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Table, Tag, Space, Button, message, Input, Select } from 'antd'
 import { useRouter } from 'next/navigation'
-import request from '@/lib/api'
+import request, { getErrorMessage } from '@/lib/api'
 
 interface Hazard {
   id: string
@@ -26,23 +26,27 @@ export default function HazardsPage() {
   const [pageSize, setPageSize] = useState(20)
   const [status, setStatus] = useState<string | undefined>()
 
-  const load = async () => {
-    setLoading(true)
-    try {
-      const r = (await request.get('/hazards', {
-        params: { page, page_size: pageSize, ...(status ? { status } : {}) },
-      })) as { items: Hazard[]; total: number }
-      setItems(r.items)
-      setTotal(r.total)
-    } catch (err: any) {
-      message.error(err?.detail || '加载失败')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    const controller = new AbortController()
+    const load = async () => {
+      setLoading(true)
+      try {
+        const r = (await request.get('/hazards', {
+          params: { page, page_size: pageSize, ...(status ? { status } : {}) },
+          signal: controller.signal,
+        })) as { items: Hazard[]; total: number }
+        setItems(r.items)
+        setTotal(r.total)
+      } catch (err: any) {
+        if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
+        message.error(getErrorMessage(err) || '加载失败')
+      } finally {
+        setLoading(false)
+      }
     }
-  }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { load() }, [page, pageSize, status])
+    load()
+    return () => controller.abort()
+  }, [page, pageSize, status])
 
   return (
     <div>

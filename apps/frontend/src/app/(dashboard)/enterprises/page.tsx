@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Table, Button, Space, message, Modal, Form, Input, Select } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { useUserStore } from '@/lib/userStore'
-import request from '@/lib/api'
+import request, { getErrorMessage } from '@/lib/api'
 
 interface Enterprise {
   id: string
@@ -21,20 +21,24 @@ export default function EnterprisesPage() {
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
 
-  const load = async () => {
+  const load = async (controller?: AbortController) => {
     setLoading(true)
     try {
-      const r = (await request.get('/enterprises', { params: { page: 1, page_size: 50 } })) as { items: Enterprise[]; total: number }
+      const r = (await request.get('/enterprises', { params: { page: 1, page_size: 50 }, signal: controller?.signal })) as { items: Enterprise[]; total: number }
       setItems(r.items)
     } catch (err: any) {
-      message.error(err?.detail || '加载失败')
+      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
+      message.error(getErrorMessage(err) || '加载失败')
     } finally {
       setLoading(false)
     }
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { load() }, [])
+  useEffect(() => {
+    const controller = new AbortController()
+    load(controller)
+    return () => controller.abort()
+  }, [])
 
   const onCreate = async () => {
     try {
@@ -45,7 +49,7 @@ export default function EnterprisesPage() {
       form.resetFields()
       load()
     } catch (err: any) {
-      message.error(err?.detail || '创建失败')
+      message.error(getErrorMessage(err) || '创建失败')
     }
   }
 
