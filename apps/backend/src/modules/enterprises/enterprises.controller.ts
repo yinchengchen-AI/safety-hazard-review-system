@@ -24,6 +24,8 @@ import {
 } from './dto/enterprise.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ActiveUserGuard, AdminGuard } from '../../common/guards';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { users } from '@prisma/client';
 
 @Controller('api/v1/enterprises')
 @UseGuards(JwtAuthGuard, ActiveUserGuard, AdminGuard)
@@ -32,8 +34,11 @@ export class EnterprisesController {
 
   @Post()
   @HttpCode(201)
-  create(@Body() dto: CreateEnterpriseDto): Promise<EnterpriseResponseDto> {
-    return this.enterprises.create(dto);
+  create(
+    @Body() dto: CreateEnterpriseDto,
+    @CurrentUser() user: users,
+  ): Promise<EnterpriseResponseDto> {
+    return this.enterprises.create(dto, user.id);
   }
 
   @Get()
@@ -72,10 +77,7 @@ export class EnterprisesController {
   }
 
   @Put(':id')
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateEnterpriseDto,
-  ): Promise<EnterpriseResponseDto> {
+  update(@Param('id') id: string, @Body() dto: UpdateEnterpriseDto): Promise<EnterpriseResponseDto> {
     return this.enterprises.update(id, dto);
   }
 

@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppConfigModule } from './config/config.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { StartupChecksModule } from './common/startup-checks.module';
 import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
+import { AuditContextInterceptor } from './common/interceptors/audit-context.interceptor';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { HealthModule } from './modules/health/health.module';
@@ -24,7 +26,10 @@ import { BullmqModule } from './queues/bullmq.module';
 import { ReportProcessor } from './queues/report.processor';
 import { ReportRenderer } from './queues/report-renderer';
 
-const enableCron = process.env.ENABLE_CRON !== 'false';
+const role = process.env.ROLE ?? 'api';
+const enableCron =
+  process.env.ENABLE_CRON === 'true' ||
+  (process.env.ENABLE_CRON !== 'false' && role === 'worker');
 
 @Module({
   imports: [
@@ -54,6 +59,8 @@ const enableCron = process.env.ENABLE_CRON !== 'false';
     ReportRenderer,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: RequestLoggingInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: AuditContextInterceptor },
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],
 })
 export class AppModule {}

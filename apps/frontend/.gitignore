@@ -11,3 +11,4 @@ frontend/.next/
 frontend/.next
 frontend/src/pages/.omc/
 frontend/.next/
+tsconfig.tsbuildinfo

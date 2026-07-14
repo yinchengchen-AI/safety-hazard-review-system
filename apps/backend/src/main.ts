@@ -6,7 +6,6 @@ import { json, urlencoded } from 'express';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const cookieParser = require('cookie-parser');
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
 
 async function bootstrap(): Promise<void> {
@@ -18,7 +17,6 @@ async function bootstrap(): Promise<void> {
   app.use(json({ limit: '1mb' }));
   app.use(urlencoded({ limit: '1mb', extended: true }));
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: false }));
-  app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalGuards(new JwtAuthGuard(app.get(Reflector)));
   app.enableCors({
     origin: config.get<string>('ALLOWED_ORIGINS', 'http://localhost:3000')

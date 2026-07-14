@@ -8,7 +8,9 @@ import {
   UpdateHazardDto,
 } from './dto/hazard.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ActiveUserGuard } from '../../common/guards';
+import { ActiveUserGuard, AdminGuard } from '../../common/guards';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { users } from '@prisma/client';
 
 @Controller('api/v1/hazards')
 @UseGuards(JwtAuthGuard, ActiveUserGuard)
@@ -31,10 +33,12 @@ export class HazardsController {
   }
 
   @Put(':id')
+  @UseGuards(AdminGuard)
   update(
     @Param('id') id: string,
     @Body() dto: UpdateHazardDto,
+    @CurrentUser() user: users,
   ): Promise<HazardResponseDto> {
-    return this.hazards.update(id, dto);
+    return this.hazards.update(id, dto, user.id);
   }
 }

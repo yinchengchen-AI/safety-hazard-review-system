@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { CreateEnterpriseDto, EnterpriseImportRequestDto, EnterpriseImportResultDto, EnterpriseListResponseDto, EnterpriseResponseDto, UpdateEnterpriseDto } from './dto/enterprise.dto';
 
 function toResponse(e: {
@@ -33,22 +34,32 @@ function toResponse(e: {
 
 @Injectable()
 export class EnterprisesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditLogsService,
+  ) {}
 
-  async create(dto: CreateEnterpriseDto): Promise<EnterpriseResponseDto> {
-    return toResponse(
-      await this.prisma.enterprises.create({ data: { ...dto } }),
-    );
+  async create(dto: CreateEnterpriseDto, currentUserId?: string): Promise<EnterpriseResponseDto> {
+    const created = await this.prisma.enterprises.create({ data: { ...dto } });
+    await this.audit.record({
+      userId: currentUserId ?? null,
+      action: 'enterprise.create',
+      targetType: 'enterprise',
+      targetId: created.id,
+      detail: { name: created.name, credit_code: created.credit_code },
+    });
+    return toResponse(created);
   }
 
   async list(page: number, pageSize: number, keyword: string): Promise<EnterpriseListResponseDto> {
-    const where: Prisma.enterprisesWhereInput = keyword
+    const kw = keyword.trim();
+    const where: Prisma.enterprisesWhereInput = kw
       ? {
           OR: [
-            { name: { contains: keyword, mode: 'insensitive' } },
-            { credit_code: { contains: keyword, mode: 'insensitive' } },
-            { region: { contains: keyword, mode: 'insensitive' } },
-            { contact_person: { contains: keyword, mode: 'insensitive' } },
+            { name: { contains: kw, mode: 'insensitive' } },
+            { credit_code: { contains: kw, mode: 'insensitive' } },
+            { region: { contains: kw, mode: 'insensitive' } },
+            { contact_person: { contains: kw, mode: 'insensitive' } },
           ],
         }
       : {};
@@ -73,17 +84,23 @@ export class EnterprisesService {
   async update(id: string, dto: UpdateEnterpriseDto): Promise<EnterpriseResponseDto> {
     const e = await this.prisma.enterprises.findFirst({ where: { id } });
     if (!e) throw new NotFoundException('Enterprise not found');
-    return toResponse(
-      await this.prisma.enterprises.update({ where: { id: e.id }, data: { ...dto } }),
-    );
+    const updated = await this.prisma.enterprises.update({ where: { id: e.id }, data: { ...dto } });
+    return toResponse(updated);
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, currentUserId?: string): Promise<void> {
     const e = await this.prisma.enterprises.findFirst({ where: { id } });
     if (!e) throw new NotFoundException('Enterprise not found');
     await this.prisma.enterprises.update({
       where: { id: e.id },
       data: { deleted_at: new Date() },
+    });
+    await this.audit.record({
+      userId: currentUserId ?? null,
+      action: 'enterprise.delete',
+      targetType: 'enterprise',
+      targetId: e.id,
+      detail: { name: e.name },
     });
   }
 
@@ -138,16 +155,17 @@ export class EnterprisesService {
       const row = dto.rows[i];
       const rowNum = i + 2;
       try {
-        if (!row.name) throw new Error('企业名称不能为空');
-        const dup = await this.prisma.enterprises.findFirst({ where: { name: row.name } });
-        if (dup) throw new Error(`企业名称已存在: ${row.name}`);
+        const name = row.name?.trim();
+        if (!name) throw new Error('企业名称不能为空');
+        const dup = await this.prisma.enterprises.findFirst({ where: { name } });
+        if (dup) throw new Error(`企业名称已存在: ${name}`);
         if (row.credit_code) {
           const dupCode = await this.prisma.enterprises.findFirst({
             where: { credit_code: row.credit_code },
           });
           if (dupCode) throw new Error(`统一社会信用代码已存在: ${row.credit_code}`);
         }
-        await this.prisma.enterprises.create({ data: { ...row } });
+        await this.prisma.enterprises.create({ data: { ...row, name } });
         success += 1;
       } catch (e) {
         errors.push(`第${rowNum}行: ${(e as Error).message}`);
@@ -156,9 +174,6 @@ export class EnterprisesService {
     return { success_count: success, error_count: errors.length, errors };
   }
 
-  /** Excel export — produces an .xlsx using exceljs. The front-end
-   *  also has its own download helper; this endpoint lets server-side
-   *  scripts and curl-based audits pull the same data. */
   async exportToBuffer(): Promise<Buffer> {
     const ExcelJS = await import('exceljs');
     const wb = new ExcelJS.Workbook();
@@ -190,8 +205,6 @@ export class EnterprisesService {
     return Buffer.from(buf as ArrayBuffer);
   }
 
-  /** Excel template used by the front-end to give users a starting
-   *  point. */
   async exportTemplateBuffer(): Promise<Buffer> {
     const ExcelJS = await import('exceljs');
     const wb = new ExcelJS.Workbook();

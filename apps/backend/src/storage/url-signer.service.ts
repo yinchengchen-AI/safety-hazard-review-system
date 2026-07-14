@@ -1,17 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { UUID } from 'crypto';
 
-const DELIMITER = '|';  // illegal in UUIDs and in our `size` enum
+const DELIMITER = '|';
 
 @Injectable()
 export class UrlSignerService {
+  private readonly logger = new Logger(UrlSignerService.name);
   private readonly secret: string;
   private readonly ttl: number;
 
   constructor(config: ConfigService) {
-    this.secret = config.get<string>('PHOTO_SIGNATURE_SECRET') ?? config.get<string>('SECRET_KEY') ?? '';
+    const explicit = config.get<string>('PHOTO_SIGNATURE_SECRET');
+    const jwt = config.get<string>('SECRET_KEY') ?? '';
+    if (explicit) {
+      this.secret = explicit;
+    } else {
+      this.logger.warn(
+        'PHOTO_SIGNATURE_SECRET is not configured; falling back to SECRET_KEY. ' +
+          'This is a dev-only fallback: a JWT secret rotation will invalidate every signed photo URL.',
+      );
+      this.secret = jwt;
+    }
     this.ttl = config.get<number>('PHOTO_SIGNATURE_TTL', 900);
   }
 
@@ -30,8 +40,6 @@ export class UrlSignerService {
   }
 
   buildLegacyTokenUrl(photoId: string, size: string, token: string): string {
-    // Kept for the deprecation window where clients still hit
-    // ?token=<jwt>; the route rejects disabled/deleted users.
     return `/api/v1/photos/${photoId}/image?size=${size}&token=${token}`;
   }
 

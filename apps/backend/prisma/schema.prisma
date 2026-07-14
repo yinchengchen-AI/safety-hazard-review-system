@@ -61,6 +61,12 @@ model enterprises {
   hazards            hazards[]
   statistics_daily   statistics_daily[]
   statistics_monthly statistics_monthly[]
+
+  // Partial unique on credit_code: NULL and soft-deleted rows are
+  // excluded so historical / imported-without-code rows are not
+  // forced into a conflict. See migration
+  // 20260714070000_enterprise_credit_code_unique.
+  @@unique([credit_code], name: "uix_enterprises_credit_code", map: "uix_enterprises_credit_code")
 }
 
 model hazard_status_history {

@@ -4,12 +4,33 @@ import sharp from 'sharp';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../../storage/storage.service';
 import { UrlSignerService } from '../../storage/url-signer.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { PhotoBindRequestDto, PhotoUploadResponseDto } from './dto/photo.dto';
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png']);
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MIN_DIM = 100;
 const MAX_DIM = 8192;
+
+// Magic-byte fingerprints for the formats we accept. sharp.metadata()
+// accepts a lot of formats we don't want; checking the first bytes
+// narrows the input to the actual allowed set.
+const MAGIC = [
+  { mime: 'image/jpeg', bytes: [0xff, 0xd8, 0xff] },
+  { mime: 'image/png', bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
+];
+
+function detectMimeFromMagic(buf: Buffer): string | null {
+  for (const m of MAGIC) {
+    if (buf.length < m.bytes.length) continue;
+    let ok = true;
+    for (let i = 0; i < m.bytes.length; i++) {
+      if (buf[i] !== m.bytes[i]) { ok = false; break; }
+    }
+    if (ok) return m.mime;
+  }
+  return null;
+}
 
 @Injectable()
 export class PhotosService {
@@ -17,15 +38,27 @@ export class PhotosService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly signer: UrlSignerService,
+    private readonly audit: AuditLogsService,
   ) {}
 
   async upload(
     buffer: Buffer,
     filename: string,
     mimeType: string,
+    currentUserId?: string,
   ): Promise<PhotoUploadResponseDto> {
     if (buffer.length > MAX_FILE_SIZE) {
       throw new BadRequestException('File size exceeds 10MB limit');
+    }
+    // 1. Magic-byte check first — the client-supplied Content-Type
+    //    is informational. We refuse anything that doesn't start
+    //    with JPEG or PNG bytes regardless of the header.
+    const detected = detectMimeFromMagic(buffer);
+    if (!detected) {
+      throw new BadRequestException('Invalid file type: magic bytes do not match a known image format');
+    }
+    if (!ALLOWED_MIME.has(detected)) {
+      throw new BadRequestException(`Invalid file type: ${detected}`);
     }
     if (!ALLOWED_MIME.has(mimeType)) {
       throw new BadRequestException(`Invalid file type: ${mimeType}`);
@@ -49,11 +82,19 @@ export class PhotosService {
         original_path: originalKey,
         thumbnail_path: thumbnailKey,
         file_size: buffer.length,
-        mime_type: mimeType,
+        mime_type: detected,
         width: w,
         height: h,
         temp_token: tempToken,
       },
+    });
+
+    await this.audit.record({
+      userId: currentUserId ?? null,
+      action: 'photo.upload',
+      targetType: 'photo',
+      targetId: photo.id,
+      detail: { bytes: buffer.length, width: w, height: h },
     });
 
     return {
@@ -66,22 +107,22 @@ export class PhotosService {
     };
   }
 
-  async bind(tempToken: string, dto: PhotoBindRequestDto): Promise<void> {
+  async bind(tempToken: string, dto: PhotoBindRequestDto, currentUserId?: string): Promise<void> {
     const photo = await this.prisma.photos.findFirst({ where: { temp_token: tempToken } });
     if (!photo) throw new NotFoundException('Photo not found');
     await this.prisma.photos.update({
       where: { id: photo.id },
       data: { task_hazard_id: dto.task_hazard_id, temp_token: null },
     });
+    await this.audit.record({
+      userId: currentUserId ?? null,
+      action: 'photo.bind',
+      targetType: 'photo',
+      targetId: photo.id,
+      detail: { task_hazard_id: dto.task_hazard_id },
+    });
   }
 
-  /**
-   * Resolve the photo on a (size, sig, exp) request. Returns the bytes
-   * + content type, or null if the request is unauthenticated.
-   * ``legacyUsed`` is true when the caller presented a JWT (the
-   * legacy ?token= path); the controller sets a deprecation header
-   * in that case.
-   */
   async serveSigned(
     photoId: string,
     size: 'original' | 'thumbnail',
@@ -97,9 +138,6 @@ export class PhotosService {
     size: 'original' | 'thumbnail',
     userId: string,
   ): Promise<{ body: Buffer; contentType: string; legacy: boolean } | null> {
-    // legacyUsed = true; the route already validated the JWT and
-    // confirmed is_active, but we re-check here to avoid trusting
-    // a route that forgot.
     const user = await this.prisma.users.findFirst({
       where: { id: userId, is_active: true },
     });
@@ -115,14 +153,12 @@ export class PhotosService {
     const photo = await this.prisma.photos.findFirst({ where: { id: photoId } });
     if (!photo) return null;
     if (photo.task_hazard_id !== null) {
-      // Bound photo: the task must still be active and not cancelled.
       const th = await this.prisma.task_hazards.findFirst({
         where: { id: photo.task_hazard_id },
         include: { review_tasks: true },
       });
       if (!th || !th.review_tasks || th.review_tasks.status === 'cancelled') return null;
     } else if (photo.temp_token === null) {
-      // Bound once but the binding is gone? Refuse.
       return null;
     }
     const key = size === 'original' ? photo.original_path : photo.thumbnail_path;
@@ -134,7 +170,7 @@ export class PhotosService {
     }
   }
 
-  async delete(photoId: string): Promise<void> {
+  async delete(photoId: string, currentUserId?: string): Promise<void> {
     const photo = await this.prisma.photos.findFirst({ where: { id: photoId } });
     if (!photo) throw new NotFoundException('Photo not found');
     if (photo.task_hazard_id !== null) {
@@ -151,6 +187,12 @@ export class PhotosService {
     await this.prisma.photos.update({
       where: { id: photo.id },
       data: { deleted_at: new Date() },
+    });
+    await this.audit.record({
+      userId: currentUserId ?? null,
+      action: 'photo.delete',
+      targetType: 'photo',
+      targetId: photo.id,
     });
   }
 }

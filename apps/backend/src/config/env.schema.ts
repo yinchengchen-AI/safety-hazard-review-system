@@ -16,11 +16,15 @@ export const envSchema = z
       .default('false')
       .transform((v) => v === 'true'),
     SECRET_KEY: z.string().min(1),
-    PHOTO_SIGNATURE_SECRET: z.string().min(1).optional(),
+    // PHOTO_SIGNATURE_SECRET must be set to a value distinct from
+    // SECRET_KEY so a JWT-secret rotation does not invalidate
+    // every signed photo URL. Required in production / staging.
+    PHOTO_SIGNATURE_SECRET: z.string().optional(),
     ENABLE_CRON: z
       .union([z.literal('true'), z.literal('false')])
-      .default('true')
+      .default('false')
       .transform((v) => v === 'true'),
+    ROLE: z.string().default('api'),
     ALGORITHM: z.string().default('HS256'),
     ACCESS_TOKEN_EXPIRE_MINUTES: z
       .string()
@@ -54,6 +58,19 @@ export const envSchema = z
           code: z.ZodIssueCode.custom,
           message: `SECRET_KEY must be at least 32 characters in ${data.ENV}`,
           path: ['SECRET_KEY'],
+        });
+      }
+      if (!data.PHOTO_SIGNATURE_SECRET) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `PHOTO_SIGNATURE_SECRET must be set in ${data.ENV} so photo URLs are not tied to the JWT secret.`,
+          path: ['PHOTO_SIGNATURE_SECRET'],
+        });
+      } else if (data.PHOTO_SIGNATURE_SECRET === data.SECRET_KEY) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `PHOTO_SIGNATURE_SECRET must differ from SECRET_KEY in ${data.ENV}.`,
+          path: ['PHOTO_SIGNATURE_SECRET'],
         });
       }
     }

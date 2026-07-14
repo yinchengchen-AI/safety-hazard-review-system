@@ -6,6 +6,7 @@ import { REPORT_QUEUE } from './bullmq.module';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { ReportRenderer } from './report-renderer';
+import { NotificationsService } from '../modules/notifications/notifications.service';
 
 @Processor(REPORT_QUEUE, { concurrency: 1 })
 export class ReportProcessor extends WorkerHost {
@@ -15,16 +16,28 @@ export class ReportProcessor extends WorkerHost {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly renderer: ReportRenderer,
+    private readonly notifications: NotificationsService,
   ) {
     super();
   }
 
-  async process(job: Job<{ taskId: string }>): Promise<void> {
-    const { taskId } = job.data;
-    this.logger.log(`generating report for task ${taskId}`);
-    const report = await this.prisma.reports.findFirst({ where: { task_id: taskId } });
+  async process(job: Job<{ taskId: string; reportId: string }>): Promise<void> {
+    const { taskId, reportId } = job.data;
+    if (job.attemptsMade > 0) {
+      // Defensive: a retry should only run if the report is still
+      // marked failed (a successful first attempt would have moved
+      // it to completed; skip in that case to avoid double work).
+      const current = await this.prisma.reports.findFirst({ where: { id: reportId } });
+      if (!current || current.status === 'completed') {
+        this.logger.log(`job ${job.id} already completed; skipping retry`);
+        return;
+      }
+    }
+
+    this.logger.log(`generating report for task ${taskId} (reportId=${reportId})`);
+    const report = await this.prisma.reports.findFirst({ where: { id: reportId } });
     if (!report) {
-      this.logger.warn(`report row missing for task ${taskId}; skipping`);
+      this.logger.warn(`report row ${reportId} missing; skipping`);
       return;
     }
     await this.prisma.reports.update({
@@ -42,13 +55,21 @@ export class ReportProcessor extends WorkerHost {
         include: { hazards: { include: { enterprises: true, batches: true } } },
       });
 
-      const pdf = await this.renderer.renderPdf(t, taskHazards);
-      const docx = await this.renderer.renderDocx(t, taskHazards);
+      const [pdf, docx] = await Promise.all([
+        this.renderer.renderPdf(t, taskHazards),
+        this.renderer.renderDocx(t, taskHazards),
+      ]);
 
       const pdfKey = `reports/${taskId}/${randomUUID()}.pdf`;
       const docxKey = `reports/${taskId}/${randomUUID()}.docx`;
-      await this.storage.putObject(pdfKey, pdf, 'application/pdf');
-      await this.storage.putObject(docxKey, docx, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      await Promise.all([
+        this.storage.putObject(pdfKey, pdf, 'application/pdf'),
+        this.storage.putObject(
+          docxKey,
+          docx,
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ),
+      ]);
 
       await this.prisma.reports.update({
         where: { id: report.id },
@@ -61,6 +82,19 @@ export class ReportProcessor extends WorkerHost {
         },
       });
       this.logger.log(`report ${report.id} completed`);
+
+      try {
+        const adminIds = await this.notifications.findAdminUserIds();
+        const recipients = Array.from(new Set([t.creator_id, ...adminIds].filter(Boolean)));
+        await this.notifications.notify(
+          'report_completed',
+          `复核任务「${t.name}」的报告已生成`,
+          recipients,
+          { related: { type: 'report', id: report.id }, force: true },
+        );
+      } catch (err) {
+        this.logger.warn(`report_completed notify failed: ${(err as Error).message}`);
+      }
     } catch (err) {
       const message = (err as Error).message;
       this.logger.error(`report ${report.id} failed: ${message}`);
@@ -68,9 +102,7 @@ export class ReportProcessor extends WorkerHost {
         where: { id: report.id },
         data: { status: 'failed', error_message: message },
       });
-      // Re-throw so BullMQ can retry per its backoff policy.
       throw err;
     }
   }
-
 }

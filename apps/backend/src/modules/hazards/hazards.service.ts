@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import {
   EDITABLE_FIELDS,
   HazardEditableFieldsDto,
@@ -14,9 +15,8 @@ import {
   UpdateHazardDto,
 } from './dto/hazard.dto';
 
-// HazardJoined = hazards row + enterprises + batches joins (lazy-typed
-// to avoid the long Prisma generic in every helper signature).
-type HazardJoined = any
+type HazardJoined = any;
+
 function toResponse(h: HazardJoined): HazardResponseDto {
   return {
     id: h.id,
@@ -56,7 +56,10 @@ function toResponse(h: HazardJoined): HazardResponseDto {
 
 @Injectable()
 export class HazardsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditLogsService,
+  ) {}
 
   async list(q: HazardListQueryDto): Promise<HazardListResponseDto> {
     const page = q.page ?? 1;
@@ -106,7 +109,17 @@ export class HazardsService {
     return out as HazardEditableFieldsDto;
   }
 
-  async update(id: string, dto: UpdateHazardDto): Promise<HazardResponseDto> {
+  /**
+   * Update a hazard's editable fields. Two safety rules:
+   *  1. Hazards already locked in a pending review task can't be
+   *     edited — the reviewer owns the decision.
+   *  2. Each editable field can only be filled once (mirrors the
+   *     legacy "only-NULL fields are editable" behaviour). A
+   *     second write of the same field is rejected. ``null`` is
+   *     treated as "leave unchanged" so clients can omit fields
+   *     without explicitly sending null.
+   */
+  async update(id: string, dto: UpdateHazardDto, currentUserId?: string): Promise<HazardResponseDto> {
     const h = await this.prisma.hazards.findFirst({ where: { id } });
     if (!h) throw new NotFoundException('Hazard not found');
 
@@ -114,21 +127,29 @@ export class HazardsService {
       throw new BadRequestException('该隐患已被分配到复核任务中，任务完成或取消前不可编辑');
     }
 
-    // Reject updates to fields that are already set (only-NULL fields are
-    // editable, mirroring the Python backend's behaviour).
+    const changes: string[] = [];
     for (const [field, newValue] of Object.entries(dto)) {
       if (newValue === undefined) continue;
       const current = (h as Record<string, unknown>)[field];
       if (current !== null && current !== undefined) {
         throw new BadRequestException(`字段 '${field}' 已有值，不可修改`);
       }
+      changes.push(field);
     }
-    return toResponse(
-      await this.prisma.hazards.update({
-        where: { id: h.id },
-        data: dto,
-        include: { enterprises: true, batches: true },
-      }),
-    );
+    const updated = await this.prisma.hazards.update({
+      where: { id: h.id },
+      data: dto,
+      include: { enterprises: true, batches: true },
+    });
+    if (changes.length > 0) {
+      await this.audit.record({
+        userId: currentUserId ?? null,
+        action: 'hazard.update',
+        targetType: 'hazard',
+        targetId: h.id,
+        detail: { fields: changes },
+      });
+    }
+    return toResponse(updated);
   }
 }

@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDateString,
   IsIn,
   IsOptional,
   IsString,
@@ -42,7 +43,6 @@ export class HazardResponseDto {
   review_count!: number;
   created_at!: Date | null;
   updated_at!: Date | null;
-  // Joined fields populated by the service layer.
   enterprise_name?: string | null;
   enterprise_credit_code?: string | null;
   enterprise_region?: string | null;
@@ -86,16 +86,16 @@ const EDITABLE_FIELDS: (keyof HazardEditableFieldsDto)[] = [
 ];
 
 export class UpdateHazardDto {
-  @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() @Length(0, 2000) description?: string;
   @IsOptional() @IsString() @Length(1, 255) location?: string;
   @IsOptional() @IsString() @Length(1, 50) category?: string;
   @IsOptional() @IsString() @Length(1, 50) inspection_method?: string;
   @IsOptional() @IsString() @Length(1, 100) inspector?: string;
-  @IsOptional() inspection_date?: Date;
+  @IsOptional() @IsDateString() inspection_date?: string;
   @IsOptional() @IsString() @Length(1, 500) judgment_basis?: string;
   @IsOptional() @IsString() violation_clause?: string;
   @IsOptional() @IsIn(['已整改', '未整改', '整改中']) is_rectified?: string;
-  @IsOptional() rectification_date?: Date;
+  @IsOptional() @IsDateString() rectification_date?: string;
   @IsOptional() @IsString() @Length(1, 200) rectification_responsible?: string;
   @IsOptional() @IsString() rectification_measures?: string;
   @IsOptional() @IsString() report_remarks?: string;

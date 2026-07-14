@@ -64,7 +64,7 @@
 │   │   │       ├── audit-logs/          # 审计日志查询
 │   │   │       └── health/              # /health 探活（prisma $queryRaw SELECT 1）
 │   │   ├── prisma/
-│   │   │   ├── schema.prisma            # 数据库 schema（13 张表）
+│   │   │   ├── schema.prisma            # 数据库 schema（14 张表：8 张带 deleted_at，6 张为日志/统计/历史）
 │   │   │   ├── migrations/0_init        # baseline 迁移
 │   │   │   └── seed.ts                  # 初始管理员种子
 │   │   ├── test/                        # Jest E2E（每个模块一个 *.e2e-spec.ts）
@@ -128,13 +128,13 @@
 - 生产部署用 `migrate.sh`（`npx prisma migrate deploy`）；baseline 迁移 `0_init` 已在切换时通过 `prisma migrate resolve --applied` 标 baseline。
 
 ### 认证与授权
-- **JWT in httpOnly cookie**（`SameSite=Lax`，生产 `Secure`），密码 bcrypt cost=12，登录成功后透明 rehash。
+- **JWT in httpOnly cookie**（`SameSite=Strict`，生产 `Secure`），密码 bcrypt cost=12，登录成功后透明 rehash。
 - `JwtAuthGuard` 全局守卫，从 cookie 或 `Authorization: Bearer` 提取 token。
 - 角色守卫在 controller 上以 `@Roles('admin')` + 局部 `RolesGuard` 实现。
 - 启动期 `assert_safe_for_runtime`：staging/production 阻断默认 `admin/admin123` 与弱 `SECRET_KEY`（< 32 字符或占位串），dev 仅打印 WARNING。
 
 ### 软删除
-- 13 张表均带 `deleted_at`（nullable）。Service 查询统一过滤 `where: { deleted_at: null }`；删除走 `update({ deleted_at: new Date() })`。
+- 14 张表里 8 张带 `deleted_at`（`users` / `enterprises` / `batches` / `hazards` / `review_tasks` / `task_hazards` / `notifications` / `photos`），其余 6 张（`audit_logs` / `hazard_status_history` / `import_errors` / `reports` / `statistics_daily` / `statistics_monthly`）没有该列，写入即永久。Service 查询统一过滤 `where: { deleted_at: null }`；软删走 `update({ deleted_at: new Date() })`，由 `prisma/soft-delete.middleware.ts` 仅对只读动作自动注入。
 
 ### 后台任务（BullMQ）
 - 队列在 `src/queues/bullmq.module.ts` 注册：`report_queue`、`notification_cleanup_queue`、`statistics_queue`。
@@ -354,7 +354,7 @@ sudo ./migrate.sh
 ## 安全注意事项
 
 - **启动期硬阻断**：`apps/backend/src/common/startup-checks.ts` 在 `staging/production` 阻断 `admin/admin123` 仍存在与 `SECRET_KEY` 弱；dev 仅 `console.warn`。
-- **JWT cookie**：httpOnly + `SameSite=Lax`（prod 加 `Secure`）。前端不再把 JWT 写 localStorage；老代码残留请改用 `/api/v1/auth/me` + cookie。
+- **JWT cookie**：httpOnly + `SameSite=Strict`（prod 加 `Secure`）。前端不再把 JWT 写 localStorage；老代码残留请改用 `/api/v1/auth/me` + cookie。
 - **图片访问**：HMAC-SHA256 签名短链（`?sig=&exp=`），TTL 默认 15 分钟，TTL 内浏览器缓存可复用。`?token=<jwt>` 仅作为 1 个发布周期的兼容回退，响应头 `X-Photo-Auth-Deprecated: true`。
 - **登录限流**：Throttler（Redis 共享），`5/minute/IP`，生产建议升级到 `IP+username` 双键。
 - **文件上传**：`PhotosController` 限制 10MB，按文件头魔数校验 MIME（JPEG/PNG/WebP/GIF）。

@@ -70,7 +70,7 @@ describe('ReviewTasks.complete (e2e) — regression: report must be enqueued', (
       .post(`/api/v1/review-tasks/${t.id}/hazards/${h.id}/review`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ conclusion: 'ok', status_in_task: 'passed' })
-      .expect(201);
+      .expect(200);
 
     // No report row yet.
     const before = await prisma.reports.findFirst({ where: { task_id: t.id } });
@@ -80,7 +80,7 @@ describe('ReviewTasks.complete (e2e) — regression: report must be enqueued', (
     await request(app.getHttpServer())
       .post(`/api/v1/review-tasks/${t.id}/complete`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .expect(201);
+      .expect(200);
 
     // Report row should now exist (proves createAndEnqueue ran).
     const after = await prisma.reports.findFirst({ where: { task_id: t.id } });

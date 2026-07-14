@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashPassword } from '../../common/security.util';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { CreateUserDto, UpdateUserDto, UserResponseDto, UserListResponseDto } from './dto/user.dto';
 
 function toResponse(u: {
@@ -29,7 +30,10 @@ function toResponse(u: {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditLogsService,
+  ) {}
 
   async create(dto: CreateUserDto): Promise<UserResponseDto> {
     const existing = await this.prisma.users.findFirst({ where: { username: dto.username } });
@@ -38,19 +42,25 @@ export class UsersService {
     }
     const created = await this.prisma.users.create({
       data: {
-        username: dto.username,
+        username: dto.username.trim(),
         password_hash: hashPassword(dto.password),
         role: dto.role,
         full_name: dto.full_name ?? null,
         phone: dto.phone ?? null,
       },
     });
+    await this.audit.record({
+      action: 'user.create',
+      targetType: 'user',
+      targetId: created.id,
+      detail: { username: created.username, role: created.role },
+    });
     return toResponse(created);
   }
 
   async list(page: number, pageSize: number, keyword: string): Promise<UserListResponseDto> {
     const where = keyword
-      ? { username: { contains: keyword, mode: 'insensitive' as const } }
+      ? { username: { contains: keyword.trim(), mode: 'insensitive' as const } }
       : {};
     const [items, total] = await Promise.all([
       this.prisma.users.findMany({
@@ -74,7 +84,6 @@ export class UsersService {
     const u = await this.prisma.users.findFirst({ where: { id } });
     if (!u) throw new NotFoundException('User not found');
 
-    // Prevent admins from locking themselves out or demoting themselves.
     if (currentUserId && id === currentUserId) {
       if (dto.is_active === false) {
         throw new BadRequestException('You cannot deactivate your own account');
@@ -84,7 +93,6 @@ export class UsersService {
       }
     }
 
-    // Ensure at least one active admin remains in the system.
     if (u.role === 'admin' && (dto.is_active === false || dto.role === 'inspector')) {
       const remainingAdminCount = await this.prisma.users.count({
         where: { role: 'admin', is_active: true, deleted_at: null },
@@ -102,6 +110,13 @@ export class UsersService {
     if (dto.is_active !== undefined) data.is_active = dto.is_active;
 
     const updated = await this.prisma.users.update({ where: { id: u.id }, data });
+    await this.audit.record({
+      userId: currentUserId ?? null,
+      action: 'user.update',
+      targetType: 'user',
+      targetId: u.id,
+      detail: { changed: Object.keys(data) },
+    });
     return toResponse(updated);
   }
 
@@ -112,16 +127,27 @@ export class UsersService {
       where: { id: u.id },
       data: { password_hash: hashPassword(newPassword) },
     });
+    await this.audit.record({
+      action: 'user.reset_password',
+      targetType: 'user',
+      targetId: u.id,
+      detail: { username: u.username },
+    });
     return toResponse(updated);
   }
 
   async remove(id: string): Promise<void> {
     const u = await this.prisma.users.findFirst({ where: { id } });
     if (!u) throw new NotFoundException('User not found');
-    // Soft delete: the Prisma middleware auto-filters deleted_at.
     await this.prisma.users.update({
       where: { id: u.id },
       data: { deleted_at: new Date() },
+    });
+    await this.audit.record({
+      action: 'user.delete',
+      targetType: 'user',
+      targetId: u.id,
+      detail: { username: u.username },
     });
   }
 }

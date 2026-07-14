@@ -21,6 +21,8 @@ import { PhotoBindRequestDto, PhotoUploadResponseDto } from './dto/photo.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 import { ActiveUserGuard } from '../../common/guards';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { users } from '@prisma/client';
 
 @Controller('api/v1/photos')
 export class PhotosController {
@@ -31,9 +33,15 @@ export class PhotosController {
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
   async upload(
     @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: users,
   ): Promise<PhotoUploadResponseDto> {
     if (!file) throw new BadRequestException('file is required');
-    return this.photos.upload(file.buffer, file.originalname ?? 'image.jpg', file.mimetype ?? 'image/jpeg');
+    return this.photos.upload(
+      file.buffer,
+      file.originalname ?? 'image.jpg',
+      file.mimetype ?? 'image/jpeg',
+      user.id,
+    );
   }
 
   @UseGuards(JwtAuthGuard, ActiveUserGuard)
@@ -42,16 +50,17 @@ export class PhotosController {
   async bind(
     @Param('tempToken') tempToken: string,
     @Body() dto: PhotoBindRequestDto,
+    @CurrentUser() user: users,
   ): Promise<{ message: string }> {
-    await this.photos.bind(tempToken, dto);
+    await this.photos.bind(tempToken, dto, user.id);
     return { message: 'Photo bound successfully' };
   }
 
   /**
    * Serve a photo. Auth via HMAC sig (preferred) or ?token=<jwt>
    * (legacy). Sets ``X-Photo-Auth-Deprecated: true`` on the legacy
-   * path so the client knows to migrate. Marked @Public because the
-   * HMAC sig itself authenticates the request.
+   * path so the client knows to migrate. Marked @Public because
+   * the HMAC sig itself authenticates the request.
    */
   @Public()
   @Get(':photoId/image')
@@ -73,8 +82,6 @@ export class PhotosController {
     if (sig && exp) {
       file = await this.photos.serveSigned(photoId, size, sig, Number(exp));
     } else if (token && req) {
-      // Legacy path: the global JwtAuthGuard has already validated
-      // the JWT and populated req.user; we just read its id.
       const user = (req as { user?: { id: string } }).user;
       if (!user) {
         res!.status(401).json({ detail: 'Photo access requires a signed URL or bearer token', status_code: 401 });
@@ -100,7 +107,10 @@ export class PhotosController {
   @UseGuards(JwtAuthGuard, ActiveUserGuard)
   @Delete(':photoId')
   @HttpCode(204)
-  async remove(@Param('photoId') photoId: string): Promise<void> {
-    await this.photos.delete(photoId);
+  async remove(
+    @Param('photoId') photoId: string,
+    @CurrentUser() user: users,
+  ): Promise<void> {
+    await this.photos.delete(photoId, user.id);
   }
 }

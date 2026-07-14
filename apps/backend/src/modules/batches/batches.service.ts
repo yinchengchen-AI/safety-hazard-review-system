@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { StorageService } from '../../storage/storage.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import {
   BatchImportResultDto,
   BatchPreviewItemDto,
@@ -13,9 +14,13 @@ import {
   ImportErrorResponseDto,
 } from './dto/batch.dto';
 
-// BatchJoined = batches row + users join (creator).
-type BatchJoined = any
-function toBatchResponse(b: BatchJoined, availableHazardCount = 0, creatorUsername: string | null = null): BatchResponseDto {
+type BatchJoined = any;
+
+function toBatchResponse(
+  b: BatchJoined,
+  availableHazardCount = 0,
+  creatorUsername: string | null = null,
+): BatchResponseDto {
   return {
     id: b.id,
     name: b.name,
@@ -32,7 +37,6 @@ function toBatchResponse(b: BatchJoined, availableHazardCount = 0, creatorUserna
   };
 }
 
-// Map a worksheet row object (keys from header row) to HazardImportRow.
 const HEADER_MAP: Record<string, keyof HazardImportRow> = {
   '上报单位': 'reporting_unit',
   '行业领域': 'industry_sector',
@@ -61,7 +65,6 @@ function normalizeHeader(header: string): string {
   return header.replace(/\s+/g, '').trim();
 }
 
-// Minimal CSV line parser that handles quoted fields.
 function parseCsvLine(line: string): string[] {
   const values: string[] = [];
   let current = '';
@@ -94,11 +97,57 @@ function parseCsvLine(line: string): string[] {
   return values;
 }
 
+/** Strip a leading UTF-8 BOM, if present. */
+function stripBom(s: string): string {
+  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
+}
+
+/** ExcelJS returns ``cell.value`` in a few shapes:
+ *  - ``null`` / primitive — pass through
+ *  - rich text: ``{ richText: [{ text: '...' }, ...] }`` — concat
+ *  - formula: ``{ formula: '...', result: ... }`` — use the result
+ *  - hyperlink: ``{ text: '...', hyperlink: '...' }`` — text
+ *  - date: a number (Excel serial). Caller decides how to coerce. */
+function cellValueToString(v: unknown): string {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number') return Number.isFinite(v) ? String(v) : '';
+  if (typeof v === 'boolean') return v ? '是' : '否';
+  if (v instanceof Date) return v.toISOString();
+  if (typeof v === 'object') {
+    const o = v as Record<string, unknown>;
+    if (Array.isArray(o.richText)) {
+      return (o.richText as Array<{ text: string }>).map((r) => r.text ?? '').join('');
+    }
+    if ('result' in o) return cellValueToString(o.result);
+    if ('text' in o) return cellValueToString(o.text);
+    if ('hyperlink' in o && 'text' in o) return cellValueToString(o.text);
+  }
+  return '';
+}
+
+/** Excel serial date (1900-based) → ISO yyyy-mm-dd. Falls back to
+ *  the string form of the number for very small / large serials so
+ *  an obviously-bad cell is still inspectable. */
+function excelSerialToIsoDate(serial: number): string {
+  if (!Number.isFinite(serial)) return '';
+  // Excel's day 1 is 1900-01-01, with a known off-by-one for the
+  // 1900 leap year bug. Unix epoch (1970-01-01) is day 25569.
+  const unixDays = serial - 25569;
+  if (Math.abs(unixDays) > 365 * 200) return '';
+  const ms = unixDays * 86_400_000;
+  const d = new Date(ms);
+  return d.toISOString().slice(0, 10);
+}
+
 @Injectable()
 export class BatchesService {
+  private readonly logger = new Logger(BatchesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly audit: AuditLogsService,
   ) {}
 
   async list(page: number, pageSize: number): Promise<BatchResponseDto[]> {
@@ -125,8 +174,12 @@ export class BatchesService {
   async preview(dto: BatchPreviewRequestDto): Promise<BatchPreviewResponseDto> {
     const items: BatchPreviewItemDto[] = dto.rows.map((row, i) => {
       const errors: string[] = [];
-      if (!row.enterprise_name) errors.push('企业名称不能为空');
-      if (!row.description) errors.push('隐患描述不能为空');
+      if (!row.enterprise_name || !row.enterprise_name.trim()) {
+        errors.push('企业名称不能为空');
+      }
+      if (!row.description || !row.description.trim()) {
+        errors.push('隐患描述不能为空');
+      }
       return {
         row_index: i + 2,
         enterprise_name: row.enterprise_name ?? null,
@@ -157,9 +210,15 @@ export class BatchesService {
       },
     });
 
-    // Persist the original file so it can be re-downloaded from the
-    // batch history page.
-    const originalKey = `batches/${batch.id}/original/${filename}`;
+    // Sanitise the filename before using it as an object key:
+    // strip any path components, keep only the basename, and
+    // restrict to a safe character set. Otherwise the key could
+    // be `../../etc/passwd` and bypass bucket policy assumptions.
+    const safeBase = (filename
+      .split(/[\\/]/).pop() ?? 'upload.xlsx')
+      .replace(/[^A-Za-z0-9._-]+/g, '_')
+      .slice(0, 120) || 'upload.xlsx';
+    const originalKey = `batches/${batch.id}/original/${safeBase}`;
     const contentType = filename.toLowerCase().endsWith('.csv')
       ? 'text/csv'
       : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -167,10 +226,10 @@ export class BatchesService {
 
     const errors: { row_index: number; reason: string }[] = [];
     let success = 0;
-    // Batch-scoped enterprise cache: same enterprise within one import
-    // should yield a single enterprise record. The cache is shared across
-    // row SAVEPOINTs because each savepoint commits into the same database
-    // transaction scope.
+    // Two-level cache: keyed by credit_code (preferred identity) or
+    // by enterprise name (fallback). Both keys map to the same
+    // enterprise id so a row that comes in with a credit_code can
+    // still hit a name-only cache lookup and vice versa.
     const enterpriseCache = new Map<string, string>();
 
     for (let i = 0; i < rows.length; i++) {
@@ -197,6 +256,14 @@ export class BatchesService {
       data: { success_count: success, fail_count: errors.length, original_file_path: originalKey },
     });
 
+    await this.audit.record({
+      userId,
+      action: 'batch.import',
+      targetType: 'batch',
+      targetId: batch.id,
+      detail: { name, total: rows.length, success, fail: errors.length },
+    });
+
     return {
       batch: toBatchResponse(updated, 0, null),
       success_count: success,
@@ -208,63 +275,52 @@ export class BatchesService {
   private async parseExcelOrCsv(buffer: Buffer, filename: string): Promise<HazardImportRow[]> {
     const ext = filename.split('.').pop()?.toLowerCase();
     if (ext === 'csv') {
-      // Minimal CSV parser: split lines, first line is header.
-      const text = buffer.toString('utf-8');
+      const text = stripBom(buffer.toString('utf-8'));
       const lines = text.split(/\r?\n/).filter((l) => l.trim());
       if (lines.length < 2) return [];
-      const headers = lines[0].split(',').map((h) => normalizeHeader(h.replace(/^"|"$/g, '')));
+      const headers = lines[0].split(',').map((h) => normalizeHeader(stripBom(h.replace(/^"|"$/g, ''))));
       return lines.slice(1).map((line) => this.mapRow(parseCsvLine(line), headers));
     }
 
     const ExcelJS = await import('exceljs');
     const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(buffer as any);
+    await wb.xlsx.load(buffer as unknown as ArrayBuffer);
     const ws = wb.worksheets[0];
     if (!ws) throw new BadRequestException('Excel 文件没有工作表');
 
     const headers: string[] = [];
     ws.getRow(1).eachCell((cell, colNumber) => {
-      headers[colNumber - 1] = normalizeHeader(String(cell.value ?? ''));
+      headers[colNumber - 1] = normalizeHeader(stripBom(cellValueToString(cell.value)));
     });
 
     const rows: HazardImportRow[] = [];
     ws.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return;
-      const values: (string | number | Date | null)[] = [];
+      const values: string[] = [];
       for (let i = 0; i < headers.length; i++) {
         const cell = row.getCell(i + 1);
-        values[i] = cell.value as string | number | Date | null;
+        values[i] = cellValueToString(cell.value);
       }
       rows.push(this.mapRow(values, headers));
     });
     return rows;
   }
 
-  private mapRow(values: (string | number | Date | null)[], headers: string[]): HazardImportRow {
+  private mapRow(values: string[], headers: string[]): HazardImportRow {
     const row: Record<string, unknown> = {};
     for (let i = 0; i < headers.length; i++) {
       const key = HEADER_MAP[headers[i]];
       if (!key) continue;
       const raw = values[i];
-      if (raw === null || raw === undefined) continue;
-      if (raw instanceof Date) {
-        row[key] = raw.toISOString().slice(0, 10);
-      } else {
-        row[key] = String(raw).trim();
-      }
+      if (raw === undefined || raw === '') continue;
+      row[key] = raw.trim();
     }
     return row as unknown as HazardImportRow;
   }
 
-  /**
-   * Process a single import row inside a SAVEPOINT so a single bad
-   * row never poisons the outer transaction. Returns ``{ reason }``
-   * on handled business error (empty enterprise name, duplicate
-   * within 30 days, etc.), or ``null`` on success.
-   */
   private async _processRow(
     batchId: string,
-    row: import('./dto/batch.dto').HazardImportRow,
+    row: HazardImportRow,
     enterpriseCache: Map<string, string>,
   ): Promise<{ reason?: string }> {
     const savepoint = await this.prisma.$transaction(async (tx) => {
@@ -276,27 +332,32 @@ export class BatchesService {
   private async _processRowInner(
     tx: Prisma.TransactionClient,
     batchId: string,
-    row: import('./dto/batch.dto').HazardImportRow,
+    row: HazardImportRow,
     enterpriseCache: Map<string, string>,
   ): Promise<{ reason?: string } | null> {
-    if (!row.enterprise_name) return { reason: '企业名称不能为空' };
-    if (!row.description) return { reason: '隐患描述不能为空' };
+    const name = row.enterprise_name?.trim();
+    const desc = row.description?.trim();
+    if (!name) return { reason: '企业名称不能为空' };
+    if (!desc) return { reason: '隐患描述不能为空' };
 
-    // Find or create enterprise, preferring credit_code match when available.
-    const cacheKey = row.credit_code
-      ? `credit:${row.credit_code}`
-      : `name:${row.enterprise_name}`;
+    // Find or create the enterprise. When a credit_code is
+    // provided it is the authoritative key (the application-level
+    // unique constraint on enterprises.credit_code enforces it).
+    // When only a name is provided we dedup by name. The cache
+    // stores entries under both keys so a name-only import after
+    // a credit_code import still finds the same row.
+    const cacheKey = row.credit_code ? `credit:${row.credit_code}` : `name:${name}`;
     let enterpriseId = enterpriseCache.get(cacheKey);
     if (!enterpriseId) {
       const enterprise = row.credit_code
         ? await tx.enterprises.findFirst({ where: { credit_code: row.credit_code } })
-        : await tx.enterprises.findFirst({ where: { name: row.enterprise_name } });
+        : await tx.enterprises.findFirst({ where: { name } });
       if (enterprise) {
         enterpriseId = enterprise.id;
       } else {
         const created = await tx.enterprises.create({
           data: {
-            name: row.enterprise_name,
+            name,
             credit_code: row.credit_code ?? null,
             region: row.region ?? null,
             address: row.address ?? null,
@@ -307,9 +368,8 @@ export class BatchesService {
         });
         enterpriseId = created.id;
       }
-      enterpriseCache.set(cacheKey, enterpriseId);
-      // Also index by name so subsequent rows without credit_code hit the cache.
-      enterpriseCache.set(`name:${row.enterprise_name}`, enterpriseId);
+      enterpriseCache.set(`credit:${row.credit_code ?? ''}`, enterpriseId);
+      enterpriseCache.set(`name:${name}`, enterpriseId);
     }
 
     // Dedup: same enterprise + description + location within 30 days.
@@ -318,7 +378,7 @@ export class BatchesService {
     const dup = await tx.hazards.findFirst({
       where: {
         enterprise_id: enterpriseId,
-        description: row.description,
+        description: desc,
         location: row.location ?? null,
         created_at: { gte: cutoff },
       },
@@ -329,8 +389,8 @@ export class BatchesService {
       data: {
         enterprise_id: enterpriseId,
         batch_id: batchId,
-        content: row.description,
-        description: row.description,
+        content: desc,
+        description: desc,
         location: row.location ?? null,
         category: row.category ?? null,
         inspection_method: row.inspection_method ?? null,
@@ -364,12 +424,10 @@ export class BatchesService {
     }));
   }
 
-  async remove(batchId: string): Promise<void> {
+  async remove(batchId: string, currentUserId?: string): Promise<void> {
     const b = await this.prisma.batches.findFirst({ where: { id: batchId } });
     if (!b) throw new NotFoundException('批次不存在');
 
-    // Prevent deletion if any hazard in this batch is currently locked in a
-    // pending review task. Completed/cancelled tasks already release the lock.
     const lockedCount = await this.prisma.hazards.count({
       where: { batch_id: b.id, deleted_at: null, current_task_id: { not: null } },
     });
@@ -378,13 +436,23 @@ export class BatchesService {
     }
 
     const now = new Date();
-    await this.prisma.batches.update({ where: { id: b.id }, data: { deleted_at: now } });
-    await this.prisma.hazards.updateMany({
-      where: { batch_id: b.id, deleted_at: null },
-      data: { deleted_at: now, current_task_id: null },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.batches.update({ where: { id: b.id }, data: { deleted_at: now } });
+      await tx.hazards.updateMany({
+        where: { batch_id: b.id, deleted_at: null },
+        data: { deleted_at: now, current_task_id: null },
+      });
+      await tx.import_errors.deleteMany({
+        where: { batch_id: b.id },
+      });
     });
-    await this.prisma.import_errors.deleteMany({
-      where: { batch_id: b.id },
+
+    await this.audit.record({
+      userId: currentUserId ?? null,
+      action: 'batch.delete',
+      targetType: 'batch',
+      targetId: b.id,
+      detail: { name: b.name },
     });
   }
 

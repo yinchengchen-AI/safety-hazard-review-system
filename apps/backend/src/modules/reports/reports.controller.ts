@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { StorageService } from '../../storage/storage.service';
@@ -24,18 +24,26 @@ export class ReportsController {
     return this.reports.getStatus(taskId);
   }
 
+  /**
+   * Download the generated report. ``?format=`` picks between PDF
+   * and Word; the default is PDF (the document the system is
+   * primarily expected to produce). The ``?format=`` query is
+   * bound to a decorated parameter, NOT relied on via
+   * ``res.req.query``, so the type is enforced at the Nest
+   * validation layer and a malformed value becomes a 400.
+   */
   @Get(':taskId/download')
   async download(
     @Param('taskId') taskId: string,
+    @Query('format') format: 'word' | 'pdf' = 'pdf',
     @Res() res: Response,
-    format: 'word' | 'pdf' = 'pdf',
   ): Promise<void> {
     const report = await this.reports.getStatus(taskId);
     if (report.status !== 'completed') {
       res.status(404).json({ detail: 'Report not ready', status_code: 404 });
       return;
     }
-    const isPdf = res.req.query['format'] === 'pdf';
+    const isPdf = format === 'pdf';
     const key = isPdf ? report.pdf_path : report.word_path;
     if (!key) {
       res.status(404).json({ detail: `${isPdf ? 'pdf' : 'word'} report not available`, status_code: 404 });

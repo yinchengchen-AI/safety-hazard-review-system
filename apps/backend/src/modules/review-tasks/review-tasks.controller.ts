@@ -45,6 +45,7 @@ export class ReviewTasksController {
   }
 
   @Post(':id/hazards/:hazardId/review')
+  @HttpCode(200)
   review(
     @Param('id') taskId: string,
     @Param('hazardId') hazardId: string,
@@ -55,6 +56,7 @@ export class ReviewTasksController {
   }
 
   @Post(':id/batch-review')
+  @HttpCode(200)
   batchReview(
     @Param('id') taskId: string,
     @Body() dto: BatchReviewRequestDto,
@@ -64,11 +66,13 @@ export class ReviewTasksController {
   }
 
   @Post(':id/complete')
+  @HttpCode(200)
   complete(@Param('id') id: string, @CurrentUser() user: users) {
     return this.tasks.complete(id, user.id);
   }
 
   @Post(':id/cancel')
+  @HttpCode(200)
   cancel(@Param('id') id: string, @CurrentUser() user: users) {
     return this.tasks.cancel(id, user.id);
   }

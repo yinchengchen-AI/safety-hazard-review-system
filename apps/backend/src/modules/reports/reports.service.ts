@@ -24,27 +24,39 @@ export class ReportsService {
    * - pending/processing → no-op (already in flight).
    * - failed → reset to pending, re-enqueue.
    * - completed → no-op unless force=true.
+   *
+   * The jobId is the report row id, so a re-enqueue (failed → pending)
+   * shares its identity with the original job. BullMQ deduplicates by
+   * jobId on add, so the in-flight retry of the previous run and the
+   * new run cannot both execute in parallel.
    */
   async createAndEnqueue(taskId: string, options: CreateAndEnqueueOptions = {}): Promise<void> {
+    let reportId: string;
     const existing = await this.prisma.reports.findFirst({ where: { task_id: taskId } });
     if (existing === null) {
-      await this.prisma.reports.create({
+      const created = await this.prisma.reports.create({
         data: { id: randomUUID(), task_id: taskId, status: 'pending' },
       });
+      reportId = created.id;
     } else if (existing.status === 'pending' || existing.status === 'processing') {
       return;
     } else if (existing.status === 'failed') {
-      await this.prisma.reports.update({
+      const updated = await this.prisma.reports.update({
         where: { id: existing.id },
         data: { status: 'pending', error_message: null },
       });
+      reportId = updated.id;
     } else if (existing.status === 'completed' && !options.force) {
       return;
+    } else {
+      reportId = existing.id;
     }
+
     await this.queue.add(
       'generate',
-      { taskId },
+      { taskId, reportId },
       {
+        jobId: reportId,
         attempts: 3,
         backoff: { type: 'exponential', delay: 30_000 },
         removeOnComplete: 100,

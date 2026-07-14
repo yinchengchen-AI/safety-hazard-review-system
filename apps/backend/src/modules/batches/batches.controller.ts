@@ -80,7 +80,10 @@ export class BatchesController {
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(@Param('id') id: string): Promise<void> {
-    await this.batches.remove(id);
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser() user: users,
+  ): Promise<void> {
+    await this.batches.remove(id, user.id);
   }
 }

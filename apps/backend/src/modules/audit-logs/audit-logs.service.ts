@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditContextStore } from '../../common/audit-context';
 
 const SENSITIVE = new Set([
   'password', 'token', 'access_token', 'temp_token', 'api_key', 'secret',
@@ -27,6 +28,16 @@ export class AuditLogsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Persist a single audit row. ``requestInfo`` is optional; when
+   * omitted, the current AsyncLocalStorage scope (set up by the
+   * ``AuditContextInterceptor``) is used so the row carries the
+   * IP / method / path / user-agent of the originating request
+   * even when called from a deeply nested service.
+   *
+   * Errors are swallowed and logged: audit must never break the
+   * user-facing flow.
+   */
   async record(input: {
     userId?: string | null;
     action: string;
@@ -42,6 +53,12 @@ export class AuditLogsService {
     } | null;
   }): Promise<void> {
     try {
+      const ctx = AuditContextStore.get();
+      const ip = input.requestInfo?.ip ?? ctx?.ipAddress ?? null;
+      const ua = input.requestInfo?.userAgent ?? ctx?.userAgent ?? null;
+      const method = input.requestInfo?.method ?? ctx?.method ?? null;
+      const path = input.requestInfo?.path ?? ctx?.path ?? null;
+      const statusCode = input.requestInfo?.statusCode ?? ctx?.statusCode ?? null;
       await this.prisma.audit_logs.create({
         data: {
           user_id: input.userId ?? null,
@@ -49,11 +66,11 @@ export class AuditLogsService {
           target_type: input.targetType,
           target_id: input.targetId ?? null,
           detail: (sanitize(input.detail ?? null) as never) ?? undefined,
-          ip_address: input.requestInfo?.ip ?? null,
-          method: input.requestInfo?.method ?? null,
-          path: input.requestInfo?.path ?? null,
-          status_code: input.requestInfo?.statusCode ?? null,
-          user_agent: input.requestInfo?.userAgent ?? null,
+          ip_address: ip,
+          method,
+          path,
+          status_code: statusCode,
+          user_agent: ua,
         },
       });
     } catch (err) {

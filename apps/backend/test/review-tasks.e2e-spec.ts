@@ -81,7 +81,7 @@ describe('ReviewTasks (e2e)', () => {
       .post(`/api/v1/review-tasks/${taskId}/hazards/${hid}/review`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ conclusion: 'ok', status_in_task: 'passed' })
-      .expect(201);
+      .expect(200);
 
     const afterReview = await prisma.hazards.findFirst({ where: { id: hid } });
     expect(afterReview?.status).toBe('passed');
@@ -91,7 +91,7 @@ describe('ReviewTasks (e2e)', () => {
     await request(app.getHttpServer())
       .post(`/api/v1/review-tasks/${taskId}/cancel`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .expect(201);
+      .expect(200);
 
     const afterCancel = await prisma.hazards.findFirst({ where: { id: hid } });
     expect(afterCancel?.status).toBe('pending');
@@ -114,7 +114,7 @@ describe('ReviewTasks (e2e)', () => {
       .post(`/api/v1/review-tasks/${taskId}/hazards/${h1}/review`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ conclusion: 'ok', status_in_task: 'passed' })
-      .expect(201);
+      .expect(200);
     await request(app.getHttpServer())
       .post(`/api/v1/review-tasks/${taskId}/complete`)
       .set('Authorization', `Bearer ${adminToken}`)
@@ -125,11 +125,11 @@ describe('ReviewTasks (e2e)', () => {
       .post(`/api/v1/review-tasks/${taskId}/hazards/${h2}/review`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ conclusion: 'ok', status_in_task: 'failed' })
-      .expect(201);
+      .expect(200);
     const complete = await request(app.getHttpServer())
       .post(`/api/v1/review-tasks/${taskId}/complete`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .expect(201);
+      .expect(200);
     expect(complete.body.status).toBe('completed');
   });
 
@@ -152,7 +152,7 @@ describe('ReviewTasks (e2e)', () => {
           { hazard_id: h2, conclusion: 'no', status_in_task: 'failed' },
         ],
       })
-      .expect(201);
+      .expect(200);
     expect(res.body.length).toBe(2);
 
     const a = await prisma.hazards.findFirst({ where: { id: h1 } });
