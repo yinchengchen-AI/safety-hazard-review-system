@@ -19,7 +19,6 @@
 ```bash
 # 后端
 cd apps/backend
-cp .env.example .env  # 然后填实际值
 npm install
 npx prisma generate
 npx prisma migrate deploy
@@ -30,6 +29,8 @@ cd apps/frontend
 npm install
 npm run dev          # http://localhost:3000
 ```
+
+`apps/backend/.env` 已包含本地开发默认值；生产部署前请使用 `init-env.sh` 生成独立的环境文件。
 
 默认管理员账号 `admin / admin123`，首次登录后请立即修改。
 
@@ -51,6 +52,21 @@ npm run test:e2e       # Playwright（需要先 npx playwright install）
 见 [DEPLOY.md](DEPLOY.md)。`./init-env.sh` 生成强随机密码，
 `./deploy-remote.sh` 拉代码、build 镜像、跑 Prisma migrate、
 重启 stack。
+
+## 关键环境变量
+
+| 变量 | 说明 | 本地默认值 |
+|---|---|---|
+| `DATABASE_URL` | PostgreSQL 连接串 | `postgresql://postgres:postgres@localhost:5432/safety_hazard_test` |
+| `REDIS_URL` | Redis 连接串 | `redis://localhost:6379/0` |
+| `MINIO_ENDPOINT` | MinIO 地址 | `localhost:9000` |
+| `MINIO_SECURE` | MinIO 是否使用 HTTPS | `false` |
+| `MINIO_BUCKET` | MinIO bucket | `hazard-photos` |
+| `SECRET_KEY` | JWT 签名密钥 | 开发占位串（生产必须 ≥32 位） |
+| `PHOTO_SIGNATURE_SECRET` | 图片 URL HMAC 签名密钥 | 默认与 `SECRET_KEY` 相同 |
+| `ENABLE_CRON` | 是否启用 @nestjs/schedule cron | API `true`，worker `false` |
+
+`docker-compose.yml` 中 worker 服务已设置 `ENABLE_CRON=false`，避免同一 cron 任务在 API 和 worker 中重复执行。
 
 ## 目录结构
 
@@ -81,10 +97,10 @@ npm run test:e2e       # Playwright（需要先 npx playwright install）
 
 ## 安全
 
-- 鉴权：JWT in httpOnly cookie（`SameSite=Lax`，生产 `Secure`），bcrypt cost=12 透明 rehash
+- 鉴权：JWT in httpOnly cookie（`SameSite=Strict`，生产 `Secure`），bcrypt cost=12
 - 启动期 `assert_safe_for_runtime`：staging/production 阻断默认 admin / 弱密钥
-- 图片：HMAC-SHA256 签名 URL（`?sig=&exp=`），15 分钟 TTL
-- 限流：slowapi 5/min/IP（login）、60/min（其他）
+- 图片：HMAC-SHA256 签名 URL（`?sig=&exp=`），默认 15 分钟 TTL；签名密钥 `PHOTO_SIGNATURE_SECRET` 与 JWT 密钥独立
+- 限流：@nestjs/throttler 5/min/IP（login）、60/min（其他）
 - Nginx 安全头：CSP / X-Frame-Options / X-Content-Type-Options / Referrer-Policy / Permissions-Policy
 
 ## License
