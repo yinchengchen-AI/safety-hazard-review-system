@@ -118,7 +118,10 @@ describe('Enterprises (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
     expect(exportRes.headers['content-type']).toMatch(/spreadsheetml/);
-    expect(Number(exportRes.headers['content-length'])).toBeGreaterThan(0);
+    // P1-2: service paginates internally so a large enterprise
+    // table no longer OOMs the process. The HTTP response is sent
+    // as a single Buffer; we just check that the body is non-empty.
+    expect(exportRes.body.length || Buffer.byteLength(exportRes.text || '')).toBeGreaterThan(0);
 
     const tmplRes = await request(app.getHttpServer())
       .get('/api/v1/enterprises/template')

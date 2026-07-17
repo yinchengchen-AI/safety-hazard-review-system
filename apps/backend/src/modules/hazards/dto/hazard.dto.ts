@@ -3,10 +3,13 @@ import {
   IsBoolean,
   IsDateString,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Length,
+  Max,
+  Min,
 } from 'class-validator';
 
 export class HazardListQueryDto {
@@ -15,8 +18,8 @@ export class HazardListQueryDto {
   @IsOptional() @IsString() status?: 'pending' | 'passed' | 'failed';
   @IsOptional() @IsString() category?: string;
   @IsOptional() @IsString() inspection_method?: string;
-  @IsOptional() @Type(() => Number) page?: number;
-  @IsOptional() @Type(() => Number) page_size?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) page_size?: number;
 }
 
 export class HazardResponseDto {

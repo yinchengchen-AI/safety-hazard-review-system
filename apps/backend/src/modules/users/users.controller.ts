@@ -11,7 +11,8 @@ import {
   Put,
   Query,
   UseGuards,
-} from '@nestjs/common';
+} from '@nestjs/common'
+import { MaxIntPipe } from '../../common/pipes/max-int.pipe';
 import { UsersService } from './users.service';
 import {
   CreateUserDto,
@@ -38,8 +39,8 @@ export class UsersController {
 
   @Get()
   list(
-    @Query('page', new ParseIntPipe({ optional: true })) page = 1,
-    @Query('page_size', new ParseIntPipe({ optional: true })) pageSize = 20,
+    @Query('page', new MaxIntPipe({ optional: true })) page = 1,
+    @Query('page_size', new MaxIntPipe({ optional: true })) pageSize = 20,
     @Query('keyword') keyword = '',
   ): Promise<UserListResponseDto> {
     return this.users.list(page, pageSize, keyword);

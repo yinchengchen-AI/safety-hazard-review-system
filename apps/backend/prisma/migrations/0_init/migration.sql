@@ -354,13 +354,3 @@ ALTER TABLE "task_hazards" ADD CONSTRAINT "task_hazards_reviewer_id_fkey" FOREIG
 -- AddForeignKey
 ALTER TABLE "task_hazards" ADD CONSTRAINT "task_hazards_task_id_fkey" FOREIGN KEY ("task_id") REFERENCES "review_tasks"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-┌─────────────────────────────────────────────────────────┐
-│  Update available 5.22.0 -> 7.8.0                       │
-│                                                         │
-│  This is a major update - please follow the guide at    │
-│  https://pris.ly/d/major-version-upgrade                │
-│                                                         │
-│  Run the following to update                            │
-│    npm i --save-dev prisma@latest                       │
-│    npm i @prisma/client@latest                          │
-└─────────────────────────────────────────────────────────┘

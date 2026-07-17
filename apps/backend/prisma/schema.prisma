@@ -67,6 +67,9 @@ model enterprises {
   // forced into a conflict. See migration
   // 20260714070000_enterprise_credit_code_unique.
   @@unique([credit_code], name: "uix_enterprises_credit_code", map: "uix_enterprises_credit_code")
+  // P1-4: a partial unique on ``name`` is maintained by raw SQL
+  // (migration 20260717_enterprise_name_unique) because Prisma's
+  // @@unique cannot express a ``WHERE deleted_at IS NULL`` clause.
 }
 
 model hazard_status_history {
@@ -216,7 +219,11 @@ model statistics_daily {
   enterprises   enterprises? @relation(fields: [enterprise_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users         users?       @relation(fields: [inspector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@unique([stat_date, enterprise_id, batch_id, inspector_id], map: "uix_stats_daily")
+  // P1-12: a plain @@unique here wouldn't actually enforce
+  // uniqueness for the all-NULL global rollup row (Postgres
+  // treats NULLs as distinct in B-tree default). The real
+  // enforcement is a partial unique index managed by raw SQL —
+  // see migration 20260717_statistics_partial_unique.
 }
 
 model statistics_monthly {
@@ -237,7 +244,7 @@ model statistics_monthly {
   enterprises   enterprises? @relation(fields: [enterprise_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users         users?       @relation(fields: [inspector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@unique([stat_month, enterprise_id, batch_id, inspector_id], map: "uix_stats_monthly")
+  // P1-12: see migration 20260717_statistics_partial_unique.
 }
 
 model task_hazards {

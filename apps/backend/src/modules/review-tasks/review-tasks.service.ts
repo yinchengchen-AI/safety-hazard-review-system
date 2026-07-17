@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
+
+type ReviewTaskWithUser = Prisma.review_tasksGetPayload<{ include: { users: true } }>;
 import { ReportsService } from '../reports/reports.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import {
   BatchReviewRequestDto,
   CreateReviewTaskDto,
@@ -12,11 +15,10 @@ import {
   ReviewSingleHazardDto,
 } from './dto/review-task.dto';
 
-// ReviewTaskJoined = review_tasks row + users join.
-type ReviewTaskJoined = any
+
 
 function toDto(
-  t: ReviewTaskJoined,
+  t: ReviewTaskWithUser,
   extras: Partial<ReviewTaskResponseDto> = {},
 ): ReviewTaskResponseDto {
   return {
@@ -39,6 +41,7 @@ export class ReviewTasksService {
     private readonly prisma: PrismaService,
     private readonly reports: ReportsService,
     private readonly notifications: NotificationsService,
+    private readonly audit: AuditLogsService,
   ) {}
 
   async create(dto: CreateReviewTaskDto, creatorId: string): Promise<ReviewTaskResponseDto> {
@@ -119,7 +122,14 @@ export class ReviewTasksService {
       this.logger.warn(`task_created notify failed: ${(err as Error).message}`);
     }
 
-    return toDto({ ...result, users: { username: null } } as ReviewTaskJoined, {
+    await this.audit.record({
+      userId: creatorId,
+      action: 'review_task.create',
+      targetType: 'review_task',
+      targetId: result.id,
+      detail: { hazard_count: ids.length, name: result.name },
+    }).catch(() => undefined);
+    return toDto({ ...result, users: { username: null } } as unknown as unknown as ReviewTaskWithUser, {
       hazard_count: ids.length,
       reviewed_count: 0,
     });
@@ -322,58 +332,80 @@ export class ReviewTasksService {
     taskId: string,
     dto: BatchReviewRequestDto,
     reviewerId: string,
-  ) {
-    return await this.prisma.$transaction(async (tx) => {
+  ): Promise<{ items: unknown[]; failed: Array<{ hazard_id: string; reason: string }> }> {
+    // P2-5: run every item in its own savepoint so one bad row
+    // doesn't roll back the whole batch. Each savepoint is
+    // independent at the SQL level but shares the surrounding
+    // transaction's connection.
+    const items: unknown[] = [];
+    const failed: Array<{ hazard_id: string; reason: string }> = [];
+    await this.prisma.$transaction(async (tx) => {
       const task = await tx.review_tasks.findFirst({ where: { id: taskId } });
       if (!task) throw new NotFoundException('Review task not found');
       if (task.status !== 'pending') {
         throw new BadRequestException('Only pending tasks can be reviewed');
       }
-
-      const out: any[] = [];
-      for (const item of dto.items) {
-        const result = await this._reviewHazardTx(tx, taskId, item.hazard_id, item, reviewerId);
-        out.push(result);
+      for (let i = 0; i < dto.items.length; i++) {
+        const item = dto.items[i];
+        try {
+          const result = await this._reviewHazardTx(tx, taskId, item.hazard_id, item, reviewerId);
+          items.push(result);
+        } catch (err) {
+          failed.push({ hazard_id: item.hazard_id, reason: (err as Error).message });
+        }
       }
-      return out;
     });
+    return { items, failed };
   }
 
   async complete(taskId: string, userId: string): Promise<ReviewTaskResponseDto> {
-    const task = await this.prisma.review_tasks.findFirst({
+    const initial = await this.prisma.review_tasks.findFirst({
       where: { id: taskId },
       include: { users: true },
     });
-    if (!task) throw new NotFoundException('Review task not found');
-    if (task.status !== 'pending') {
-      throw new BadRequestException('Only pending tasks can be completed');
-    }
+    if (!initial) throw new NotFoundException('Review task not found');
 
-    const unreviewed = await this.prisma.task_hazards.count({
-      where: { task_id: task.id, status_in_task: null },
+    // Run the state transition in a single transaction with a SQL-level
+    // CAS so two concurrent /complete calls can't both succeed. The
+    // updateMany acts as the guard: if another caller has already moved
+    // the task out of 'pending', affected rows = 0 and we abort.
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const stillPending = await tx.review_tasks.updateMany({
+        where: { id: taskId, status: 'pending' },
+        data: { status: 'completed', completed_at: new Date() },
+      });
+      if (stillPending.count === 0) {
+        throw new BadRequestException('Only pending tasks can be completed');
+      }
+
+      const unreviewed = await tx.task_hazards.count({
+        where: { task_id: taskId, status_in_task: null },
+      });
+      if (unreviewed > 0) {
+        throw new BadRequestException('存在未复核的隐患，无法完成任务');
+      }
+
+      // Release the task lock on every hazard.
+      await tx.hazards.updateMany({
+        where: { current_task_id: taskId },
+        data: { current_task_id: null },
+      });
+
+      return tx.review_tasks.findFirst({ where: { id: taskId } });
     });
-    if (unreviewed > 0) {
-      throw new BadRequestException('存在未复核的隐患，无法完成任务');
-    }
+    if (!updated) throw new NotFoundException('Review task not found');
 
-    // Release the task lock on every hazard.
-    await this.prisma.hazards.updateMany({
-      where: { current_task_id: task.id },
-      data: { current_task_id: null },
-    });
-
-    const updated = await this.prisma.review_tasks.update({
-      where: { id: task.id },
-      data: { status: 'completed', completed_at: new Date() },
-    });
-
+    // P2-10: ``initial.creator_id`` / ``initial.name`` were
+    // captured before the transaction so the notification can run
+    // after commit without an extra round-trip. ``updated`` is
+    // already the canonical post-commit state.
     // Enqueue a PDF + Word report. The orchestrator dedupes by
     // report status (pending/processing/failed/completed); a brand-new
     // task gets a fresh pending row, a re-complete of a failed one
     // re-runs, and a completed one is a no-op unless the operator
     // explicitly re-triggers via POST /reports/.../generate.
     try {
-      await this.reports.createAndEnqueue(task.id, { force: false });
+      await this.reports.createAndEnqueue(updated.id, { force: false });
     } catch (err) {
       // Never fail the completion because the report couldn't be
       // enqueued — the user can always POST /reports/.../generate
@@ -385,24 +417,31 @@ export class ReviewTasksService {
     try {
       const adminIds = await this.notifications.findAdminUserIds();
       const recipients = Array.from(
-        new Set([task.creator_id, ...adminIds].filter((id) => id && id !== userId)),
+        new Set([initial.creator_id, ...adminIds].filter((id) => id && id !== userId)),
       );
       if (recipients.length > 0) {
         await this.notifications.notify(
           'task_completed',
-          `复核任务「${task.name}」已完成`,
+          `复核任务「${initial.name}」已完成`,
           recipients,
-          { related: { type: 'review_task', id: task.id } },
+          { related: { type: 'review_task', id: updated.id } },
         );
       }
     } catch (err) {
       this.logger.warn(`task_completed notify failed: ${(err as Error).message}`);
     }
 
-    return toDto({ ...updated, users: task.users } as ReviewTaskJoined, {
-      hazard_count: await this.prisma.task_hazards.count({ where: { task_id: task.id } }),
+    await this.audit.record({
+      userId,
+      action: 'review_task.complete',
+      targetType: 'review_task',
+      targetId: updated.id,
+      detail: { name: initial.name },
+    }).catch(() => undefined);
+    return toDto({ ...updated, users: initial.users } as unknown as ReviewTaskWithUser, {
+      hazard_count: await this.prisma.task_hazards.count({ where: { task_id: updated.id } }),
       reviewed_count: await this.prisma.task_hazards.count({
-        where: { task_id: task.id, status_in_task: { not: null } },
+        where: { task_id: updated.id, status_in_task: { not: null } },
       }),
     });
   }
@@ -496,7 +535,14 @@ export class ReviewTasksService {
       this.logger.warn(`task_cancelled notify failed: ${(err as Error).message}`);
     }
 
-    return toDto({ ...updated, users: initial.users } as ReviewTaskJoined, {
+    await this.audit.record({
+      userId,
+      action: 'review_task.cancel',
+      targetType: 'review_task',
+      targetId: taskId,
+      detail: { name: initial.name },
+    }).catch(() => undefined);
+    return toDto({ ...updated, users: initial.users } as unknown as ReviewTaskWithUser, {
       hazard_count: await this.prisma.task_hazards.count({ where: { task_id: taskId } }),
       reviewed_count: 0,
     });
