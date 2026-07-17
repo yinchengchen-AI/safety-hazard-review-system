@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react'
-import { Table, Tag, Button, Space, message } from 'antd'
+import { Table, Tag, Button, message } from 'antd'
 import request, { getErrorMessage } from '@/lib/api'
 
 interface Notif {
@@ -48,22 +48,25 @@ export default function NotificationsPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <div className="dashboard-toolbar">
         <Button onClick={markAll}>全部已读</Button>
-      </Space>
-      <Table
-        rowKey="id"
-        loading={loading}
-        dataSource={items}
-        size="middle"
-        pagination={{ pageSize: 20 }}
-        columns={[
-          { title: '标题', dataIndex: 'title' },
-          { title: '类型', dataIndex: 'type', width: 120, render: (v: string) => <Tag>{v}</Tag> },
-          { title: '已读', dataIndex: 'is_read', width: 80, render: (v: boolean) => v ? <Tag color="green">是</Tag> : <Tag color="red">否</Tag> },
-          { title: '时间', dataIndex: 'created_at', width: 180, render: (v: string) => new Date(v).toLocaleString('zh-CN') },
-        ]}
-      />
+      </div>
+      <div className="dashboard-table-wrap">
+        <Table
+          rowKey="id"
+          loading={loading}
+          dataSource={items}
+          size="middle"
+          scroll={{ x: 620 }}
+          pagination={{ pageSize: 20 }}
+          columns={[
+            { title: '标题', dataIndex: 'title' },
+            { title: '类型', dataIndex: 'type', width: 120, render: (v: string) => <Tag>{v}</Tag> },
+            { title: '已读', dataIndex: 'is_read', width: 80, render: (v: boolean) => v ? <Tag color="green">是</Tag> : <Tag color="red">否</Tag> },
+            { title: '时间', dataIndex: 'created_at', width: 180, render: (v: string) => new Date(v).toLocaleString('zh-CN') },
+          ]}
+        />
+      </div>
     </div>
   )
 }

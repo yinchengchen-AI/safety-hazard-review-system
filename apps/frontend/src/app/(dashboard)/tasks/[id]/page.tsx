@@ -170,7 +170,7 @@ export default function TaskDetailPage() {
       <Card
         title="任务信息"
         extra={
-          <Space>
+          <Space wrap>
             {task.status === 'pending' && (
               <Button danger onClick={handleCancel}>取消任务</Button>
             )}
@@ -182,16 +182,16 @@ export default function TaskDetailPage() {
           </Space>
         }
       >
-        <Descriptions bordered column={2}>
+        <Descriptions bordered column={{ xs: 1, sm: 2 }}>
           <Descriptions.Item label="任务名称">{task.name}</Descriptions.Item>
           <Descriptions.Item label="状态"><Tag color={statusColor}>{statusText}</Tag></Descriptions.Item>
           <Descriptions.Item label="创建人">{task.creator_username ?? '-'}</Descriptions.Item>
           <Descriptions.Item label="复核进度">{task.reviewed_count} / {task.hazard_count}</Descriptions.Item>
           <Descriptions.Item label="创建时间">{task.created_at ? new Date(task.created_at).toLocaleString('zh-CN') : '-'}</Descriptions.Item>
           <Descriptions.Item label="完成时间">{task.completed_at ? new Date(task.completed_at).toLocaleString('zh-CN') : '-'}</Descriptions.Item>
-          <Descriptions.Item label="报告" span={2}>
+          <Descriptions.Item label="报告" span={{ xs: 1, sm: 2 }}>
             {task.report_status ? (
-              <Space>
+              <Space wrap>
                 <Tag color="blue">状态：{task.report_status}</Tag>
                 {task.report_status === 'completed' && (
                   <>
@@ -215,6 +215,7 @@ export default function TaskDetailPage() {
             rowKey="task_hazard_id"
             dataSource={task.hazards}
             size="middle"
+            scroll={{ x: 980 }}
             pagination={{ pageSize: 10 }}
             columns={[
               {
@@ -262,7 +263,8 @@ export default function TaskDetailPage() {
         onOk={submitReview}
         okText="提交"
         cancelText="取消"
-        destroyOnClose
+        width="min(560px, calc(100vw - 32px))"
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" preserve={false}>
           <Form.Item

@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react'
-import { Table, Button, Space, message, Modal, Form, Input, Select } from 'antd'
+import { Table, Button, message, Modal, Form, Input, Select } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { useUserStore } from '@/lib/userStore'
 import request, { getErrorMessage } from '@/lib/api'
@@ -57,24 +57,27 @@ export default function EnterprisesPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <div className="dashboard-toolbar">
         {isAdmin && <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>新增企业</Button>}
-      </Space>
-      <Table
-        rowKey="id"
-        loading={loading}
-        dataSource={items}
-        size="middle"
-        pagination={{ pageSize: 20 }}
-        columns={[
-          { title: '名称', dataIndex: 'name' },
-          { title: '统一社会信用代码', dataIndex: 'credit_code', width: 200 },
-          { title: '属地', dataIndex: 'region', width: 120 },
-          { title: '负责人', dataIndex: 'contact_person', width: 120 },
-          { title: '行业领域', dataIndex: 'industry_sector', width: 120 },
-        ]}
-      />
-      <Modal title="新增企业" open={open} onCancel={() => setOpen(false)} onOk={onCreate} okText="保存" cancelText="取消">
+      </div>
+      <div className="dashboard-table-wrap">
+        <Table
+          rowKey="id"
+          loading={loading}
+          dataSource={items}
+          size="middle"
+          scroll={{ x: 760 }}
+          pagination={{ pageSize: 20 }}
+          columns={[
+            { title: '名称', dataIndex: 'name' },
+            { title: '统一社会信用代码', dataIndex: 'credit_code', width: 200 },
+            { title: '属地', dataIndex: 'region', width: 120 },
+            { title: '负责人', dataIndex: 'contact_person', width: 120 },
+            { title: '行业领域', dataIndex: 'industry_sector', width: 120 },
+          ]}
+        />
+      </div>
+      <Modal width="min(520px, calc(100vw - 32px))" title="新增企业" open={open} onCancel={() => setOpen(false)} onOk={onCreate} okText="保存" cancelText="取消">
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="企业名称" rules={[{ required: true, max: 200 }]}><Input /></Form.Item>
           <Form.Item name="credit_code" label="统一社会信用代码"><Input maxLength={50} /></Form.Item>

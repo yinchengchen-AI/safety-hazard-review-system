@@ -98,66 +98,69 @@ export default function BatchesHistoryPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <div className="dashboard-toolbar">
         <Button onClick={() => router.push('/batches/import')}>新建导入</Button>
-      </Space>
-      <Table
-        rowKey="id"
-        loading={loading}
-        dataSource={items}
-        size="middle"
-        pagination={{ pageSize: 20 }}
-        columns={[
-          { title: '批次名称', dataIndex: 'name' },
-          { title: '文件名', dataIndex: 'file_name', ellipsis: true, width: 200 },
-          { title: '导入人', dataIndex: 'creator_username', width: 120 },
-          {
-            title: '导入时间', dataIndex: 'import_time', width: 180,
-            render: (v: string | null) => (v ? new Date(v).toLocaleString('zh-CN') : '-'),
-          },
-          {
-            title: '成功 / 失败', width: 140,
-            render: (_: unknown, r: Batch) => (
-              <Space size={4}>
-                <Tag color="green">{r.success_count}</Tag>
-                <span>/</span>
-                <Tag color={r.fail_count > 0 ? 'red' : 'default'}>{r.fail_count}</Tag>
-              </Space>
-            ),
-          },
-          {
-            title: '可复核隐患', dataIndex: 'available_hazard_count', width: 120,
-            render: (n: number) => (n > 0 ? <Tag color="blue">{n}</Tag> : <Tag>0</Tag>),
-          },
-          {
-            title: '操作', width: 200, fixed: 'right',
-            render: (_: unknown, r: Batch) => (
-              <Space>
-                <Button
-                  type="link"
-                  icon={<FileSearchOutlined />}
-                  disabled={r.fail_count === 0}
-                  onClick={() => openDrawer(r)}
-                >
-                  查看错误
-                </Button>
-                <Button
-                  type="link"
-                  icon={<DownloadOutlined />}
-                  onClick={() => downloadOriginal(r)}
-                >
-                  下载原文件
-                </Button>
-              </Space>
-            ),
-          },
-        ]}
-      />
+      </div>
+      <div className="dashboard-table-wrap">
+        <Table
+          rowKey="id"
+          loading={loading}
+          dataSource={items}
+          size="middle"
+          scroll={{ x: 1060 }}
+          pagination={{ pageSize: 20 }}
+          columns={[
+            { title: '批次名称', dataIndex: 'name' },
+            { title: '文件名', dataIndex: 'file_name', ellipsis: true, width: 200 },
+            { title: '导入人', dataIndex: 'creator_username', width: 120 },
+            {
+              title: '导入时间', dataIndex: 'import_time', width: 180,
+              render: (v: string | null) => (v ? new Date(v).toLocaleString('zh-CN') : '-'),
+            },
+            {
+              title: '成功 / 失败', width: 140,
+              render: (_: unknown, r: Batch) => (
+                <Space size={4}>
+                  <Tag color="green">{r.success_count}</Tag>
+                  <span>/</span>
+                  <Tag color={r.fail_count > 0 ? 'red' : 'default'}>{r.fail_count}</Tag>
+                </Space>
+              ),
+            },
+            {
+              title: '可复核隐患', dataIndex: 'available_hazard_count', width: 120,
+              render: (n: number) => (n > 0 ? <Tag color="blue">{n}</Tag> : <Tag>0</Tag>),
+            },
+            {
+              title: '操作', width: 200, fixed: 'right',
+              render: (_: unknown, r: Batch) => (
+                <Space wrap>
+                  <Button
+                    type="link"
+                    icon={<FileSearchOutlined />}
+                    disabled={r.fail_count === 0}
+                    onClick={() => openDrawer(r)}
+                  >
+                    查看错误
+                  </Button>
+                  <Button
+                    type="link"
+                    icon={<DownloadOutlined />}
+                    onClick={() => downloadOriginal(r)}
+                  >
+                    下载原文件
+                  </Button>
+                </Space>
+              ),
+            },
+          ]}
+        />
+      </div>
       <Drawer
         title={drawerBatch ? `批次错误明细 - ${drawerBatch.name}` : '错误明细'}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        width={720}
+        width="min(720px, calc(100vw - 24px))"
       >
         {drawerBatch && (
           <Descriptions bordered size="small" column={1} style={{ marginBottom: 16 }}>

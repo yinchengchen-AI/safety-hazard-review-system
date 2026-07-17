@@ -1,5 +1,6 @@
 import { AntdRegistry } from '@ant-design/nextjs-registry'
 import { ConfigProvider } from 'antd'
+import './globals.css'
 
 const theme = {
   token: {

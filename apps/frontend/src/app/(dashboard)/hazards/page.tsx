@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react'
-import { Table, Tag, Space, Button, message, Input, Select } from 'antd'
+import { Table, Tag, message, Select } from 'antd'
 import { useRouter } from 'next/navigation'
 import request, { getErrorMessage } from '@/lib/api'
 
@@ -50,7 +50,7 @@ export default function HazardsPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <div className="dashboard-toolbar">
         <Select
           allowClear
           placeholder="按状态筛选"
@@ -63,37 +63,40 @@ export default function HazardsPage() {
             { value: 'failed', label: '未通过' },
           ]}
         />
-      </Space>
-      <Table
-        rowKey="id"
-        loading={loading}
-        dataSource={items}
-        size="middle"
-        pagination={{
-          current: page,
-          pageSize,
-          total,
-          showSizeChanger: true,
-          onChange: (p, ps) => { setPage(p); setPageSize(ps) },
-        }}
-        onRow={(record) => ({ onClick: () => router.push(`/hazards/${record.id}`) })}
-        columns={[
-          { title: '编号', dataIndex: 'id', width: 90, render: (v: string) => v.slice(0, 8) },
-          { title: '描述', dataIndex: 'content', ellipsis: true },
-          { title: '位置', dataIndex: 'location', width: 140 },
-          { title: '企业', dataIndex: 'enterprise_name', width: 160, ellipsis: true },
-          { title: '批次', dataIndex: 'batch_name', width: 140 },
-          {
-            title: '状态', dataIndex: 'status', width: 100,
-            render: (s: string) => {
-              const color = s === 'pending' ? 'gold' : s === 'passed' ? 'green' : 'red'
-              const text = s === 'pending' ? '待复核' : s === 'passed' ? '已通过' : '未通过'
-              return <Tag color={color}>{text}</Tag>
+      </div>
+      <div className="dashboard-table-wrap">
+        <Table
+          rowKey="id"
+          loading={loading}
+          dataSource={items}
+          size="middle"
+          scroll={{ x: 900 }}
+          pagination={{
+            current: page,
+            pageSize,
+            total,
+            showSizeChanger: true,
+            onChange: (p, ps) => { setPage(p); setPageSize(ps) },
+          }}
+          onRow={(record) => ({ onClick: () => router.push(`/hazards/${record.id}`) })}
+          columns={[
+            { title: '编号', dataIndex: 'id', width: 90, render: (v: string) => v.slice(0, 8) },
+            { title: '描述', dataIndex: 'content', ellipsis: true },
+            { title: '位置', dataIndex: 'location', width: 140 },
+            { title: '企业', dataIndex: 'enterprise_name', width: 160, ellipsis: true },
+            { title: '批次', dataIndex: 'batch_name', width: 140 },
+            {
+              title: '状态', dataIndex: 'status', width: 100,
+              render: (s: string) => {
+                const color = s === 'pending' ? 'gold' : s === 'passed' ? 'green' : 'red'
+                const text = s === 'pending' ? '待复核' : s === 'passed' ? '已通过' : '未通过'
+                return <Tag color={color}>{text}</Tag>
+              },
             },
-          },
-          { title: '复核次数', dataIndex: 'review_count', width: 100 },
-        ]}
-      />
+            { title: '复核次数', dataIndex: 'review_count', width: 100 },
+          ]}
+        />
+      </div>
     </div>
   )
 }

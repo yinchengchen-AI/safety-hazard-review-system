@@ -1,5 +1,5 @@
 "use client"
-import { Button, Upload, message, Card, Space, Typography } from 'antd'
+import { Button, Upload, message, Card, Typography } from 'antd'
 import { InboxOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -52,9 +52,9 @@ export default function BatchImportPage() {
   return (
     <div>
       <Card>
-        <Space style={{ marginBottom: 16 }}>
+        <div className="dashboard-toolbar">
           <Button icon={<DownloadOutlined />} onClick={onDownloadTemplate}>下载导入模板</Button>
-        </Space>
+        </div>
         <Dragger {...props} disabled={uploading}>
           <p className="ant-upload-drag-icon">
             <InboxOutlined />

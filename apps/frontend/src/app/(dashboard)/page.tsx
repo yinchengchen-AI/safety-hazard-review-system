@@ -73,40 +73,40 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <Row gutter={16}>
-        <Col span={6}>
+      <Row gutter={[16, 16]}>
+        <Col xs={12} md={6}>
           <Card>
             <Statistic title="隐患总数" value={data.total_hazards} prefix={<FileSearchOutlined />} />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} md={6}>
           <Card>
             <Statistic title="待复核" value={data.pending_count} prefix={<ClockCircleOutlined />} valueStyle={{ color: '#faad14' }} />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} md={6}>
           <Card>
             <Statistic title="已通过" value={data.passed_count} prefix={<CheckCircleOutlined />} valueStyle={{ color: '#52c41a' }} />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} md={6}>
           <Card>
             <Statistic title="未通过" value={data.failed_count} prefix={<CloseCircleOutlined />} valueStyle={{ color: '#f5222d' }} />
           </Card>
         </Col>
       </Row>
-      <Row gutter={16} style={{ marginTop: 16 }}>
-        <Col span={8}>
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} md={8}>
           <Card title="覆盖率">
             <Statistic title="已复核 / 总数" value={data.coverage_rate * 100} precision={2} suffix="%" />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} md={8}>
           <Card title="通过率">
             <Statistic title="已通过 / 已复核" value={data.pass_rate * 100} precision={2} suffix="%" />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} md={8}>
           <Card title="复核任务">
             <Statistic title="任务总数" value={data.task_count} />
           </Card>

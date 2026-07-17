@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { Layout, Menu, Button, Avatar, Dropdown, Badge, List, Empty, Breadcrumb } from 'antd'
+import { Layout, Menu, Button, Avatar, Dropdown, Badge, List, Empty, Breadcrumb, Drawer } from 'antd'
 import {
   HomeOutlined,
   WarningOutlined,
@@ -70,8 +70,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { unreadCount, notifications, fetchUnreadCount, fetchNotifications, markRead, markAllRead } =
     useNotificationStore()
   const [collapsed, setCollapsed] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openKeys, setOpenKeys] = useState<string[]>([])
   const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)')
+    const update = () => setIsMobile(media.matches)
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
 
   const fetchUnreadRef = useRef(fetchUnreadCount)
   fetchUnreadRef.current = fetchUnreadCount
@@ -132,7 +142,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   )
 
   const dropdown = (
-    <div style={{ width: 360, maxHeight: 400, overflow: 'auto', background: '#fff', borderRadius: 8, boxShadow: '0 6px 16px rgba(0,0,0,0.08)' }}>
+    <div className="notification-dropdown" style={{ maxHeight: 400, overflow: 'auto', background: '#fff', borderRadius: 8, boxShadow: '0 6px 16px rgba(0,0,0,0.08)' }}>
       <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontWeight: 600 }}>通知</span>
         {unreadCount > 0 && (
@@ -163,7 +173,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider collapsible collapsed={collapsed} trigger={null} theme="light" width={200} collapsedWidth={80} style={{ overflow: 'auto', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 10 }}>
+      <Sider className="dashboard-sider" collapsible collapsed={collapsed} trigger={null} theme="light" width={200} collapsedWidth={80} style={{ overflow: 'auto', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 10 }}>
         <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: collapsed ? 0 : 10, padding: collapsed ? 0 : '0 16px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #1677ff 0%, #0958d9 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16, fontWeight: 'bold', flexShrink: 0 }}>安</div>
           {!collapsed && <div style={{ fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden' }}>隐患复核系</div>}
@@ -172,17 +182,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Menu mode="inline" selectedKeys={[pathname]} openKeys={openKeys} onOpenChange={setOpenKeys} items={items} style={{ borderRight: 'none' }} />
         </div>
       </Sider>
+      <Drawer
+        title="隐患复核系统"
+        placement="left"
+        width={280}
+        open={isMobile && mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        styles={{ body: { padding: 0 }, header: { padding: '16px 20px' } }}
+      >
+        <Menu
+          mode="inline"
+          selectedKeys={[pathname]}
+          openKeys={openKeys}
+          onOpenChange={setOpenKeys}
+          onClick={() => setMobileMenuOpen(false)}
+          items={items}
+          style={{ borderRight: 'none' }}
+        />
+      </Drawer>
       <Layout>
-        <Header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', position: 'sticky', top: 0, zIndex: 200, marginLeft: collapsed ? 80 : 200, marginRight: 20, width: 'auto' }}>
+        <Header className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', position: 'sticky', top: 0, zIndex: 200, marginLeft: isMobile ? 0 : (collapsed ? 80 : 200), marginRight: isMobile ? 0 : 20, width: 'auto', background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
-            <Button type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} style={{ fontSize: 16, width: 36, height: 36, flexShrink: 0 }} />
-            <Breadcrumb
+            <Button type="text" icon={isMobile ? <MenuUnfoldOutlined /> : (collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />)} onClick={() => isMobile ? setMobileMenuOpen(true) : setCollapsed(!collapsed)} style={{ fontSize: 16, width: 36, height: 36, flexShrink: 0 }} aria-label={isMobile ? '打开导航菜单' : '折叠侧栏'} />
+            <Breadcrumb className="dashboard-breadcrumb"
               items={[{ title: pathname === '/' ? '首页' : pathname.split('/').filter(Boolean).join(' / ') }]}
               style={{ marginLeft: 8 }}
             />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-            <Dropdown open={dropdownOpen} onOpenChange={handleDropdownOpen} dropdownRender={() => dropdown} placement="bottomRight" trigger={['click']}>
+          <div className="dashboard-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+            <Dropdown open={dropdownOpen} onOpenChange={handleDropdownOpen} popupRender={() => dropdown} placement={isMobile ? 'bottom' : 'bottomRight'} trigger={['click']}>
               <Badge count={unreadCount} size="small">
                 <Button type="text" icon={<BellOutlined style={{ fontSize: 18 }} />} />
               </Badge>
@@ -190,13 +218,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Dropdown menu={{ items: userMenu }} placement="bottomRight">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                 <Avatar style={{ background: '#1677ff' }}>{user?.username?.charAt(0) || '用'}</Avatar>
-                <span style={{ fontSize: 14, fontWeight: 500 }}>{user?.username || '用户'}</span>
+                <span className="dashboard-user-name" style={{ fontSize: 14, fontWeight: 500 }}>{user?.username || '用户'}</span>
               </div>
             </Dropdown>
           </div>
         </Header>
-        <Content style={{ margin: 20, marginLeft: collapsed ? 100 : 220, minHeight: 'calc(100vh - 104px)' }}>
-          <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)', minHeight: '100%', padding: 24 }}>
+        <Content className="dashboard-content" style={{ margin: 20, marginLeft: isMobile ? 0 : (collapsed ? 100 : 220), minHeight: 'calc(100vh - 104px)' }}>
+          <div className="dashboard-content-shell" style={{ background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)', minHeight: '100%', padding: 24 }}>
             {children}
           </div>
         </Content>

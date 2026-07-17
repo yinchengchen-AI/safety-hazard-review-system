@@ -14,7 +14,6 @@ import {
   Input,
   Select,
   DatePicker,
-  Space,
   Alert,
 } from 'antd'
 import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons'
@@ -227,7 +226,7 @@ export default function HazardDetailPage() {
             message="所有可编辑字段都已填写"
           />
         )}
-        <Descriptions bordered column={2}>
+        <Descriptions bordered column={{ xs: 1, sm: 2 }}>
           <Descriptions.Item label="ID">{hazard.id}</Descriptions.Item>
           <Descriptions.Item label="状态"><Tag color={statusColor}>{statusText}</Tag></Descriptions.Item>
           <Descriptions.Item label="企业">{hazard.enterprise_name || '-'}</Descriptions.Item>
@@ -243,19 +242,19 @@ export default function HazardDetailPage() {
           <Descriptions.Item label="整改责任人">{hazard.rectification_responsible || '-'}</Descriptions.Item>
           <Descriptions.Item label="复核次数">{hazard.review_count}</Descriptions.Item>
           <Descriptions.Item label="当前复核任务">{hazard.current_task_id || '-'}</Descriptions.Item>
-          <Descriptions.Item label="隐患描述" span={2}>
+          <Descriptions.Item label="隐患描述" span={{ xs: 1, sm: 2 }}>
             {hazard.description || '-'}
           </Descriptions.Item>
-          <Descriptions.Item label="判定依据" span={2}>
+          <Descriptions.Item label="判定依据" span={{ xs: 1, sm: 2 }}>
             {hazard.judgment_basis || '-'}
           </Descriptions.Item>
-          <Descriptions.Item label="违反条款" span={2}>
+          <Descriptions.Item label="违反条款" span={{ xs: 1, sm: 2 }}>
             {hazard.violation_clause || '-'}
           </Descriptions.Item>
-          <Descriptions.Item label="整改措施" span={2}>
+          <Descriptions.Item label="整改措施" span={{ xs: 1, sm: 2 }}>
             {hazard.rectification_measures || '-'}
           </Descriptions.Item>
-          <Descriptions.Item label="举报情况备注" span={2}>
+          <Descriptions.Item label="举报情况备注" span={{ xs: 1, sm: 2 }}>
             {hazard.report_remarks || '-'}
           </Descriptions.Item>
           <Descriptions.Item label="创建时间">{hazard.created_at ? new Date(hazard.created_at).toLocaleString('zh-CN') : '-'}</Descriptions.Item>
@@ -270,8 +269,8 @@ export default function HazardDetailPage() {
         onOk={submitEdit}
         okText="保存"
         cancelText="取消"
-        width={680}
-        destroyOnClose
+        width="min(680px, calc(100vw - 32px))"
+        destroyOnHidden
       >
         <Alert
           type="info"

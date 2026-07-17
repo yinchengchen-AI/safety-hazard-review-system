@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react'
-import { Table, Tag, Button, Space, Modal, Form, Input, Select, message } from 'antd'
+import { Table, Tag, Button, Modal, Form, Input, Select, message } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import request from '@/lib/api'
 import { getErrorMessage } from '@/lib/api'
@@ -49,23 +49,26 @@ export default function UsersPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <div className="dashboard-toolbar">
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>新增用户</Button>
-      </Space>
-      <Table
-        rowKey="id"
-        loading={loading}
-        dataSource={items}
-        size="middle"
-        pagination={{ pageSize: 20 }}
-        columns={[
-          { title: '用户名', dataIndex: 'username' },
-          { title: '姓名', dataIndex: 'full_name' },
-          { title: '角色', dataIndex: 'role', width: 100, render: (v: string) => <Tag color={v === 'admin' ? 'red' : 'blue'}>{v}</Tag> },
-          { title: '状态', dataIndex: 'is_active', width: 100, render: (v: boolean) => v ? <Tag color="green">激活</Tag> : <Tag color="red">禁用</Tag> },
-        ]}
-      />
-      <Modal title="新增用户" open={open} onCancel={() => setOpen(false)} onOk={onCreate} okText="保存" cancelText="取消">
+      </div>
+      <div className="dashboard-table-wrap">
+        <Table
+          rowKey="id"
+          loading={loading}
+          dataSource={items}
+          size="middle"
+          scroll={{ x: 620 }}
+          pagination={{ pageSize: 20 }}
+          columns={[
+            { title: '用户名', dataIndex: 'username' },
+            { title: '姓名', dataIndex: 'full_name' },
+            { title: '角色', dataIndex: 'role', width: 100, render: (v: string) => <Tag color={v === 'admin' ? 'red' : 'blue'}>{v}</Tag> },
+            { title: '状态', dataIndex: 'is_active', width: 100, render: (v: boolean) => v ? <Tag color="green">激活</Tag> : <Tag color="red">禁用</Tag> },
+          ]}
+        />
+      </div>
+      <Modal width="min(520px, calc(100vw - 32px))" title="新增用户" open={open} onCancel={() => setOpen(false)} onOk={onCreate} okText="保存" cancelText="取消">
         <Form form={form} layout="vertical">
           <Form.Item name="username" label="用户名" rules={[{ required: true, min: 1, max: 50 }]}><Input /></Form.Item>
           <Form.Item name="password" label="密码" rules={[{ required: true, min: 8 }]}><Input.Password /></Form.Item>

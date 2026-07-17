@@ -36,11 +36,11 @@ export default function LoginPage() {
         alignItems: 'center',
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #f0f7ff 0%, #e6f4ff 50%, #f6ffed 100%)',
-        padding: 24,
+        padding: '24px clamp(12px, 5vw, 24px)',
       }}
     >
       <Card
-        style={{ width: 420, borderRadius: 24, boxShadow: '0 20px 60px rgba(22,119,255,0.12)' }}
+        style={{ width: 'min(420px, 100%)', borderRadius: 24, boxShadow: '0 20px 60px rgba(22,119,255,0.12)' }}
       >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div
