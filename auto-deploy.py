@@ -24,16 +24,26 @@ def print_banner():
     print()
 
 def ssh_connect(password):
-    """建立 SSH 连接"""
+    """建立 SSH 连接。
+
+    P2-11: password can also be a path to an SSH private key when
+    ``SSH_KEY_PATH`` is set. Precedence: key file > env password >
+    interactive prompt. Using a key avoids passing the plaintext
+    password on the command line / via process listing."""
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print(f"[1/4] 正在连接 {HOST} ...")
+    key_path = os.environ.get("SSH_KEY_PATH")
     try:
-        client.connect(HOST, username=USER, password=password, timeout=30)
+        if key_path:
+            pkey = paramiko.RSAKey.from_private_key_file(key_path)
+            client.connect(HOST, username=USER, pkey=pkey, timeout=30)
+        else:
+            client.connect(HOST, username=USER, password=password, timeout=30)
         print("      连接成功!")
         return client
     except paramiko.AuthenticationException:
-        print("[ERROR] 认证失败，请检查用户名和密码")
+        print("[ERROR] 认证失败，请检查用户名和凭据")
         sys.exit(1)
     except Exception as e:
         print(f"[ERROR] 连接失败: {e}")
@@ -59,7 +69,13 @@ def run_deploy(client, password):
     print("-" * 50)
 
     # 使用 sudo -S 传递密码，避免交互式挂起
-    cmd = f"echo '{password}' | sudo -S bash {REMOTE_SCRIPT_PATH}"
+    # P2-11: if password is actually an SSH key path, sudo will
+    # fail on the remote side. Skip the echo entirely when the
+    # operator opted into key-based auth.
+    if os.environ.get("SSH_KEY_PATH"):
+        cmd = f"bash {REMOTE_SCRIPT_PATH}"
+    else:
+        cmd = f"echo '{password}' | sudo -S bash {REMOTE_SCRIPT_PATH}"
     stdin, stdout, stderr = client.exec_command(cmd)
 
     # 实时输出（get_pty=False 时 stdout/stderr 分离，但统一读取避免阻塞）
@@ -103,15 +119,18 @@ def main():
         print(f"[ERROR] 本地脚本 {LOCAL_SCRIPT_PATH} 不存在")
         sys.exit(1)
 
-    # 获取密码（支持环境变量或命令行参数，避免交互式输入问题）
-    password = os.environ.get('DEPLOY_PASSWORD')
-    if not password and len(sys.argv) > 1:
-        password = sys.argv[1]
-    if not password:
-        password = getpass(f"请输入 {USER}@{HOST} 的密码: ")
-    if not password:
-        print("[ERROR] 密码不能为空")
-        sys.exit(1)
+    # 获取凭据。优先级：SSH_KEY_PATH > 环境变量密码 > 命令行参数 > 交互式输入
+    if os.environ.get('SSH_KEY_PATH'):
+        password = os.environ.get('SSH_KEY_PATH')
+    else:
+        password = os.environ.get('DEPLOY_PASSWORD')
+        if not password and len(sys.argv) > 1:
+            password = sys.argv[1]
+        if not password:
+            password = getpass(f"请输入 {USER}@{HOST} 的密码: ")
+        if not password:
+            print("[ERROR] 密码不能为空")
+            sys.exit(1)
 
     print()
 

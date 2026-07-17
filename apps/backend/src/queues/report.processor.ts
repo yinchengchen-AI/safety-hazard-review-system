@@ -8,7 +8,7 @@ import { StorageService } from '../storage/storage.service';
 import { ReportRenderer } from './report-renderer';
 import { NotificationsService } from '../modules/notifications/notifications.service';
 
-@Processor(REPORT_QUEUE, { concurrency: 1 })
+@Processor(REPORT_QUEUE, { concurrency: 2 })
 export class ReportProcessor extends WorkerHost {
   private readonly logger = new Logger(ReportProcessor.name);
 

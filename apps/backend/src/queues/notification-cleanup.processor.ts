@@ -1,29 +1,19 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Job } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 
 /**
- * Soft-deletes notifications older than 30 days that the user has
- * already read. Runs daily at 03:00 (Asia/Shanghai).
- *
- * Implementation note: the BullMQ repeatable job runs in the same
- * worker as the report queue. The pattern below (``Cron`` from
- * @nestjs/schedule) is a fallback so a deployment that hasn't wired
- * BullMQ yet still gets the cleanup.
+ * P2-3: soft-deletes notifications older than 30 days that the user
+ * has already read. Runs daily at 03:00 (Asia/Shanghai) via the
+ * @nestjs/schedule cron registration. The previous BullMQ
+ * processor route was removed because it duplicated the cron and
+ * could double-execute the cleanup if both ran.
  */
-@Processor('notification-queue')
-export class NotificationCleanupProcessor extends WorkerHost {
+@Injectable()
+export class NotificationCleanupProcessor {
   private readonly logger = new Logger(NotificationCleanupProcessor.name);
 
-  constructor(private readonly prisma: PrismaService) {
-    super();
-  }
-
-  async process(job: Job): Promise<{ deleted: number }> {
-    return this.run();
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async scheduledCleanup(): Promise<void> {

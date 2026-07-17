@@ -7,14 +7,10 @@ import { NotificationCleanupProcessor } from './notification-cleanup.processor';
 
 /**
  * Worker entrypoint — runs in a separate container.
- *
- * ROLE=worker is set unconditionally before bootstrap so
- * ``AppModule``'s cron registration picks up the worker default
- * (cron ON for workers, OFF for the API process). Setting it
- * explicitly in code means a container that forgets to export
- * ``ROLE`` in its env still behaves correctly.
+ * ROLE is expected to be set to ``worker`` by the deployment
+ * (docker-compose, k8s manifest, etc.). We no longer default it
+ * in code so the config flows from one place.
  */
-process.env.ROLE = process.env.ROLE ?? 'worker';
 
 async function main(): Promise<void> {
   const log = new Logger('worker');

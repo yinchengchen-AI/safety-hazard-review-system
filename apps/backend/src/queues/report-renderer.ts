@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { chromium } from 'playwright';
 import {
   Document,
   Packer,
@@ -23,6 +22,24 @@ export class ReportRenderer {
    * Render the PDF by converting the report HTML to a binary PDF via
    * Playwright. The caller stores the resulting buffer in MinIO.
    */
+  private browserPromise: Promise<import('playwright').Browser> | null = null;
+
+  private async getBrowser(): Promise<import('playwright').Browser> {
+    if (!this.browserPromise) {
+      this.browserPromise = (async () => {
+        const { chromium } = await import('playwright');
+        // P2-9: --no-sandbox is required when the worker runs as
+        // root inside the Alpine container. --disable-dev-shm-usage
+        // avoids /dev/shm OOM in constrained environments.
+        return chromium.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-dev-shm-usage'],
+        });
+      })();
+    }
+    return this.browserPromise;
+  }
+
   async renderPdf(
     task: { id: string; name: string; created_at: Date | null; users: { username: string } | null },
     taskHazards: Array<{ hazards: { content: string | null; location: string | null; status: string } | null }>,
@@ -37,15 +54,17 @@ ${taskHazards
   .join('')}
 </table></body></html>`;
 
-    let browser;
+    // P2-4: reuse a single browser instance across jobs instead of
+    // launching Chromium per request.
+    const browser = await this.getBrowser();
+    const ctx = await browser.newContext();
     try {
-      browser = await chromium.launch({ headless: true });
-      const page = await browser.newPage();
+      const page = await ctx.newPage();
       await page.setContent(html, { waitUntil: 'networkidle' });
       const pdf = await page.pdf({ format: 'A4', printBackground: true });
       return Buffer.from(pdf);
     } finally {
-      await browser?.close().catch((err) => this.logger.warn(`failed to close browser: ${err.message}`));
+      await ctx.close().catch(() => undefined);
     }
   }
 
