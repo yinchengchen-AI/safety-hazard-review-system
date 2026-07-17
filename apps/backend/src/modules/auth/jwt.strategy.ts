@@ -7,10 +7,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { users } from '@prisma/client';
 
 /**
- * Token priority: Authorization Bearer header > access_token cookie > ?token=
- * query string. The browser SPA uses the cookie; tests and direct API
- * consumers can override with a header. ``?token=`` is kept for the
- * photo URL migration window and will be removed in a later phase.
+ * Token priority: Authorization Bearer header > access_token cookie.
+ * The browser SPA uses the cookie; tests and direct API consumers
+ * can override with a header.
  */
 function extractToken(req: Request): string | null {
   const auth = req.headers['authorization'];
@@ -20,8 +19,6 @@ function extractToken(req: Request): string | null {
   if (req.cookies && typeof req.cookies['access_token'] === 'string') {
     return req.cookies['access_token'];
   }
-  const q = (req.query as Record<string, unknown>).token;
-  if (typeof q === 'string') return q;
   return null;
 }
 
@@ -35,13 +32,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string }): Promise<users> {
+  async validate(payload: { sub: string; ver?: number; role?: string }): Promise<users> {
     // Prisma's soft-delete middleware (Phase 1) already excludes rows
     // where deleted_at is set, so a missing user means either deleted
     // or wrong id.
     const user = await this.prisma.users.findFirst({ where: { id: payload.sub } });
     if (!user) {
       throw new UnauthorizedException('Could not validate credentials');
+    }
+    // P1-6: token_version bump (on password reset / role change /
+    // explicit "log out everywhere") invalidates every token minted
+    // before the bump. Tokens minted before this field existed will
+    // have payload.ver === undefined, which we treat as v0.
+    const claimedVersion = typeof payload.ver === 'number' ? payload.ver : 0;
+    if (claimedVersion !== user.token_version) {
+      throw new UnauthorizedException('Token has been revoked');
     }
     return user;
   }

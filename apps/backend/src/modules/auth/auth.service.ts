@@ -1,9 +1,10 @@
-import { ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashPassword, needsRehash, verifyPassword } from '../../common/security.util';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { LoginRateLimiter } from './login-rate-limiter';
 
 export interface LoginResult {
   access_token: string;
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly audit: AuditLogsService,
+    private readonly rateLimiter: LoginRateLimiter,
   ) {
     const minutes = this.config.get<number>('ACCESS_TOKEN_EXPIRE_MINUTES', 480);
     this.cookieMaxAgeMs = minutes * 60 * 1000;
@@ -78,19 +80,48 @@ export class AuthService {
     });
   }
 
-  async login(username: string, password: string): Promise<LoginResult> {
-    const user = await this.validateCredentials(username, password);
-    const access_token = await this.jwt.signAsync({ sub: user.id, role: user.role });
-    return {
-      access_token,
-      token_type: 'bearer',
-      user: {
-        id: user.id,
-        username: user.username,
+  /**
+   * Authenticate and mint a JWT. ``ip`` (best-effort from
+   * x-forwarded-for or socket) drives the per-(IP, username)
+   * rate limiter in addition to the global @nestjs/throttler.
+   */
+  async login(username: string, password: string, ip = ''): Promise<LoginResult> {
+    // Pre-check so we never even hit the DB when the limit is hit.
+    const pre = await this.rateLimiter.record(ip, username, 'failure');
+    if (pre.blocked) {
+      throw new HttpException(
+        `登录尝试过于频繁，请 ${pre.retryAfterSec ?? 60} 秒后再试`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    try {
+      const user = await this.validateCredentials(username, password);
+      // Reset counters on success.
+      await this.rateLimiter.record(ip, username, 'success');
+      const access_token = await this.jwt.signAsync({
+        sub: user.id,
         role: user.role,
-        is_active: user.is_active,
-      },
-    };
+        ver: user.token_version,
+      });
+      return {
+        access_token,
+        token_type: 'bearer',
+        user: {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          is_active: user.is_active,
+        },
+      };
+    } catch (err) {
+      // The pre-check already incremented; record this attempt too
+      // so a partial key still counts toward its limit.
+      if (!(err instanceof HttpException && err.getStatus() === HttpStatus.TOO_MANY_REQUESTS)) {
+        await this.rateLimiter.record(ip, username, 'failure');
+      }
+      throw err;
+    }
   }
 
   /** HTTP cookie helpers. The browser SPA relies on the httpOnly

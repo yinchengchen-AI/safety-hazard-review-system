@@ -33,24 +33,60 @@ export class UrlSignerService {
     return createHmac('sha256', this.secret).update(payload).digest('hex');
   }
 
-  signPhotoUrl(photoId: string, size: 'original' | 'thumbnail'): string {
+  signPhotoUrl(
+    photoId: string,
+    size: 'original' | 'thumbnail',
+    uaHint: string | null = null,
+  ): string {
     const exp = Math.floor(Date.now() / 1000) + this.ttl;
-    const sig = this.sign(this.payload(photoId, size, exp));
-    return `/api/v1/photos/${photoId}/image?size=${size}&exp=${exp}&sig=${sig}`;
+    const baseSig = this.sign(this.payload(photoId, size, exp));
+    const sig = uaHint ? this.signWithHint(this.payload(photoId, size, exp), uaHint) : baseSig;
+    const hintParam = uaHint ? `&u=${encodeURIComponent(uaHint)}` : '';
+    // P1-14: optionally bind the signature to the first 16 chars
+    // of the requesting UA so a captured URL won't replay cleanly
+    // from a different client (Referer leak, shared logs, packet
+    // dump). Caller passes null to keep the URL portable.
+    return `/api/v1/photos/${photoId}/image?size=${size}&exp=${exp}&sig=${sig}${hintParam}`;
+  }
+
+  private signWithHint(payload: Buffer, uaHint: string): string {
+    return createHmac('sha256', this.secret)
+      .update(Buffer.concat([payload, Buffer.from('|' + uaHint)]))
+      .digest('hex');
   }
 
   buildLegacyTokenUrl(photoId: string, size: string, token: string): string {
     return `/api/v1/photos/${photoId}/image?size=${size}&token=${token}`;
   }
 
-  verify(photoId: string, size: string, exp: number, sig: string): boolean {
+  verify(
+    photoId: string,
+    size: string,
+    exp: number,
+    sig: string,
+    uaHint: string | null = null,
+  ): boolean {
     if (!sig || !exp) return false;
     const expInt = Number(exp);
     if (!Number.isFinite(expInt)) return false;
     if (expInt < Math.floor(Date.now() / 1000)) return false;
-    const expected = this.sign(this.payload(photoId, size, expInt));
+    const expectedPlain = this.sign(this.payload(photoId, size, expInt));
+    const expectedHinted = uaHint
+      ? this.signWithHint(this.payload(photoId, size, expInt), uaHint)
+      : null;
     try {
-      return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(sig, 'hex'));
+      const provided = Buffer.from(sig, 'hex');
+      if (expectedHinted) {
+        const hintBuf = Buffer.from(expectedHinted, 'hex');
+        if (hintBuf.length === provided.length && timingSafeEqual(hintBuf, provided)) {
+          return true;
+        }
+      }
+      const plainBuf = Buffer.from(expectedPlain, 'hex');
+      if (plainBuf.length === provided.length && timingSafeEqual(plainBuf, provided)) {
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }

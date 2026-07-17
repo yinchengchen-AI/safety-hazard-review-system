@@ -26,9 +26,11 @@ export const envSchema = z
       .transform((v) => v === 'true'),
     ROLE: z.string().default('api'),
     ALGORITHM: z.string().default('HS256'),
+    // P1-6: shorter access token lifetime (60 min). Refresh
+    // happens via the token_version bump on password change.
     ACCESS_TOKEN_EXPIRE_MINUTES: z
       .string()
-      .default('480')
+      .default('60')
       .transform((v) => parseInt(v, 10))
       .pipe(z.number().int().positive()),
     ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
