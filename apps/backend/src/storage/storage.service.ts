@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand, CreateBucketCommand, NotFound } from '@aws-sdk/client-s3';
+import { randomBytes } from 'crypto';
 import sharp from 'sharp';
 
 @Injectable()
@@ -103,6 +104,8 @@ export class StorageService implements OnModuleInit {
   }
 
   private randomId(): string {
-    return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    // P2-2: randomUUID would be ideal but we keep 16 chars to fit
+    // existing key layouts. randomBytes is cryptographically secure.
+    return randomBytes(8).toString('hex');
   }
 }

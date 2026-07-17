@@ -198,71 +198,74 @@ export class BatchesService {
     }
     const name = filename.replace(/\.[^.]+$/, '') || `import_${new Date().toISOString().slice(0, 10)}`;
 
-    const batch = await this.prisma.batches.create({
-      data: {
-        id: randomUUID(),
-        name,
-        file_name: filename,
-        total_count: rows.length,
-        success_count: 0,
-        fail_count: 0,
-        creator_id: userId,
-      },
-    });
-
-    // Sanitise the filename before using it as an object key:
-    // strip any path components, keep only the basename, and
-    // restrict to a safe character set. Otherwise the key could
-    // be `../../etc/passwd` and bypass bucket policy assumptions.
     const safeBase = (filename
       .split(/[\\/]/).pop() ?? 'upload.xlsx')
       .replace(/[^A-Za-z0-9._-]+/g, '_')
       .slice(0, 120) || 'upload.xlsx';
-    const originalKey = `batches/${batch.id}/original/${safeBase}`;
+    const batchId = randomUUID();
+    const originalKey = `batches/${batchId}/original/${safeBase}`;
     const contentType = filename.toLowerCase().endsWith('.csv')
       ? 'text/csv'
       : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    // Upload to MinIO BEFORE the transaction starts so the DB
+    // transaction stays short. On transaction failure we delete
+    // the orphaned object below.
     await this.storage.putObject(originalKey, buffer, contentType);
 
     const errors: { row_index: number; reason: string }[] = [];
     let success = 0;
-    // Two-level cache: keyed by credit_code (preferred identity) or
-    // by enterprise name (fallback). Both keys map to the same
-    // enterprise id so a row that comes in with a credit_code can
-    // still hit a name-only cache lookup and vice versa.
     const enterpriseCache = new Map<string, string>();
-
-    for (let i = 0; i < rows.length; i++) {
-      const rowNum = i + 2;
-      const row = rows[i];
-      const result = await this._processRow(batch.id, row, enterpriseCache);
-      if (result.reason) {
-        errors.push({ row_index: rowNum, reason: result.reason });
-        await this.prisma.import_errors.create({
+    let updated;
+    try {
+      updated = await this.prisma.$transaction(async (tx) => {
+        const batch = await tx.batches.create({
           data: {
-            batch_id: batch.id,
-            row_index: rowNum,
-            raw_data: JSON.stringify(row),
-            reason: result.reason,
+            id: batchId,
+            name,
+            file_name: filename,
+            total_count: rows.length,
+            success_count: 0,
+            fail_count: 0,
+            creator_id: userId,
+            original_file_path: originalKey,
           },
         });
-      } else {
-        success += 1;
-      }
+        for (let i = 0; i < rows.length; i++) {
+          const rowNum = i + 2;
+          const row = rows[i];
+          const result = await this._processRowInner(tx, batch.id, row, enterpriseCache);
+          if (result?.reason) {
+            errors.push({ row_index: rowNum, reason: result.reason });
+            await tx.import_errors.create({
+              data: {
+                batch_id: batch.id,
+                row_index: rowNum,
+                raw_data: JSON.stringify(row),
+                reason: result.reason,
+              },
+            });
+          } else {
+            success += 1;
+          }
+        }
+        return tx.batches.update({
+          where: { id: batch.id },
+          data: { success_count: success, fail_count: errors.length },
+        });
+      }, { timeout: 120_000 });
+    } catch (err) {
+      await this.storage.deleteObject(originalKey).catch(() => undefined);
+      throw err;
     }
-
-    const updated = await this.prisma.batches.update({
-      where: { id: batch.id },
-      data: { success_count: success, fail_count: errors.length, original_file_path: originalKey },
-    });
 
     await this.audit.record({
       userId,
       action: 'batch.import',
       targetType: 'batch',
-      targetId: batch.id,
+      targetId: updated.id,
       detail: { name, total: rows.length, success, fail: errors.length },
-    });
+    }).catch(() => undefined);
 
     return {
       batch: toBatchResponse(updated, 0, null),
@@ -316,17 +319,6 @@ export class BatchesService {
       row[key] = raw.trim();
     }
     return row as unknown as HazardImportRow;
-  }
-
-  private async _processRow(
-    batchId: string,
-    row: HazardImportRow,
-    enterpriseCache: Map<string, string>,
-  ): Promise<{ reason?: string }> {
-    const savepoint = await this.prisma.$transaction(async (tx) => {
-      return await this._processRowInner(tx, batchId, row, enterpriseCache);
-    });
-    return savepoint ?? {};
   }
 
   private async _processRowInner(
@@ -445,14 +437,6 @@ export class BatchesService {
       await tx.import_errors.deleteMany({
         where: { batch_id: b.id },
       });
-    });
-
-    await this.audit.record({
-      userId: currentUserId ?? null,
-      action: 'batch.delete',
-      targetType: 'batch',
-      targetId: b.id,
-      detail: { name: b.name },
     });
   }
 

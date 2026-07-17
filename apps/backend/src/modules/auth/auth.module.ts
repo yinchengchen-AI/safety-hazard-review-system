@@ -5,6 +5,8 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
+import { LoginRateLimiter } from './login-rate-limiter';
+import { redisProvider } from '../../queues/redis.provider';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
 @Module({
@@ -20,7 +22,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
     }),
     AuditLogsModule,
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, LoginRateLimiter, redisProvider],
   controllers: [AuthController],
   exports: [AuthService, JwtModule],
 })

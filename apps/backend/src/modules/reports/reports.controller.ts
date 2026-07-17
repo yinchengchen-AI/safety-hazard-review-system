@@ -4,6 +4,8 @@ import { ReportsService } from './reports.service';
 import { StorageService } from '../../storage/storage.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ActiveUserGuard } from '../../common/guards';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { users } from '@prisma/client';
 
 @Controller('api/v1/reports')
 @UseGuards(JwtAuthGuard, ActiveUserGuard)
@@ -14,13 +16,21 @@ export class ReportsController {
   ) {}
 
   @Post(':taskId/generate')
-  async generate(@Param('taskId') taskId: string): Promise<{ task_id: string; message: string }> {
+  async generate(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: users,
+  ): Promise<{ task_id: string; message: string }> {
+    await this.reports.assertCanDownload(taskId, user.id, user.role);
     await this.reports.createAndEnqueue(taskId, { force: true });
     return { task_id: taskId, message: 'Report generation started' };
   }
 
   @Get(':taskId/status')
-  status(@Param('taskId') taskId: string) {
+  async status(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: users,
+  ) {
+    await this.reports.assertCanDownload(taskId, user.id, user.role);
     return this.reports.getStatus(taskId);
   }
 
@@ -31,13 +41,19 @@ export class ReportsController {
    * bound to a decorated parameter, NOT relied on via
    * ``res.req.query``, so the type is enforced at the Nest
    * validation layer and a malformed value becomes a 400.
+   *
+   * Only the task creator and active admins can download. 403 is
+   * returned for non-allowed users (after the existence check) so
+   * we don't leak task existence via a 404-vs-403 oracle.
    */
   @Get(':taskId/download')
   async download(
     @Param('taskId') taskId: string,
     @Query('format') format: 'word' | 'pdf' = 'pdf',
+    @CurrentUser() user: users,
     @Res() res: Response,
   ): Promise<void> {
+    await this.reports.assertCanDownload(taskId, user.id, user.role);
     const report = await this.reports.getStatus(taskId);
     if (report.status !== 'completed') {
       res.status(404).json({ detail: 'Report not ready', status_code: 404 });
@@ -49,7 +65,16 @@ export class ReportsController {
       res.status(404).json({ detail: `${isPdf ? 'pdf' : 'word'} report not available`, status_code: 404 });
       return;
     }
-    const body = await this.storage.getObject(key);
+    let body: Buffer;
+    try {
+      body = await this.storage.getObject(key);
+    } catch {
+      // The DB row exists with a path, but the underlying object is
+      // missing — usually a leftover after a failed worker run. Tell
+      // the caller the file isn't available rather than 500.
+      res.status(404).json({ detail: 'Report file not found in storage', status_code: 404 });
+      return;
+    }
     res.setHeader(
       'Content-Type',
       isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

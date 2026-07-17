@@ -21,9 +21,24 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   let payload: { role?: string } | null = null
   if (token) {
     try {
-      const secret = new TextEncoder().encode(process.env.SECRET_KEY || '')
-      const { payload: p } = await jwtVerify(token, secret)
-      payload = p as { role?: string }
+      // P1-11: pull SECRET_KEY from serverRuntimeConfig (server-only)
+      // so it never ends up in the client bundle. The build fails
+      // fast if it is missing in staging/production.
+      const rawSecret =
+        (process.env as { SECRET_KEY?: string }).SECRET_KEY ||
+        (process.env as { serverRuntimeConfig?: { secretKey?: string } })
+          .serverRuntimeConfig?.secretKey ||
+        ''
+      if (!rawSecret) {
+        // No key configured -> treat as unauthenticated so we don't
+        // crash on missing config. The build-time check in
+        // next.config.js covers staging/production.
+        payload = null
+      } else {
+        const secret = new TextEncoder().encode(rawSecret)
+        const { payload: p } = await jwtVerify(token, secret)
+        payload = p as { role?: string }
+      }
     } catch {
       // Invalid or expired token: treat as unauthenticated.
       payload = null

@@ -4,6 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+
+type HazardWithRelations = Prisma.hazardsGetPayload<{
+  include: { enterprises: true; batches: true };
+}>;
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import {
@@ -15,9 +19,9 @@ import {
   UpdateHazardDto,
 } from './dto/hazard.dto';
 
-type HazardJoined = any;
 
-function toResponse(h: HazardJoined): HazardResponseDto {
+
+function toResponse(h: HazardWithRelations): HazardResponseDto {
   return {
     id: h.id,
     enterprise_id: h.enterprise_id,

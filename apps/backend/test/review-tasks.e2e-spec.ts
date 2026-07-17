@@ -153,7 +153,11 @@ describe('ReviewTasks (e2e)', () => {
         ],
       })
       .expect(200);
-    expect(res.body.length).toBe(2);
+    // P2-5: batchReview now returns { items, failed } instead of a
+    // bare array, so individual row failures don't roll back the
+    // whole batch.
+    expect(res.body.items.length).toBe(2);
+    expect(res.body.failed.length).toBe(0);
 
     const a = await prisma.hazards.findFirst({ where: { id: h1 } });
     const b = await prisma.hazards.findFirst({ where: { id: h2 } });

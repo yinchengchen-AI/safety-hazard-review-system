@@ -85,10 +85,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const fetchUnreadRef = useRef(fetchUnreadCount)
   fetchUnreadRef.current = fetchUnreadCount
+  // P2-7: pause the 30s polling while the tab is hidden so the
+  // browser can throttle background timers and we don't ping Redis
+  // for nothing.
   useEffect(() => {
-    fetchUnreadRef.current()
-    const id = setInterval(() => fetchUnreadRef.current(), 30000)
-    return () => clearInterval(id)
+    let id: ReturnType<typeof setInterval> | null = null
+    const start = () => {
+      if (id) return
+      fetchUnreadRef.current()
+      id = setInterval(() => {
+        if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+          fetchUnreadRef.current()
+        }
+      }, 30000)
+    }
+    const stop = () => {
+      if (id) { clearInterval(id); id = null }
+    }
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') start()
+      else stop()
+    }
+    start()
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      stop()
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [])
 
   useEffect(() => { fetchUser() }, [fetchUser])

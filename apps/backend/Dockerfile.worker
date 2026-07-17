@@ -13,6 +13,11 @@ RUN npx prisma generate && npm run build
 FROM docker.m.daocloud.io/node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# P0-6: install CJK fonts so Playwright-rendered PDFs / DOCX exports
+# contain real Chinese glyphs instead of tofu boxes. fontconfig is
+# required so fc-match resolves the requested family.
+RUN apk add --no-cache fontconfig font-noto-cjk ttf-dejavu \
+    && fc-cache -fv > /dev/null
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma

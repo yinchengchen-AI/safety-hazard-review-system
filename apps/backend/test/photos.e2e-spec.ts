@@ -100,4 +100,80 @@ describe('Photos (e2e)', () => {
     const photo = await prisma.photos.findFirst({ where: { task_hazard_id: th.id } });
     expect(photo?.task_hazard_id).toBe(th.id);
   });
+
+  // P0-1: serve without sig/exp must return 401. With the legacy
+  // ?token=<jwt> path removed the photo endpoint refuses any
+  // unauthenticated request.
+  it('rejects photo fetch without HMAC signature (P0-1)', async () => {
+    const png = makePng();
+    const up = await request(app.getHttpServer())
+      .post('/api/v1/photos/upload')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .attach('file', png, { filename: 'tiny.png', contentType: 'image/png' })
+      .expect(201);
+
+    const photo = await prisma.photos.findFirst({ where: { temp_token: up.body.temp_token } });
+
+    // No sig / exp / token at all → 401.
+    const r1 = await request(app.getHttpServer())
+      .get(`/api/v1/photos/${photo!.id}/image?size=original`)
+      .expect(401);
+    expect(r1.body.detail).toMatch(/signed URL/);
+
+    // Legacy ?token=<jwt> is no longer accepted even with a valid token.
+    const r2 = await request(app.getHttpServer())
+      .get(`/api/v1/photos/${photo!.id}/image?size=original&token=${adminToken}`)
+      .expect(401);
+    expect(r2.body.detail).toMatch(/signed URL/);
+  });
+
+  // P0-3: a non-uploader non-admin user must not be able to bind
+  // someone else's photo. We need a second user for this.
+  it('rejects bind from non-uploader non-admin (P0-3)', async () => {
+    // Create an inspector user (non-admin) with a known password.
+    const inspectorName = `inspector_${Date.now()}`;
+    const inspectorHash = bcrypt.hashSync('inspector-pw', 12);
+    await prisma.users.create({
+      data: { username: inspectorName, password_hash: inspectorHash, role: 'inspector', is_active: true },
+    });
+    const inspectorLogin = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({ username: inspectorName, password: 'inspector-pw' })
+      .expect(200);
+    const inspectorCookie = inspectorLogin.headers['set-cookie']?.[0] ?? '';
+    const inspectorMatch = inspectorCookie.match(/access_token=([^;]+)/);
+    const inspectorToken = inspectorMatch ? decodeURIComponent(inspectorMatch[1]) : '';
+
+    // Admin uploads a photo (admin is the uploader).
+    const png = makePng();
+    const up = await request(app.getHttpServer())
+      .post('/api/v1/photos/upload')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .attach('file', png, { filename: 'tiny.png', contentType: 'image/png' })
+      .expect(201);
+
+    // Inspector tries to bind admin's photo → 400 (P0-3).
+    const ent = await prisma.enterprises.create({ data: { name: `bind_ent_${Date.now()}` } });
+    const batch = await prisma.batches.create({ data: { name: 'b', total_count: 1, success_count: 1, fail_count: 0 } });
+    const h = await prisma.hazards.create({
+      data: { enterprise_id: ent.id, batch_id: batch.id, content: 'x', description: 'x', status: 'pending', review_count: 0 },
+    });
+    const admin = await prisma.users.findFirst({ where: { username: 'admin' } });
+    const t = await prisma.review_tasks.create({
+      data: { id: require('crypto').randomUUID(), name: 'P', creator_id: admin!.id, status: 'pending' },
+    });
+    const th = await prisma.task_hazards.create({ data: { task_id: t.id, hazard_id: h.id } });
+
+    const r = await request(app.getHttpServer())
+      .post(`/api/v1/photos/${up.body.temp_token}/bind`)
+      .set('Authorization', `Bearer ${inspectorToken}`)
+      .send({ task_hazard_id: th.id })
+      .expect(400);
+    expect(r.body.detail).toMatch(/uploader or an admin/);
+
+    // Verify the bind did not happen.
+    const photo = await prisma.photos.findFirst({ where: { temp_token: up.body.temp_token } });
+    expect(photo?.task_hazard_id).toBeNull();
+    expect(photo?.temp_token).toBe(up.body.temp_token);
+  });
 });

@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'crypto';
@@ -48,6 +48,19 @@ export class ReportsService {
       reportId = updated.id;
     } else if (existing.status === 'completed' && !options.force) {
       return;
+    } else if (existing.status === 'completed' && options.force) {
+      // Force re-run must reset the row so the worker does not bail
+      // out at its defensive "already completed" check.
+      const updated = await this.prisma.reports.update({
+        where: { id: existing.id },
+        data: {
+          status: 'pending',
+          pdf_path: null,
+          word_path: null,
+          error_message: null,
+        },
+      });
+      reportId = updated.id;
     } else {
       reportId = existing.id;
     }
@@ -69,5 +82,27 @@ export class ReportsService {
     const report = await this.prisma.reports.findFirst({ where: { task_id: taskId } });
     if (!report) throw new NotFoundException('Report not found');
     return report;
+  }
+
+  /**
+   * Confirm the requesting user is allowed to download artifacts
+   * for a task. The task creator and any active admin may read
+   * the report; everyone else gets 403 so we don't leak task
+   * existence via a 404-vs-403 oracle.
+   */
+  async assertCanDownload(
+    taskId: string,
+    userId: string,
+    userRole: string,
+  ): Promise<void> {
+    if (userRole === 'admin') return;
+    const task = await this.prisma.review_tasks.findFirst({
+      where: { id: taskId },
+      select: { creator_id: true },
+    });
+    if (!task) throw new NotFoundException('Report not found');
+    if (task.creator_id !== userId) {
+      throw new ForbiddenException('You do not have access to this report');
+    }
   }
 }

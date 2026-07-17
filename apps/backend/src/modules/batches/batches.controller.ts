@@ -13,7 +13,8 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
-} from '@nestjs/common';
+} from '@nestjs/common'
+import { MaxIntPipe } from '../../common/pipes/max-int.pipe';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { BatchesService } from './batches.service';
@@ -36,8 +37,8 @@ export class BatchesController {
 
   @Get()
   list(
-    @Query('page', new ParseIntPipe({ optional: true })) page = 1,
-    @Query('page_size', new ParseIntPipe({ optional: true })) pageSize = 10,
+    @Query('page', new MaxIntPipe({ optional: true })) page = 1,
+    @Query('page_size', new MaxIntPipe({ optional: true })) pageSize = 10,
   ): Promise<BatchResponseDto[]> {
     return this.batches.list(page, pageSize);
   }

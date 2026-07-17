@@ -86,6 +86,7 @@ export class PhotosService {
         width: w,
         height: h,
         temp_token: tempToken,
+        uploader_id: currentUserId ?? null,
       },
     });
 
@@ -107,9 +108,34 @@ export class PhotosService {
     };
   }
 
-  async bind(tempToken: string, dto: PhotoBindRequestDto, currentUserId?: string): Promise<void> {
+  async bind(
+    tempToken: string,
+    dto: PhotoBindRequestDto,
+    currentUserId?: string,
+    currentUserRole?: string,
+  ): Promise<void> {
+    if (!currentUserId) throw new BadRequestException('Authentication required');
     const photo = await this.prisma.photos.findFirst({ where: { temp_token: tempToken } });
     if (!photo) throw new NotFoundException('Photo not found');
+    // Only the uploader or an admin may attach a photo to a
+    // task_hazard row. Without this check anyone who learns a
+    // temp_token could attach the wrong photo to the wrong task.
+    if (currentUserRole !== 'admin' && photo.uploader_id !== currentUserId) {
+      throw new BadRequestException('Only the uploader or an admin can bind this photo');
+    }
+    // Confirm the task_hazard row exists and belongs to a
+    // pending task. Binding to a completed/cancelled task would
+    // alter historical evidence.
+    const th = await this.prisma.task_hazards.findFirst({
+      where: { id: dto.task_hazard_id },
+      include: { review_tasks: true },
+    });
+    if (!th || !th.review_tasks) {
+      throw new BadRequestException('Target task_hazard does not exist');
+    }
+    if (th.review_tasks.status !== 'pending') {
+      throw new BadRequestException('Cannot bind photo to a completed or cancelled task');
+    }
     await this.prisma.photos.update({
       where: { id: photo.id },
       data: { task_hazard_id: dto.task_hazard_id, temp_token: null },
@@ -128,28 +154,16 @@ export class PhotosService {
     size: 'original' | 'thumbnail',
     sig: string,
     exp: number,
+    uaHint: string | null = null,
   ): Promise<{ body: Buffer; contentType: string } | null> {
-    if (!this.signer.verify(photoId, size, exp, sig)) return null;
-    return this.serve(photoId, size, false);
-  }
-
-  async serveLegacy(
-    photoId: string,
-    size: 'original' | 'thumbnail',
-    userId: string,
-  ): Promise<{ body: Buffer; contentType: string; legacy: boolean } | null> {
-    const user = await this.prisma.users.findFirst({
-      where: { id: userId, is_active: true },
-    });
-    if (!user) return null;
-    return this.serve(photoId, size, true);
+    if (!this.signer.verify(photoId, size, exp, sig, uaHint)) return null;
+    return this.serve(photoId, size);
   }
 
   private async serve(
     photoId: string,
     size: 'original' | 'thumbnail',
-    legacy: boolean,
-  ): Promise<{ body: Buffer; contentType: string; legacy: boolean } | null> {
+  ): Promise<{ body: Buffer; contentType: string } | null> {
     const photo = await this.prisma.photos.findFirst({ where: { id: photoId } });
     if (!photo) return null;
     if (photo.task_hazard_id !== null) {
@@ -164,15 +178,23 @@ export class PhotosService {
     const key = size === 'original' ? photo.original_path : photo.thumbnail_path;
     try {
       const body = await this.storage.getObject(key);
-      return { body, contentType: photo.mime_type ?? 'image/jpeg', legacy };
+      return { body, contentType: photo.mime_type ?? 'image/jpeg' };
     } catch {
       return null;
     }
   }
 
-  async delete(photoId: string, currentUserId?: string): Promise<void> {
+  async delete(
+    photoId: string,
+    currentUserId?: string,
+    currentUserRole?: string,
+  ): Promise<void> {
+    if (!currentUserId) throw new BadRequestException('Authentication required');
     const photo = await this.prisma.photos.findFirst({ where: { id: photoId } });
     if (!photo) throw new NotFoundException('Photo not found');
+    if (currentUserRole !== 'admin' && photo.uploader_id !== currentUserId) {
+      throw new BadRequestException('Only the uploader or an admin can delete this photo');
+    }
     if (photo.task_hazard_id !== null) {
       const th = await this.prisma.task_hazards.findFirst({
         where: { id: photo.task_hazard_id },

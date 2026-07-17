@@ -1,4 +1,5 @@
-import { Controller, Get, HttpCode, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common'
+import { MaxIntPipe } from '../../common/pipes/max-int.pipe';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ActiveUserGuard } from '../../common/guards';
@@ -13,8 +14,8 @@ export class NotificationsController {
   @Get()
   list(
     @CurrentUser() user: users,
-    @Query('page', new ParseIntPipe({ optional: true })) page = 1,
-    @Query('page_size', new ParseIntPipe({ optional: true })) pageSize = 20,
+    @Query('page', new MaxIntPipe({ optional: true })) page = 1,
+    @Query('page_size', new MaxIntPipe({ optional: true })) pageSize = 20,
   ) {
     return this.notifications.list(user.id, page, pageSize);
   }

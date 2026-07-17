@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { InjectMetric } from '@willsoto/nestjs-prometheus';
+import { Counter } from 'prom-client';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditContextStore } from '../../common/audit-context';
@@ -26,7 +28,11 @@ function sanitize(value: unknown, depth = 0): unknown {
 export class AuditLogsService {
   private readonly logger = new Logger(AuditLogsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @InjectMetric('audit_write_failures_total')
+    private readonly failureCounter: Counter<string>,
+  ) {}
 
   /**
    * Persist a single audit row. ``requestInfo`` is optional; when
@@ -74,7 +80,15 @@ export class AuditLogsService {
         },
       });
     } catch (err) {
-      this.logger.warn(`audit log write failed: ${(err as Error).message}`);
+      // P1-7: audit failures used to be silently swallowed. We now
+      // log at error level AND bump a Prometheus counter so SRE
+      // dashboards can alert on persistent audit-write failures.
+      this.logger.error(`audit log write failed: ${(err as Error).message}`);
+      try {
+        this.failureCounter.inc({ kind: 'audit' });
+      } catch {
+        // metric may not be registered in tests; ignore
+      }
     }
   }
 

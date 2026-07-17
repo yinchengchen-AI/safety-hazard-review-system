@@ -81,10 +81,17 @@ export class EnterprisesService {
     return toResponse(e);
   }
 
-  async update(id: string, dto: UpdateEnterpriseDto): Promise<EnterpriseResponseDto> {
+  async update(id: string, dto: UpdateEnterpriseDto, currentUserId?: string): Promise<EnterpriseResponseDto> {
     const e = await this.prisma.enterprises.findFirst({ where: { id } });
     if (!e) throw new NotFoundException('Enterprise not found');
     const updated = await this.prisma.enterprises.update({ where: { id: e.id }, data: { ...dto } });
+    await this.audit.record({
+      userId: currentUserId ?? null,
+      action: 'enterprise.update',
+      targetType: 'enterprise',
+      targetId: e.id,
+      detail: { name: e.name, changed: Object.keys(dto) },
+    });
     return toResponse(updated);
   }
 
@@ -151,30 +158,63 @@ export class EnterprisesService {
   async importRows(dto: EnterpriseImportRequestDto): Promise<EnterpriseImportResultDto> {
     const errors: string[] = [];
     let success = 0;
-    for (let i = 0; i < dto.rows.length; i++) {
-      const row = dto.rows[i];
-      const rowNum = i + 2;
-      try {
+    // P2-6: batch the existence checks with a single query per
+    // dimension (name + credit_code) instead of N round-trips.
+    const names = Array.from(
+      new Set(dto.rows.map((r) => r.name?.trim()).filter((n): n is string => !!n)),
+    );
+    const codes = Array.from(
+      new Set(dto.rows.map((r) => r.credit_code).filter((c): c is string => !!c)),
+    );
+    const existing = await this.prisma.enterprises.findMany({
+      where: {
+        OR: [
+          { name: { in: names } },
+          ...(codes.length ? [{ credit_code: { in: codes } }] : []),
+        ],
+      },
+      select: { name: true, credit_code: true },
+    });
+    const nameSet = new Set(existing.map((e) => e.name));
+    const codeSet = new Set(existing.map((e) => e.credit_code).filter((c): c is string => !!c));
+    await this.prisma.$transaction(async (tx) => {
+      for (let i = 0; i < dto.rows.length; i++) {
+        const row = dto.rows[i];
+        const rowNum = i + 2;
         const name = row.name?.trim();
-        if (!name) throw new Error('企业名称不能为空');
-        const dup = await this.prisma.enterprises.findFirst({ where: { name } });
-        if (dup) throw new Error(`企业名称已存在: ${name}`);
-        if (row.credit_code) {
-          const dupCode = await this.prisma.enterprises.findFirst({
-            where: { credit_code: row.credit_code },
-          });
-          if (dupCode) throw new Error(`统一社会信用代码已存在: ${row.credit_code}`);
+        if (!name) {
+          errors.push(`第${rowNum}行: 企业名称不能为空`);
+          continue;
         }
-        await this.prisma.enterprises.create({ data: { ...row, name } });
-        success += 1;
-      } catch (e) {
-        errors.push(`第${rowNum}行: ${(e as Error).message}`);
+        if (nameSet.has(name)) {
+          errors.push(`第${rowNum}行: 企业名称已存在: ${name}`);
+          continue;
+        }
+        if (row.credit_code && codeSet.has(row.credit_code)) {
+          errors.push(`第${rowNum}行: 统一社会信用代码已存在: ${row.credit_code}`);
+          continue;
+        }
+        try {
+          await tx.enterprises.create({ data: { ...row, name } });
+          // Reserve the names so later rows in the same import collide.
+          nameSet.add(name);
+          if (row.credit_code) codeSet.add(row.credit_code);
+          success += 1;
+        } catch (e) {
+          errors.push(`第${rowNum}行: ${(e as Error).message}`);
+        }
       }
-    }
+    });
     return { success_count: success, error_count: errors.length, errors };
   }
 
-  async exportToBuffer(): Promise<Buffer> {
+  /**
+   * Stream the enterprise list to an Excel workbook in fixed-size
+   * pages so the API never holds more than PAGE_SIZE rows in
+   * memory. The caller pipes the returned stream to the HTTP
+   * response; ExcelJS flushes each batch through the stream.
+   */
+  async exportToStream(out: import('stream').Writable): Promise<number> {
     const ExcelJS = await import('exceljs');
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('企业列表');
@@ -188,21 +228,51 @@ export class EnterprisesService {
       { header: '企业类型', key: 'enterprise_type', width: 16 },
       { header: '创建时间', key: 'created_at', width: 20 },
     ];
-    const all = await this.prisma.enterprises.findMany({ orderBy: { created_at: 'desc' } });
-    for (const e of all) {
-      ws.addRow({
-        name: e.name,
-        credit_code: e.credit_code ?? '',
-        region: e.region ?? '',
-        address: e.address ?? '',
-        contact_person: e.contact_person ?? '',
-        industry_sector: e.industry_sector ?? '',
-        enterprise_type: e.enterprise_type ?? '',
-        created_at: e.created_at ? e.created_at.toISOString().slice(0, 19).replace('T', ' ') : '',
+    const PAGE_SIZE = 1000;
+    let skip = 0;
+    let total = 0;
+    while (true) {
+      const batch = await this.prisma.enterprises.findMany({
+        orderBy: { created_at: 'desc' },
+        skip,
+        take: PAGE_SIZE,
       });
+      if (batch.length === 0) break;
+      for (const e of batch) {
+        ws.addRow({
+          name: e.name,
+          credit_code: e.credit_code ?? '',
+          region: e.region ?? '',
+          address: e.address ?? '',
+          contact_person: e.contact_person ?? '',
+          industry_sector: e.industry_sector ?? '',
+          enterprise_type: e.enterprise_type ?? '',
+          created_at: e.created_at ? e.created_at.toISOString().slice(0, 19).replace('T', ' ') : '',
+        });
+      }
+      total += batch.length;
+      skip += batch.length;
+      if (batch.length < PAGE_SIZE) break;
     }
-    const buf = await wb.xlsx.writeBuffer();
-    return Buffer.from(buf as ArrayBuffer);
+    await wb.xlsx.write(out);
+    // ExcelJS does not always call .end() on the writable; close
+    // it explicitly so the HTTP layer can flush the response.
+    const maybeEnd = (out as unknown as { end?: () => void }).end;
+    if (typeof maybeEnd === 'function' && !out.writableEnded) {
+      maybeEnd.call(out);
+    }
+    return total;
+  }
+
+  /** Legacy helper retained for tests that want a Buffer (max 1k rows). */
+  async exportToBuffer(): Promise<Buffer> {
+    const { Writable } = await import('stream');
+    const chunks: Buffer[] = [];
+    const sink = new Writable({
+      write(chunk: Buffer, _enc, cb) { chunks.push(chunk); cb(); },
+    });
+    await this.exportToStream(sink);
+    return Buffer.concat(chunks);
   }
 
   async exportTemplateBuffer(): Promise<Buffer> {

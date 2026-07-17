@@ -103,11 +103,22 @@ export class UsersService {
     }
 
     const data: Record<string, unknown> = {};
-    if (dto.role !== undefined) data.role = dto.role;
-    if (dto.password !== undefined) data.password_hash = hashPassword(dto.password);
+    let bumpVersion = false;
+    if (dto.role !== undefined && dto.role !== u.role) {
+      data.role = dto.role;
+      bumpVersion = true;
+    }
+    if (dto.password !== undefined) {
+      data.password_hash = hashPassword(dto.password);
+      bumpVersion = true;
+    }
     if (dto.full_name !== undefined) data.full_name = dto.full_name;
     if (dto.phone !== undefined) data.phone = dto.phone;
-    if (dto.is_active !== undefined) data.is_active = dto.is_active;
+    if (dto.is_active !== undefined && dto.is_active !== u.is_active) {
+      data.is_active = dto.is_active;
+      bumpVersion = true;
+    }
+    if (bumpVersion) data.token_version = { increment: 1 };
 
     const updated = await this.prisma.users.update({ where: { id: u.id }, data });
     await this.audit.record({
@@ -123,9 +134,13 @@ export class UsersService {
   async resetPassword(id: string, newPassword: string): Promise<UserResponseDto> {
     const u = await this.prisma.users.findFirst({ where: { id } });
     if (!u) throw new NotFoundException('User not found');
+    // P1-6: bump token_version so all outstanding JWTs are invalidated.
     const updated = await this.prisma.users.update({
       where: { id: u.id },
-      data: { password_hash: hashPassword(newPassword) },
+      data: {
+        password_hash: hashPassword(newPassword),
+        token_version: { increment: 1 },
+      },
     });
     await this.audit.record({
       action: 'user.reset_password',

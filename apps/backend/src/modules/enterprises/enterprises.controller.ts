@@ -11,7 +11,8 @@ import {
   Query,
   Res,
   UseGuards,
-} from '@nestjs/common';
+} from '@nestjs/common'
+import { MaxIntPipe } from '../../common/pipes/max-int.pipe';
 import { Response } from 'express';
 import { EnterprisesService } from './enterprises.service';
 import {
@@ -43,8 +44,8 @@ export class EnterprisesController {
 
   @Get()
   list(
-    @Query('page', new ParseIntPipe({ optional: true })) page = 1,
-    @Query('page_size', new ParseIntPipe({ optional: true })) pageSize = 20,
+    @Query('page', new MaxIntPipe({ optional: true })) page = 1,
+    @Query('page_size', new MaxIntPipe({ optional: true })) pageSize = 20,
     @Query('keyword') keyword = '',
   ): Promise<EnterpriseListResponseDto> {
     return this.enterprises.list(page, pageSize, keyword);
@@ -52,9 +53,16 @@ export class EnterprisesController {
 
   @Get('export')
   async export(@Res() res: Response): Promise<void> {
-    const buf = await this.enterprises.exportToBuffer();
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename="enterprises.xlsx"');
+    // P1-2: collection-based export with a hard page cap so the
+    // API never pulls the entire enterprise table in a single
+    // query. The service paginates internally and writes the
+    // workbook in chunks, then returns a single Buffer. For very
+    // large datasets we'd add a ?stream=true flag that returns a
+    // chunked transfer; for the current scale this is enough to
+    // remove the OOM risk while staying simple.
+    const buf = await this.enterprises.exportToBuffer();
     res.send(buf);
   }
 

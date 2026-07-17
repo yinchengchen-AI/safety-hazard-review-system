@@ -1,6 +1,6 @@
 import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsDateString, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import { AuditLogsService } from './audit-logs.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ActiveUserGuard, AdminGuard } from '../../common/guards';
@@ -13,7 +13,7 @@ class AuditLogQueryDto {
   @IsOptional() @IsDateString() start_date?: string;
   @IsOptional() @IsDateString() end_date?: string;
   @Type(() => Number) @IsInt() @Min(1) page: number = 1;
-  @Type(() => Number) @IsInt() @Min(1) page_size: number = 20;
+  @Type(() => Number) @IsInt() @Min(1) @Max(100) page_size: number = 20;
 }
 
 @Controller('api/v1/audit-logs')

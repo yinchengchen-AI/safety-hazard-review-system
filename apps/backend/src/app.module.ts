@@ -12,6 +12,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { HealthModule } from './modules/health/health.module';
+
 import { EnterprisesModule } from './modules/enterprises/enterprises.module';
 import { HazardsModule } from './modules/hazards/hazards.module';
 import { BatchesModule } from './modules/batches/batches.module';
