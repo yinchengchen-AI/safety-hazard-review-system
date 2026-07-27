@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   Card,
@@ -16,8 +16,18 @@ import {
   Input,
   Radio,
   Empty,
+  Upload,
+  Image,
 } from 'antd'
-import { ArrowLeftOutlined, DownloadOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import type { UploadFile } from 'antd'
+import {
+  ArrowLeftOutlined,
+  DownloadOutlined,
+  CheckCircleOutlined,
+  FileTextOutlined,
+  PlusOutlined,
+} from '@ant-design/icons'
+import dayjs from 'dayjs'
 import request, { getErrorMessage } from '@/lib/api'
 
 interface TaskHazard {
@@ -55,6 +65,81 @@ interface TaskDetail {
   hazards: TaskHazard[]
 }
 
+interface ReportStatus {
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  pdf_path: string | null
+  word_path: string | null
+  error_message: string | null
+  generated_at: string | null
+}
+
+interface PhotoUploadResponse {
+  temp_token: string
+  original_url: string
+  thumbnail_url: string
+  width: number
+  height: number
+  file_size: number
+}
+
+interface PhotoItem {
+  id: string
+  task_hazard_id: string
+  original_url: string
+  thumbnail_url: string
+  created_at: string | null
+}
+
+const REPORT_STATUS_MAP: Record<string, { text: string; color: string }> = {
+  pending: { text: '待生成', color: 'gold' },
+  processing: { text: '生成中', color: 'processing' },
+  completed: { text: '已生成', color: 'green' },
+  failed: { text: '生成失败', color: 'red' },
+}
+
+const POLL_INTERVAL_MS = 4000
+const MAX_PHOTO_SIZE = 10 * 1024 * 1024
+const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png']
+
+/** 已绑定照片的缩略图墙：展开行时才拉取（签名 URL TTL 900s，不做全局定时刷新） */
+function HazardPhotos({ taskHazardId, refreshKey }: { taskHazardId: string; refreshKey: number }) {
+  const [photos, setPhotos] = useState<PhotoItem[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const fetchPhotos = async () => {
+      try {
+        const r = (await request.get('/photos', { params: { task_hazard_id: taskHazardId } })) as PhotoItem[]
+        if (!cancelled) setPhotos(r)
+      } catch {
+        if (!cancelled) setPhotos([])
+      }
+    }
+    fetchPhotos()
+    return () => { cancelled = true }
+  }, [taskHazardId, refreshKey])
+
+  if (!photos) return <Spin size="small" />
+  if (photos.length === 0) return <span style={{ color: '#999' }}>暂无照片</span>
+  return (
+    <Image.PreviewGroup>
+      <Space wrap size={8}>
+        {photos.map((p) => (
+          <Image
+            key={p.id}
+            src={p.thumbnail_url}
+            preview={{ src: p.original_url }}
+            width={72}
+            height={72}
+            style={{ objectFit: 'cover', borderRadius: 4 }}
+            alt="复核照片"
+          />
+        ))}
+      </Space>
+    </Image.PreviewGroup>
+  )
+}
+
 export default function TaskDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -62,6 +147,12 @@ export default function TaskDetailPage() {
   const [loading, setLoading] = useState(true)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [reviewTarget, setReviewTarget] = useState<TaskHazard | null>(null)
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const [photoList, setPhotoList] = useState<UploadFile<PhotoUploadResponse>[]>([])
+  const [report, setReport] = useState<ReportStatus | null>(null)
+  const [generating, setGenerating] = useState(false)
+  const [downloading, setDownloading] = useState<'pdf' | 'word' | null>(null)
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const [form] = Form.useForm<{ conclusion: string; status_in_task: 'pending' | 'passed' | 'failed' }>()
 
   const load = useCallback(async (controller?: AbortController) => {
@@ -85,14 +176,89 @@ export default function TaskDetailPage() {
     return () => controller.abort()
   }, [load])
 
-  const handleComplete = async () => {
-    try {
-      await request.post(`/review-tasks/${id}/complete`)
-      message.success('任务已完成')
-      load()
-    } catch (err: any) {
-      message.error(getErrorMessage(err) || '操作失败')
+  const stopPolling = useCallback(() => {
+    if (pollTimer.current) {
+      clearInterval(pollTimer.current)
+      pollTimer.current = null
     }
+    setGenerating(false)
+  }, [])
+
+  const fetchReportStatus = useCallback(async (): Promise<ReportStatus | null> => {
+    try {
+      const r = (await request.get(`/reports/${id}/status`)) as ReportStatus
+      setReport(r)
+      return r
+    } catch {
+      // 报告尚未创建时后端返回 404，属正常情况
+      return null
+    }
+  }, [id])
+
+  const startPolling = useCallback(() => {
+    if (pollTimer.current) return
+    setGenerating(true)
+    pollTimer.current = setInterval(async () => {
+      const r = await fetchReportStatus()
+      if (!r) return
+      if (r.status === 'completed') {
+        stopPolling()
+        message.success('报告生成完成')
+        load()
+      } else if (r.status === 'failed') {
+        stopPolling()
+        message.error(r.error_message || '报告生成失败')
+        load()
+      }
+    }, POLL_INTERVAL_MS)
+  }, [fetchReportStatus, stopPolling, load])
+
+  // 页面卸载时清理轮询定时器
+  useEffect(() => {
+    return () => {
+      if (pollTimer.current) clearInterval(pollTimer.current)
+    }
+  }, [])
+
+  // 初始化：若报告正在生成中，恢复轮询；已有报告则同步一次状态（拿 error_message 等）
+  useEffect(() => {
+    if (!task?.report_status) return
+    if (task.report_status === 'pending' || task.report_status === 'processing') {
+      startPolling()
+    } else {
+      fetchReportStatus()
+    }
+  }, [task?.report_status, startPolling, fetchReportStatus])
+
+  const generateReport = async () => {
+    setGenerating(true)
+    try {
+      await request.post(`/reports/${id}/generate`)
+      message.success('报告生成任务已提交')
+      await fetchReportStatus()
+      startPolling()
+    } catch (err: any) {
+      setGenerating(false)
+      message.error(getErrorMessage(err) || '报告生成失败')
+    }
+  }
+
+  const handleComplete = async () => {
+    Modal.confirm({
+      title: '确认完成该复核任务？',
+      content: '完成后任务将被锁定，所有隐患不可再复核或修改，请确认已全部复核完毕。',
+      okText: '确认完成',
+      cancelText: '暂不完成',
+      onOk: async () => {
+        try {
+          await request.post(`/review-tasks/${id}/complete`)
+          message.success('任务已完成')
+          load()
+        } catch (err: any) {
+          message.error(getErrorMessage(err) || '操作失败')
+        }
+      },
+    })
   }
 
   const handleCancel = async () => {
@@ -116,6 +282,7 @@ export default function TaskDetailPage() {
 
   const openReview = (th: TaskHazard) => {
     setReviewTarget(th)
+    setPhotoList([])
     form.setFieldsValue({
       conclusion: th.conclusion ?? '',
       status_in_task: (th.status_in_task as 'pending' | 'passed' | 'failed') ?? 'passed',
@@ -123,23 +290,46 @@ export default function TaskDetailPage() {
     setReviewOpen(true)
   }
 
+  const closeReview = () => {
+    setReviewOpen(false)
+    setReviewTarget(null)
+    setPhotoList([])
+    form.resetFields()
+  }
+
   const submitReview = async () => {
     if (!reviewTarget) return
+    if (photoList.some((f) => f.status === 'uploading')) {
+      message.warning('照片仍在上传中，请稍候再提交')
+      return
+    }
+    if (photoList.some((f) => f.status === 'error')) {
+      message.warning('存在上传失败的照片，请移除后再提交')
+      return
+    }
     try {
       const v = await form.validateFields()
-      await request.post(`/review-tasks/${id}/hazards/${reviewTarget.hazard_id}/review`, v)
+      const tokens = photoList
+        .filter((f) => f.status === 'done' && f.response?.temp_token)
+        .map((f) => f.response!.temp_token)
+      setReviewSubmitting(true)
+      await request.post(`/review-tasks/${id}/hazards/${reviewTarget.hazard_id}/review`, {
+        ...v,
+        ...(tokens.length > 0 ? { photo_tokens: tokens } : {}),
+      })
       message.success('复核已提交')
-      setReviewOpen(false)
-      setReviewTarget(null)
-      form.resetFields()
+      closeReview()
       load()
     } catch (err: any) {
       if (err?.errorFields) return
       message.error(getErrorMessage(err) || '提交失败')
+    } finally {
+      setReviewSubmitting(false)
     }
   }
 
   const downloadReport = async (format: 'pdf' | 'word') => {
+    setDownloading(format)
     try {
       const res = await request.get(`/reports/${id}/download?format=${format}`, { responseType: 'blob' })
       const ext = format === 'pdf' ? 'pdf' : 'docx'
@@ -150,8 +340,11 @@ export default function TaskDetailPage() {
       document.body.appendChild(link)
       link.click()
       link.remove()
+      window.URL.revokeObjectURL(url)
     } catch (err: any) {
       message.error(getErrorMessage(err) || '下载失败')
+    } finally {
+      setDownloading(null)
     }
   }
 
@@ -161,6 +354,8 @@ export default function TaskDetailPage() {
   const statusText = task.status === 'pending' ? '待复核' : task.status === 'completed' ? '已完成' : '已取消'
   const statusColor = task.status === 'pending' ? 'gold' : task.status === 'completed' ? 'green' : 'red'
   const canReview = task.status === 'pending'
+  const effectiveReportStatus = report?.status ?? task.report_status
+  const reportMeta = effectiveReportStatus ? REPORT_STATUS_MAP[effectiveReportStatus] : null
 
   return (
     <div>
@@ -179,6 +374,14 @@ export default function TaskDetailPage() {
                 完成任务
               </Button>
             )}
+            <Button
+              icon={<FileTextOutlined />}
+              loading={generating}
+              onClick={generateReport}
+              disabled={generating}
+            >
+              {generating ? '生成中…' : effectiveReportStatus === 'completed' ? '重新生成报告' : '生成报告'}
+            </Button>
           </Space>
         }
       >
@@ -187,17 +390,39 @@ export default function TaskDetailPage() {
           <Descriptions.Item label="状态"><Tag color={statusColor}>{statusText}</Tag></Descriptions.Item>
           <Descriptions.Item label="创建人">{task.creator_username ?? '-'}</Descriptions.Item>
           <Descriptions.Item label="复核进度">{task.reviewed_count} / {task.hazard_count}</Descriptions.Item>
-          <Descriptions.Item label="创建时间">{task.created_at ? new Date(task.created_at).toLocaleString('zh-CN') : '-'}</Descriptions.Item>
-          <Descriptions.Item label="完成时间">{task.completed_at ? new Date(task.completed_at).toLocaleString('zh-CN') : '-'}</Descriptions.Item>
+          <Descriptions.Item label="创建时间">{task.created_at ? dayjs(task.created_at).format('YYYY-MM-DD HH:mm') : '-'}</Descriptions.Item>
+          <Descriptions.Item label="完成时间">{task.completed_at ? dayjs(task.completed_at).format('YYYY-MM-DD HH:mm') : '-'}</Descriptions.Item>
           <Descriptions.Item label="报告" span={{ xs: 1, sm: 2 }}>
-            {task.report_status ? (
+            {effectiveReportStatus ? (
               <Space wrap>
-                <Tag color="blue">状态：{task.report_status}</Tag>
-                {task.report_status === 'completed' && (
+                <Tag color={reportMeta?.color ?? 'blue'}>{reportMeta?.text ?? effectiveReportStatus}</Tag>
+                {effectiveReportStatus === 'completed' && (
                   <>
-                    <Button size="small" icon={<DownloadOutlined />} onClick={() => downloadReport('pdf')}>下载 PDF</Button>
-                    <Button size="small" icon={<DownloadOutlined />} onClick={() => downloadReport('word')}>下载 Word</Button>
+                    <Button
+                      size="small"
+                      icon={<DownloadOutlined />}
+                      loading={downloading === 'pdf'}
+                      onClick={() => downloadReport('pdf')}
+                    >
+                      下载 PDF
+                    </Button>
+                    <Button
+                      size="small"
+                      icon={<DownloadOutlined />}
+                      loading={downloading === 'word'}
+                      onClick={() => downloadReport('word')}
+                    >
+                      下载 Word
+                    </Button>
+                    {report?.generated_at && (
+                      <span style={{ color: '#999', fontSize: 12 }}>
+                        生成于 {dayjs(report.generated_at).format('YYYY-MM-DD HH:mm:ss')}
+                      </span>
+                    )}
                   </>
+                )}
+                {effectiveReportStatus === 'failed' && (
+                  <span style={{ color: '#ff4d4f' }}>{report?.error_message || '报告生成失败，可重试'}</span>
                 )}
               </Space>
             ) : (
@@ -217,6 +442,11 @@ export default function TaskDetailPage() {
             size="middle"
             scroll={{ x: 980 }}
             pagination={{ pageSize: 10 }}
+            expandable={{
+              expandedRowRender: (r: TaskHazard) => (
+                <HazardPhotos taskHazardId={r.task_hazard_id} refreshKey={task.reviewed_count} />
+              ),
+            }}
             columns={[
               {
                 title: '#', width: 50,
@@ -259,10 +489,11 @@ export default function TaskDetailPage() {
       <Modal
         title={reviewTarget ? `复核：${reviewTarget.hazard?.content ?? reviewTarget.hazard_id}` : '复核'}
         open={reviewOpen}
-        onCancel={() => { setReviewOpen(false); setReviewTarget(null); form.resetFields() }}
+        onCancel={closeReview}
         onOk={submitReview}
         okText="提交"
         cancelText="取消"
+        confirmLoading={reviewSubmitting}
         width="min(560px, calc(100vw - 32px))"
         destroyOnHidden
       >
@@ -284,6 +515,52 @@ export default function TaskDetailPage() {
             rules={[{ required: true, min: 1, max: 4000, message: '请填写复核结论（1-4000 字）' }]}
           >
             <Input.TextArea rows={4} maxLength={4000} showCount placeholder="请说明本次复核的依据和结论" />
+          </Form.Item>
+          <Form.Item label="复核照片" extra="仅支持 JPEG / PNG，单张不超过 10MB，可多选">
+            <Upload
+              listType="picture-card"
+              accept="image/jpeg,image/png"
+              multiple
+              fileList={photoList}
+              beforeUpload={(file) => {
+                if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+                  message.error('仅支持 JPEG / PNG 图片')
+                  return Upload.LIST_IGNORE
+                }
+                if (file.size > MAX_PHOTO_SIZE) {
+                  message.error('图片大小不能超过 10MB')
+                  return Upload.LIST_IGNORE
+                }
+                return true
+              }}
+              customRequest={async (options) => {
+                const fd = new FormData()
+                fd.append('file', options.file as File)
+                try {
+                  const r = (await request.post('/photos/upload', fd, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                  })) as PhotoUploadResponse
+                  options.onSuccess?.(r)
+                } catch (err: any) {
+                  message.error(getErrorMessage(err) || '照片上传失败')
+                  options.onError?.(err instanceof Error ? err : new Error('上传失败'))
+                }
+              }}
+              onChange={({ fileList }) => {
+                setPhotoList(
+                  fileList.map((f) =>
+                    f.status === 'done' && f.response && !f.url
+                      ? { ...f, url: f.response.thumbnail_url }
+                      : f,
+                  ),
+                )
+              }}
+            >
+              <div>
+                <PlusOutlined />
+                <div style={{ marginTop: 8 }}>上传照片</div>
+              </div>
+            </Upload>
           </Form.Item>
         </Form>
       </Modal>

@@ -16,6 +16,8 @@ import {
 import { DownloadOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import request, { getErrorMessage } from '@/lib/api'
+import { downloadBlob } from '@/lib/download'
+import dayjs from 'dayjs'
 
 interface Batch {
   id: string
@@ -37,10 +39,20 @@ interface ImportError {
   reason: string
 }
 
+interface BatchListResponse {
+  items: Batch[]
+  total: number
+  page: number
+  page_size: number
+}
+
 export default function BatchesHistoryPage() {
   const router = useRouter()
   const [items, setItems] = useState<Batch[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerBatch, setDrawerBatch] = useState<Batch | null>(null)
   const [errors, setErrors] = useState<ImportError[]>([])
@@ -49,16 +61,19 @@ export default function BatchesHistoryPage() {
   const load = useCallback(async (controller?: AbortController) => {
     setLoading(true)
     try {
-      const r = (await request.get('/batches?page=1&page_size=50', {
+      const r = (await request.get('/batches', {
+        params: { page, page_size: pageSize },
         signal: controller?.signal,
-      })) as Batch[]
-      setItems(r)
-    } catch (err) {
+      })) as BatchListResponse
+      setItems(r.items)
+      setTotal(r.total)
+    } catch (err: any) {
+      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
       message.error(getErrorMessage(err) || '加载失败')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page, pageSize])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -83,14 +98,7 @@ export default function BatchesHistoryPage() {
 
   const downloadOriginal = async (b: Batch) => {
     try {
-      const res = await request.get(`/batches/${b.id}/download`, { responseType: 'blob' })
-      const url = window.URL.createObjectURL(new Blob([res as any]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', b.file_name || `batch_${b.id}.xlsx`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
+      await downloadBlob(`/batches/${b.id}/download`, b.file_name || `batch_${b.id}.xlsx`)
     } catch (err) {
       message.error(getErrorMessage(err) || '下载失败')
     }
@@ -108,14 +116,21 @@ export default function BatchesHistoryPage() {
           dataSource={items}
           size="middle"
           scroll={{ x: 1060 }}
-          pagination={{ pageSize: 20 }}
+          pagination={{
+            current: page,
+            pageSize,
+            total,
+            showSizeChanger: true,
+            showTotal: (t) => `共 ${t} 条`,
+            onChange: (p, ps) => { setPage(p); setPageSize(ps) },
+          }}
           columns={[
             { title: '批次名称', dataIndex: 'name' },
             { title: '文件名', dataIndex: 'file_name', ellipsis: true, width: 200 },
             { title: '导入人', dataIndex: 'creator_username', width: 120 },
             {
               title: '导入时间', dataIndex: 'import_time', width: 180,
-              render: (v: string | null) => (v ? new Date(v).toLocaleString('zh-CN') : '-'),
+              render: (v: string | null) => (v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '-'),
             },
             {
               title: '成功 / 失败', width: 140,

@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react'
-import { Card, Col, Row, Statistic, Spin, message } from 'antd'
+import { Card, Col, Radio, Row, Statistic, Spin, message } from 'antd'
 import { Line } from '@ant-design/charts'
 import request, { getErrorMessage } from '@/lib/api'
 
@@ -22,32 +22,58 @@ interface TrendPoint {
   review_count: number
 }
 
+type Granularity = 'day' | 'month'
+
 export default function StatisticsPage() {
   const [overview, setOverview] = useState<Overview | null>(null)
   const [trend, setTrend] = useState<TrendPoint[]>([])
-  const [loading, setLoading] = useState(true)
+  const [overviewLoading, setOverviewLoading] = useState(true)
+  const [trendLoading, setTrendLoading] = useState(true)
+  const [granularity, setGranularity] = useState<Granularity>('day')
 
   useEffect(() => {
     const controller = new AbortController()
     ;(async () => {
       try {
-        const [ov, tr] = await Promise.all([
-          request.get('/statistics/overview', { signal: controller.signal }) as Promise<Overview>,
-          request.get('/statistics/trend', { signal: controller.signal }) as Promise<TrendPoint[]>,
-        ])
+        const ov = (await request.get('/statistics/overview', { signal: controller.signal })) as Overview
         setOverview(ov)
-        setTrend(tr)
       } catch (err: any) {
         if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
-        message.error(getErrorMessage(err) || '加载失败')
+        message.error(getErrorMessage(err) || '概览加载失败')
       } finally {
-        setLoading(false)
+        setOverviewLoading(false)
       }
     })()
     return () => controller.abort()
   }, [])
 
-  if (loading) return <Spin size="large" />
+  useEffect(() => {
+    const controller = new AbortController()
+    ;(async () => {
+      setTrendLoading(true)
+      try {
+        const tr = (await request.get('/statistics/trend', {
+          params: { granularity },
+          signal: controller.signal,
+        })) as TrendPoint[]
+        setTrend(tr)
+      } catch (err: any) {
+        if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
+        message.error(getErrorMessage(err) || '趋势加载失败')
+      } finally {
+        setTrendLoading(false)
+      }
+    })()
+    return () => controller.abort()
+  }, [granularity])
+
+  if (overviewLoading && trendLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -59,24 +85,40 @@ export default function StatisticsPage() {
           <Col xs={12} md={6}><Card><Statistic title="通过率" value={(overview.pass_rate * 100).toFixed(2)} suffix="%" /></Card></Col>
         </Row>
       )}
-      <Card title="每日趋势">
-        {trend.length > 0 ? (
-          <div style={{ minWidth: 0, width: '100%' }}>
-            <Line
-              data={trend.flatMap((t) => [
-                { date: t.period, value: t.passed_count, type: '已通过' },
-                { date: t.period, value: t.failed_count, type: '未通过' },
-                { date: t.period, value: t.review_count, type: '已复核' },
-              ])}
-              xField="date"
-              yField="value"
-              colorField="type"
-              height={280}
-            />
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', color: '#999', padding: 40 }}>暂无趋势数据</div>
-        )}
+      <Card
+        title={granularity === 'day' ? '每日趋势' : '每月趋势'}
+        extra={
+          <Radio.Group
+            value={granularity}
+            onChange={(e) => setGranularity(e.target.value as Granularity)}
+            optionType="button"
+            size="small"
+            options={[
+              { value: 'day', label: '按日' },
+              { value: 'month', label: '按月' },
+            ]}
+          />
+        }
+      >
+        <Spin spinning={trendLoading}>
+          {trend.length > 0 ? (
+            <div style={{ minWidth: 0, width: '100%' }}>
+              <Line
+                data={trend.flatMap((t) => [
+                  { date: t.period, value: t.passed_count, type: '已通过' },
+                  { date: t.period, value: t.failed_count, type: '未通过' },
+                  { date: t.period, value: t.review_count, type: '已复核' },
+                ])}
+                xField="date"
+                yField="value"
+                colorField="type"
+                height={280}
+              />
+            </div>
+          ) : (
+            !trendLoading && <div style={{ textAlign: 'center', color: '#999', padding: 40 }}>暂无趋势数据</div>
+          )}
+        </Spin>
       </Card>
     </div>
   )

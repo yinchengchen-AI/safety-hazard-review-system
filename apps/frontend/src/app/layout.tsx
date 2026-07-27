@@ -1,6 +1,11 @@
 import { AntdRegistry } from '@ant-design/nextjs-registry'
 import { ConfigProvider } from 'antd'
+import zhCN from 'antd/locale/zh_CN'
+import dayjs from 'dayjs'
+import 'dayjs/locale/zh-cn'
 import './globals.css'
+
+dayjs.locale('zh-cn')
 
 const theme = {
   token: {
@@ -13,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="zh-CN">
       <body>
         <AntdRegistry>
-          <ConfigProvider theme={theme}>{children}</ConfigProvider>
+          <ConfigProvider locale={zhCN} theme={theme}>{children}</ConfigProvider>
         </AntdRegistry>
       </body>
     </html>

@@ -19,6 +19,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useUserStore } from '@/lib/userStore'
 import { useNotificationStore, AppNotification } from '@/lib/notificationStore'
 import { logout as apiLogout } from '@/lib/auth'
+import dayjs from 'dayjs'
 
 const { Header, Sider, Content } = Layout
 
@@ -60,7 +61,7 @@ function formatRelative(dateStr: string): string {
   if (h < 24) return h + '小时前'
   const days = Math.floor(h / 24)
   if (days < 7) return days + '天前'
-  return d.toLocaleDateString('zh-CN')
+  return dayjs(d).format('YYYY-MM-DD')
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -199,7 +200,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sider className="dashboard-sider" collapsible collapsed={collapsed} trigger={null} theme="light" width={200} collapsedWidth={80} style={{ overflow: 'auto', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 10 }}>
         <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: collapsed ? 0 : 10, padding: collapsed ? 0 : '0 16px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #1677ff 0%, #0958d9 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16, fontWeight: 'bold', flexShrink: 0 }}>安</div>
-          {!collapsed && <div style={{ fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden' }}>隐患复核系</div>}
+          {!collapsed && <div style={{ fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden' }}>隐患复核系统</div>}
         </div>
         <div style={{ padding: '12px 0' }}>
           <Menu mode="inline" selectedKeys={[pathname]} openKeys={openKeys} onOpenChange={setOpenKeys} items={items} style={{ borderRight: 'none' }} />

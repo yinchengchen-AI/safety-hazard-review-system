@@ -40,6 +40,14 @@ export const errorMessageMap: Record<string, string> = {
   'Excel 文件没有工作表': 'Excel 文件没有工作表',
   '重复数据（最近1个月内已存在）': '重复数据（最近1个月内已存在）',
   'UnauthorizedException': '未授权，请重新登录',
+  'ThrottlerException: Too Many Requests': '操作过于频繁，请稍后再试',
+  'file is required': '请选择要上传的文件',
+  'You do not have access to this report': '您没有权限访问该报告',
+  'Authentication required': '请先登录',
+  'Only the uploader or an admin can bind/delete this photo': '仅上传者或管理员可以操作该照片',
+  'Target task_hazard does not exist': '目标隐患任务不存在',
+  'Cannot bind photo to a completed or cancelled task': '任务已完成或已取消，无法绑定照片',
+  'Network Error': '网络连接失败，请检查网络后重试',
 }
 
 /**
@@ -54,6 +62,8 @@ export function translateDetail(detail: unknown): string {
     return ''
   }
   if (errorMessageMap[detail]) return errorMessageMap[detail]
+  // Dynamic message like "Hazard <id> is already in another review task"
+  if (detail.includes('is already in another review task')) return '该隐患已在其他复核任务中'
   for (const [en, zh] of Object.entries(errorMessageMap)) {
     if (detail.startsWith(en)) return zh
   }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import {
   Table,
   Tag,
@@ -50,6 +50,23 @@ export default function AuditLogsPage() {
     start_date: null,
     end_date: null,
   })
+  const [actionInput, setActionInput] = useState('')
+  const [userIdInput, setUserIdInput] = useState('')
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const debouncedSetFilter = (patch: Partial<Filters>) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setFilters((prev) => ({ ...prev, ...patch }))
+      setPage(1)
+    }, 300)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
 
   const load = useCallback(
     async (controller?: AbortController) => {
@@ -84,6 +101,9 @@ export default function AuditLogsPage() {
   }, [load])
 
   const reset = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    setActionInput('')
+    setUserIdInput('')
     setFilters({
       action: '',
       target_type: undefined,
@@ -101,8 +121,8 @@ export default function AuditLogsPage() {
           allowClear
           placeholder="操作 (action)"
           style={{ width: 220 }}
-          value={filters.action}
-          onChange={(e) => { setFilters({ ...filters, action: e.target.value }); setPage(1) }}
+          value={actionInput}
+          onChange={(e) => { setActionInput(e.target.value); debouncedSetFilter({ action: e.target.value }) }}
           prefix={<SearchOutlined />}
         />
         <Select
@@ -127,8 +147,8 @@ export default function AuditLogsPage() {
           allowClear
           placeholder="用户 ID"
           style={{ width: 220 }}
-          value={filters.user_id}
-          onChange={(e) => { setFilters({ ...filters, user_id: e.target.value }); setPage(1) }}
+          value={userIdInput}
+          onChange={(e) => { setUserIdInput(e.target.value); debouncedSetFilter({ user_id: e.target.value }) }}
         />
         <DatePicker
           placeholder="起始日期"
@@ -160,7 +180,7 @@ export default function AuditLogsPage() {
           }}
           scroll={{ x: 1200 }}
           columns={[
-            { title: '时间', dataIndex: 'created_at', width: 170, render: (v: string) => new Date(v).toLocaleString('zh-CN') },
+            { title: '时间', dataIndex: 'created_at', width: 170, render: (v: string) => dayjs(v).format('YYYY-MM-DD HH:mm') },
             { title: '操作', dataIndex: 'action', width: 220, render: (v: string) => <Tag color="blue">{v}</Tag> },
             { title: '对象', dataIndex: 'target_type', width: 110, render: (v: string) => <Tag>{v}</Tag> },
             { title: '对象 ID', dataIndex: 'target_id', width: 90, render: (v: string | null) => v ? v.slice(0, 8) : '-' },

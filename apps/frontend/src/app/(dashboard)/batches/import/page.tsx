@@ -4,6 +4,7 @@ import { InboxOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import request, { getErrorMessage } from '@/lib/api'
+import { downloadBlob } from '@/lib/download'
 
 const { Dragger } = Upload
 
@@ -14,16 +15,9 @@ export default function BatchImportPage() {
 
   const onDownloadTemplate = async () => {
     try {
-      const res = await request.get('/batches/template', { responseType: 'blob' })
-      const url = window.URL.createObjectURL(new Blob([res as any]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', 'hazard_batch_template.xlsx')
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-    } catch (err: any) {
-      message.error('模板下载失败')
+      await downloadBlob('/batches/template', 'hazard_batch_template.xlsx')
+    } catch (err) {
+      message.error(getErrorMessage(err) || '模板下载失败')
     }
   }
 

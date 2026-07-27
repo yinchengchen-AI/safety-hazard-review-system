@@ -18,6 +18,7 @@ import {
 } from 'antd'
 import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons'
 import dayjs, { Dayjs } from 'dayjs'
+import Link from 'next/link'
 import request, { getErrorMessage } from '@/lib/api'
 import { useUserStore } from '@/lib/userStore'
 
@@ -89,6 +90,7 @@ export default function HazardDetailPage() {
   const [editable, setEditable] = useState<EditableFields | null>(null)
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [form] = Form.useForm<Record<string, unknown>>()
 
   const load = useCallback(async (controller?: AbortController) => {
@@ -168,6 +170,7 @@ export default function HazardDetailPage() {
         message.warning('没有可更新的字段（已填写的字段不可修改）')
         return
       }
+      setSaving(true)
       await request.put(`/hazards/${id}`, payload)
       message.success('保存成功')
       setEditOpen(false)
@@ -175,6 +178,8 @@ export default function HazardDetailPage() {
     } catch (err: any) {
       if (err?.errorFields) return
       message.error(getErrorMessage(err) || '保存失败')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -241,7 +246,11 @@ export default function HazardDetailPage() {
           <Descriptions.Item label="整改完成时间">{hazard.rectification_date || '-'}</Descriptions.Item>
           <Descriptions.Item label="整改责任人">{hazard.rectification_responsible || '-'}</Descriptions.Item>
           <Descriptions.Item label="复核次数">{hazard.review_count}</Descriptions.Item>
-          <Descriptions.Item label="当前复核任务">{hazard.current_task_id || '-'}</Descriptions.Item>
+          <Descriptions.Item label="当前复核任务">
+            {hazard.current_task_id ? (
+              <Link href={`/tasks/${hazard.current_task_id}`}>{hazard.current_task_id}</Link>
+            ) : '—'}
+          </Descriptions.Item>
           <Descriptions.Item label="隐患描述" span={{ xs: 1, sm: 2 }}>
             {hazard.description || '-'}
           </Descriptions.Item>
@@ -257,8 +266,8 @@ export default function HazardDetailPage() {
           <Descriptions.Item label="举报情况备注" span={{ xs: 1, sm: 2 }}>
             {hazard.report_remarks || '-'}
           </Descriptions.Item>
-          <Descriptions.Item label="创建时间">{hazard.created_at ? new Date(hazard.created_at).toLocaleString('zh-CN') : '-'}</Descriptions.Item>
-          <Descriptions.Item label="更新时间">{hazard.updated_at ? new Date(hazard.updated_at).toLocaleString('zh-CN') : '-'}</Descriptions.Item>
+          <Descriptions.Item label="创建时间">{hazard.created_at ? dayjs(hazard.created_at).format('YYYY-MM-DD HH:mm') : '-'}</Descriptions.Item>
+          <Descriptions.Item label="更新时间">{hazard.updated_at ? dayjs(hazard.updated_at).format('YYYY-MM-DD HH:mm') : '-'}</Descriptions.Item>
         </Descriptions>
       </Card>
 
@@ -269,6 +278,7 @@ export default function HazardDetailPage() {
         onOk={submitEdit}
         okText="保存"
         cancelText="取消"
+        confirmLoading={saving}
         width="min(680px, calc(100vw - 32px))"
         destroyOnHidden
       >
