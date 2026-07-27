@@ -29,6 +29,38 @@ interface AuditLog {
   user_agent: string | null
 }
 
+const ACTION_MAP: Record<string, string> = {
+  'auth.login.success': '登录成功',
+  'auth.login.failure': '登录失败',
+  'user.create': '创建用户',
+  'user.update': '更新用户',
+  'user.reset_password': '重置密码',
+  'user.delete': '删除用户',
+  'enterprise.create': '创建企业',
+  'enterprise.update': '更新企业',
+  'enterprise.delete': '删除企业',
+  'hazard.update': '更新隐患',
+  'batch.import': '批量导入',
+  'review_task.create': '创建复核任务',
+  'review_task.complete': '完成复核任务',
+  'review_task.cancel': '取消复核任务',
+  'photo.upload': '上传照片',
+  'photo.bind': '绑定照片',
+  'photo.delete': '删除照片',
+}
+
+const TARGET_TYPE_MAP: Record<string, string> = {
+  auth: '认证',
+  user: '用户',
+  enterprise: '企业',
+  hazard: '隐患',
+  batch: '批次',
+  review_task: '复核任务',
+  report: '报告',
+  photo: '照片',
+  notification: '通知',
+}
+
 interface Filters {
   action: string
   target_type: string | undefined
@@ -181,8 +213,8 @@ export default function AuditLogsPage() {
           scroll={{ x: 1200 }}
           columns={[
             { title: '时间', dataIndex: 'created_at', width: 170, render: (v: string) => dayjs(v).format('YYYY-MM-DD HH:mm') },
-            { title: '操作', dataIndex: 'action', width: 220, render: (v: string) => <Tag color="blue">{v}</Tag> },
-            { title: '对象', dataIndex: 'target_type', width: 110, render: (v: string) => <Tag>{v}</Tag> },
+            { title: '操作', dataIndex: 'action', width: 220, render: (v: string) => <Tag color="blue">{ACTION_MAP[v] ?? v}</Tag> },
+            { title: '对象', dataIndex: 'target_type', width: 110, render: (v: string) => <Tag>{TARGET_TYPE_MAP[v] ?? v}</Tag> },
             { title: '对象 ID', dataIndex: 'target_id', width: 90, render: (v: string | null) => v ? v.slice(0, 8) : '-' },
             { title: '用户 ID', dataIndex: 'user_id', width: 90, render: (v: string | null) => v ? v.slice(0, 8) : '-' },
             { title: '方法', dataIndex: 'method', width: 70 },

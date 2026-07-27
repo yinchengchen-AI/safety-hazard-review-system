@@ -16,12 +16,40 @@ import {
   MenuUnfoldOutlined,
 } from '@ant-design/icons'
 import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { useUserStore } from '@/lib/userStore'
 import { useNotificationStore, AppNotification } from '@/lib/notificationStore'
 import { logout as apiLogout } from '@/lib/auth'
 import dayjs from 'dayjs'
 
 const { Header, Sider, Content } = Layout
+
+const segmentLabels: Record<string, string> = {
+  hazards: '隐患管理',
+  batches: '批量管理',
+  import: '批量导入',
+  history: '导入历史',
+  tasks: '复核任务',
+  statistics: '统计分析',
+  users: '用户管理',
+  enterprises: '企业管理',
+  'audit-logs': '操作日志',
+  notifications: '通知中心',
+}
+
+function buildBreadcrumbItems(pathname: string) {
+  if (pathname === '/') return [{ title: '首页' }]
+  const segs = pathname.split('/').filter(Boolean)
+  return [
+    { title: <Link href="/">首页</Link> },
+    ...segs.map((seg, i) => {
+      const isLast = i === segs.length - 1
+      const label = segmentLabels[seg] ?? (isLast ? '详情' : seg)
+      if (isLast) return { title: label }
+      return { title: <Link href={'/' + segs.slice(0, i + 1).join('/')}>{label}</Link> }
+    }),
+  ]
+}
 
 const menuItems = [
   { key: '/', icon: <HomeOutlined />, label: '首页' },
@@ -229,7 +257,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
             <Button type="text" icon={isMobile ? <MenuUnfoldOutlined /> : (collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />)} onClick={() => isMobile ? setMobileMenuOpen(true) : setCollapsed(!collapsed)} style={{ fontSize: 16, width: 36, height: 36, flexShrink: 0 }} aria-label={isMobile ? '打开导航菜单' : '折叠侧栏'} />
             <Breadcrumb className="dashboard-breadcrumb"
-              items={[{ title: pathname === '/' ? '首页' : pathname.split('/').filter(Boolean).join(' / ') }]}
+              items={buildBreadcrumbItems(pathname)}
               style={{ marginLeft: 8 }}
             />
           </div>
