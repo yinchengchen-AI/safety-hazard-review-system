@@ -30,4 +30,14 @@ ensure SECRET_KEY "$(openssl rand -hex 32)"
 ensure PHOTO_SIGNATURE_SECRET "$(openssl rand -hex 32)"
 ensure ALLOWED_ORIGINS http://localhost
 
+# migrate.sh runs Prisma from a host-network container, so it needs a
+# DATABASE_URL pointing at the compose Postgres bound on 127.0.0.1.
+if ! grep -q "^DATABASE_URL=" "$ENV_FILE" 2>/dev/null; then
+  pg_user=$(grep '^POSTGRES_USER=' "$ENV_FILE" | cut -d= -f2-)
+  pg_pass=$(grep '^POSTGRES_PASSWORD=' "$ENV_FILE" | cut -d= -f2-)
+  pg_db=$(grep '^POSTGRES_DB=' "$ENV_FILE" | cut -d= -f2-)
+  echo "DATABASE_URL=postgresql://${pg_user}:${pg_pass}@127.0.0.1:5432/${pg_db}" >> "$ENV_FILE"
+  echo "[init] set DATABASE_URL"
+fi
+
 echo "[init] done. env at $ENV_FILE"
