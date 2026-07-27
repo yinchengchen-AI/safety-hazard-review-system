@@ -21,6 +21,15 @@ git pull --ff-only
 echo "[deploy] building images"
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
 
+echo "[deploy] starting postgres (needed by migrations on fresh hosts)"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d postgres
+for i in $(seq 1 30); do
+  status=$(docker inspect -f '{{.State.Health.Status}}' safety-pg 2>/dev/null || echo starting)
+  [[ "$status" == "healthy" ]] && break
+  sleep 2
+done
+[[ "$status" == "healthy" ]] || { echo "postgres did not become healthy" >&2; exit 1; }
+
 echo "[deploy] running migrations"
 "$REPO_DIR/migrate.sh"
 
