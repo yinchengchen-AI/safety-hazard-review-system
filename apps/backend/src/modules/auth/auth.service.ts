@@ -135,7 +135,7 @@ export class AuthService {
       'HttpOnly',
       'SameSite=Strict',
     ];
-    if (isProd) flags.push('Secure');
+    if (this.cookieSecure(isProd)) flags.push('Secure');
     return flags.join('; ');
   }
 
@@ -147,8 +147,15 @@ export class AuthService {
       'HttpOnly',
       'SameSite=Strict',
     ];
-    if (isProd) flags.push('Secure');
+    if (this.cookieSecure(isProd)) flags.push('Secure');
     return flags.join('; ');
+  }
+
+  /** Browsers silently drop Secure cookies received over plain HTTP.
+   *  Keep Secure on in prod by default, but allow COOKIE_SECURE=false
+   *  for deployments that terminate without TLS (plain HTTP on :80). */
+  cookieSecure(isProd: boolean): boolean {
+    return isProd && this.config.get<string>('COOKIE_SECURE', 'true') !== 'false';
   }
 
   isProd(): boolean {

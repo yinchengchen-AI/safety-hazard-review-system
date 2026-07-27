@@ -73,6 +73,9 @@ services:
       MINIO_BUCKET: ${MINIO_BUCKET:-hazard-photos}
       SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY to a 32+ char string}
       PHOTO_SIGNATURE_SECRET: ${PHOTO_SIGNATURE_SECRET:?set PHOTO_SIGNATURE_SECRET to a 32+ char string, distinct from SECRET_KEY}
+      # Set COOKIE_SECURE=false when serving over plain HTTP (no TLS),
+      # otherwise browsers drop the Secure auth cookie and login loops.
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
       ROLE: api
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost}
       PORT: "8000"
