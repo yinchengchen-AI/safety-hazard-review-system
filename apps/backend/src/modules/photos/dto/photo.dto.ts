@@ -13,3 +13,16 @@ export class PhotoUploadResponseDto {
   height!: number;
   file_size!: number;
 }
+
+export class PhotoListQueryDto {
+  @IsUUID()
+  task_hazard_id!: string;
+}
+
+export class PhotoListItemDto {
+  id!: string;
+  task_hazard_id!: string;
+  original_url!: string;
+  thumbnail_url!: string;
+  created_at!: Date | null;
+}

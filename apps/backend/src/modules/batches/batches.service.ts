@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import {
   BatchImportResultDto,
+  BatchListResponseDto,
   BatchPreviewItemDto,
   BatchPreviewRequestDto,
   BatchPreviewResponseDto,
@@ -150,15 +151,18 @@ export class BatchesService {
     private readonly audit: AuditLogsService,
   ) {}
 
-  async list(page: number, pageSize: number): Promise<BatchResponseDto[]> {
-    const rows = await this.prisma.batches.findMany({
-      where: {},
-      orderBy: { import_time: 'desc' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      include: { users: true },
-    });
-    if (rows.length === 0) return [];
+  async list(page: number, pageSize: number): Promise<BatchListResponseDto> {
+    const [rows, total] = await Promise.all([
+      this.prisma.batches.findMany({
+        where: {},
+        orderBy: [{ import_time: 'desc' }, { id: 'asc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: { users: true },
+      }),
+      this.prisma.batches.count({ where: {} }),
+    ]);
+    if (rows.length === 0) return { items: [], total, page, page_size: pageSize };
     const ids = rows.map((r) => r.id);
     const counts = await this.prisma.hazards.groupBy({
       by: ['batch_id'],
@@ -166,9 +170,14 @@ export class BatchesService {
       _count: { _all: true },
     });
     const countMap = new Map(counts.map((c) => [c.batch_id, c._count._all]));
-    return rows.map((r) =>
-      toBatchResponse(r, countMap.get(r.id) ?? 0, r.users?.username ?? null),
-    );
+    return {
+      items: rows.map((r) =>
+        toBatchResponse(r, countMap.get(r.id) ?? 0, r.users?.username ?? null),
+      ),
+      total,
+      page,
+      page_size: pageSize,
+    };
   }
 
   async preview(dto: BatchPreviewRequestDto): Promise<BatchPreviewResponseDto> {

@@ -122,6 +122,37 @@ describe('Batches (e2e)', () => {
     expect(res.body.items[1].errors).toContain('隐患描述不能为空');
   });
 
+  it('lists batches as a paginated envelope { items, total, page, page_size }', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/batches')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(res.body).toHaveProperty('items');
+    expect(res.body).toHaveProperty('total');
+    expect(res.body.page).toBe(1);
+    expect(res.body.page_size).toBe(10);
+    expect(res.body.items).toBeInstanceOf(Array);
+    expect(res.body.total).toBeGreaterThanOrEqual(res.body.items.length);
+  });
+
+  it('paginates the batch list with page/page_size', async () => {
+    const first = await request(app.getHttpServer())
+      .get('/api/v1/batches?page=1&page_size=1')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(first.body.page).toBe(1);
+    expect(first.body.page_size).toBe(1);
+    expect(first.body.items.length).toBeLessThanOrEqual(1);
+    if (first.body.total > 1) {
+      const second = await request(app.getHttpServer())
+        .get('/api/v1/batches?page=2&page_size=1')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      expect(second.body.items.length).toBe(1);
+      expect(second.body.items[0].id).not.toBe(first.body.items[0].id);
+    }
+  });
+
   it('reuses a single enterprise record when the same credit_code appears multiple times', async () => {
     const uniq = `e_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const creditCode = `91${Date.now()}`;

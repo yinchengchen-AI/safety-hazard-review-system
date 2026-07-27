@@ -5,7 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../../storage/storage.service';
 import { UrlSignerService } from '../../storage/url-signer.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
-import { PhotoBindRequestDto, PhotoUploadResponseDto } from './dto/photo.dto';
+import { PhotoBindRequestDto, PhotoListItemDto, PhotoUploadResponseDto } from './dto/photo.dto';
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png']);
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -147,6 +147,26 @@ export class PhotosService {
       targetId: photo.id,
       detail: { task_hazard_id: dto.task_hazard_id },
     });
+  }
+
+  async listByTaskHazard(taskHazardId: string): Promise<PhotoListItemDto[]> {
+    const th = await this.prisma.task_hazards.findFirst({
+      where: { id: taskHazardId, deleted_at: null },
+    });
+    if (!th) throw new NotFoundException('Task hazard not found');
+    const photos = await this.prisma.photos.findMany({
+      where: { task_hazard_id: taskHazardId, deleted_at: null },
+      orderBy: { uploaded_at: 'asc' },
+    });
+    // URLs are signed on demand (same as the upload response) so
+    // the returned links are always within the signature TTL.
+    return photos.map((photo) => ({
+      id: photo.id,
+      task_hazard_id: taskHazardId,
+      original_url: this.signer.signPhotoUrl(photo.id, 'original'),
+      thumbnail_url: this.signer.signPhotoUrl(photo.id, 'thumbnail'),
+      created_at: photo.uploaded_at,
+    }));
   }
 
   async serveSigned(

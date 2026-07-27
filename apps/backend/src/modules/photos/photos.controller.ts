@@ -17,7 +17,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { PhotosService } from './photos.service';
-import { PhotoBindRequestDto, PhotoUploadResponseDto } from './dto/photo.dto';
+import { PhotoBindRequestDto, PhotoListItemDto, PhotoListQueryDto, PhotoUploadResponseDto } from './dto/photo.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 import { ActiveUserGuard } from '../../common/guards';
@@ -54,6 +54,12 @@ export class PhotosController {
   ): Promise<{ message: string }> {
     await this.photos.bind(tempToken, dto, user.id, user.role);
     return { message: 'Photo bound successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard, ActiveUserGuard)
+  @Get()
+  async list(@Query() query: PhotoListQueryDto): Promise<PhotoListItemDto[]> {
+    return this.photos.listByTaskHazard(query.task_hazard_id);
   }
 
   /**

@@ -5,13 +5,16 @@ import {
   HttpCode,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
+import { MaxIntPipe } from '../../common/pipes/max-int.pipe';
 import { ReviewTasksService } from './review-tasks.service';
 import {
   BatchReviewRequestDto,
   CreateReviewTaskDto,
   ReviewTaskDetailResponseDto,
+  ReviewTaskListResponseDto,
   ReviewTaskResponseDto,
   ReviewSingleHazardDto,
 } from './dto/review-task.dto';
@@ -35,8 +38,12 @@ export class ReviewTasksController {
   }
 
   @Get()
-  list(): Promise<ReviewTaskResponseDto[]> {
-    return this.tasks.list();
+  list(
+    @Query('page', new MaxIntPipe({ optional: true })) page = 1,
+    @Query('page_size', new MaxIntPipe({ optional: true })) pageSize = 10,
+    @Query('status') status?: string,
+  ): Promise<ReviewTaskListResponseDto> {
+    return this.tasks.list(page, pageSize, status);
   }
 
   @Get(':id')

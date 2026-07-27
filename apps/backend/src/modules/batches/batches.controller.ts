@@ -20,6 +20,7 @@ import { Response } from 'express';
 import { BatchesService } from './batches.service';
 import {
   BatchImportResultDto,
+  BatchListResponseDto,
   BatchPreviewRequestDto,
   BatchPreviewResponseDto,
   BatchResponseDto,
@@ -39,7 +40,7 @@ export class BatchesController {
   list(
     @Query('page', new MaxIntPipe({ optional: true })) page = 1,
     @Query('page_size', new MaxIntPipe({ optional: true })) pageSize = 10,
-  ): Promise<BatchResponseDto[]> {
+  ): Promise<BatchListResponseDto> {
     return this.batches.list(page, pageSize);
   }
 

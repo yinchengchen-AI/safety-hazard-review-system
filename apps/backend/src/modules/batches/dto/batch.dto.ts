@@ -59,6 +59,13 @@ export class BatchResponseDto {
   available_hazard_count?: number;
 }
 
+export class BatchListResponseDto {
+  items!: BatchResponseDto[];
+  total!: number;
+  page!: number;
+  page_size!: number;
+}
+
 export class BatchImportResultDto {
   batch!: BatchResponseDto;
   success_count!: number;

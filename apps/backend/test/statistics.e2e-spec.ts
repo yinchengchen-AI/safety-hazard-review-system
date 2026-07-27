@@ -52,4 +52,44 @@ describe('Statistics (e2e)', () => {
       .expect(200);
     expect(r.body).toBeInstanceOf(Array);
   });
+
+  it('trend with granularity=month reads statistics_monthly and returns YYYY-MM periods', async () => {
+    const monthKey = `2099-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}`;
+    await prisma.statistics_monthly.create({
+      data: {
+        stat_month: monthKey,
+        total_hazards: 7,
+        pending_count: 3,
+        passed_count: 2,
+        failed_count: 2,
+        review_count: 4,
+        task_count: 1,
+      },
+    });
+
+    const r = await request(app.getHttpServer())
+      .get(`/api/v1/statistics/trend?granularity=month&start_date=2099-01-01&end_date=2099-12-31`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(r.body).toBeInstanceOf(Array);
+    const row = r.body.find((x: { period: string }) => x.period === monthKey);
+    expect(row).toBeDefined();
+    expect(row.total_hazards).toBe(7);
+    expect(row.review_count).toBe(4);
+    expect(row.task_count).toBe(1);
+
+    // Out-of-range date filter excludes the row.
+    const empty = await request(app.getHttpServer())
+      .get('/api/v1/statistics/trend?granularity=month&start_date=2098-01-01&end_date=2098-12-31')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(empty.body.some((x: { period: string }) => x.period === monthKey)).toBe(false);
+  });
+
+  it('trend rejects an invalid granularity', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/statistics/trend?granularity=year')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(400);
+  });
 });

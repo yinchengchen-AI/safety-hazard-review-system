@@ -176,4 +176,73 @@ describe('Photos (e2e)', () => {
     expect(photo?.task_hazard_id).toBeNull();
     expect(photo?.temp_token).toBe(up.body.temp_token);
   });
+
+  // GET /api/v1/photos?task_hazard_id lists bound photos with
+  // freshly signed URLs so the frontend can render them.
+  it('lists photos by task_hazard_id with signed URLs', async () => {
+    const png = makePng();
+    const up = await request(app.getHttpServer())
+      .post('/api/v1/photos/upload')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .attach('file', png, { filename: 'tiny.png', contentType: 'image/png' })
+      .expect(201);
+
+    const ent = await prisma.enterprises.create({ data: { name: `list_ent_${Date.now()}` } });
+    const batch = await prisma.batches.create({ data: { name: 'b', total_count: 1, success_count: 1, fail_count: 0 } });
+    const h = await prisma.hazards.create({
+      data: { enterprise_id: ent.id, batch_id: batch.id, content: 'x', description: 'x', status: 'pending', review_count: 0 },
+    });
+    const admin = await prisma.users.findFirst({ where: { username: 'admin' } });
+    const t = await prisma.review_tasks.create({
+      data: { id: require('crypto').randomUUID(), name: 'P', creator_id: admin!.id, status: 'pending' },
+    });
+    const th = await prisma.task_hazards.create({ data: { task_id: t.id, hazard_id: h.id } });
+
+    await request(app.getHttpServer())
+      .post(`/api/v1/photos/${up.body.temp_token}/bind`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ task_hazard_id: th.id })
+      .expect(200);
+
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/photos?task_hazard_id=${th.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body).toHaveLength(1);
+    const item = res.body[0];
+    const photo = await prisma.photos.findFirst({ where: { task_hazard_id: th.id } });
+    expect(item.id).toBe(photo!.id);
+    expect(item.task_hazard_id).toBe(th.id);
+    expect(item.original_url).toMatch(/sig=/);
+    expect(item.thumbnail_url).toMatch(/sig=/);
+    expect(item.created_at).toBeDefined();
+
+    // The returned signed URL must actually serve the image.
+    await request(app.getHttpServer()).get(item.thumbnail_url).expect(200);
+
+    // A task_hazard with no photos returns an empty array.
+    const h2 = await prisma.hazards.create({
+      data: { enterprise_id: ent.id, batch_id: batch.id, content: 'y', description: 'y', status: 'pending', review_count: 0 },
+    });
+    const th2 = await prisma.task_hazards.create({ data: { task_id: t.id, hazard_id: h2.id } });
+    const empty = await request(app.getHttpServer())
+      .get(`/api/v1/photos?task_hazard_id=${th2.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(empty.body).toEqual([]);
+  });
+
+  it('returns 404 for a non-existent task_hazard_id and 400 for a non-UUID', async () => {
+    await request(app.getHttpServer())
+      .get(`/api/v1/photos?task_hazard_id=${require('crypto').randomUUID()}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(404);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/photos?task_hazard_id=not-a-uuid')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(400);
+  });
 });

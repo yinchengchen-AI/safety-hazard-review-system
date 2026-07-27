@@ -17,10 +17,12 @@ export class StatisticsController {
   trend(
     @Query('start_date') start?: string,
     @Query('end_date') end?: string,
+    @Query('granularity') granularity?: string,
   ) {
     return this.stats.trend(
       start ? new Date(start) : undefined,
       end ? new Date(end) : undefined,
+      granularity,
     );
   }
 }

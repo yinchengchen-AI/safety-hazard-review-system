@@ -35,6 +35,17 @@ export class ReviewTaskDetailResponseDto extends ReviewTaskResponseDto {
   hazards!: any[];
 }
 
+/** Allowed values for the ``status`` filter on the list endpoint. */
+export const REVIEW_TASK_STATUSES = ['pending', 'completed', 'cancelled'] as const;
+export type ReviewTaskStatus = (typeof REVIEW_TASK_STATUSES)[number];
+
+export class ReviewTaskListResponseDto {
+  items!: ReviewTaskResponseDto[];
+  total!: number;
+  page!: number;
+  page_size!: number;
+}
+
 export class ReviewSingleHazardDto {
   @IsString() @Length(1, 4000) conclusion!: string;
   @IsIn(['pending', 'passed', 'failed']) status_in_task!: string;

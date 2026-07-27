@@ -10,7 +10,9 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import {
   BatchReviewRequestDto,
   CreateReviewTaskDto,
+  REVIEW_TASK_STATUSES,
   ReviewTaskDetailResponseDto,
+  ReviewTaskListResponseDto,
   ReviewTaskResponseDto,
   ReviewSingleHazardDto,
 } from './dto/review-task.dto';
@@ -135,12 +137,32 @@ export class ReviewTasksService {
     });
   }
 
-  async list(): Promise<ReviewTaskResponseDto[]> {
-    const tasks = await this.prisma.review_tasks.findMany({
-      orderBy: { created_at: 'desc' },
-      include: { users: true },
-    });
-    if (tasks.length === 0) return [];
+  async list(
+    page = 1,
+    pageSize = 10,
+    status?: string,
+  ): Promise<ReviewTaskListResponseDto> {
+    const where: Prisma.review_tasksWhereInput = {};
+    if (status) {
+      if (!(REVIEW_TASK_STATUSES as readonly string[]).includes(status)) {
+        throw new BadRequestException(
+          `Invalid status filter: ${status}. Allowed: ${REVIEW_TASK_STATUSES.join(', ')}`,
+        );
+      }
+      where.status = status;
+    }
+
+    const [tasks, total] = await Promise.all([
+      this.prisma.review_tasks.findMany({
+        where,
+        orderBy: [{ created_at: 'desc' }, { id: 'asc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: { users: true },
+      }),
+      this.prisma.review_tasks.count({ where }),
+    ]);
+    if (tasks.length === 0) return { items: [], total, page, page_size: pageSize };
     const taskIds = tasks.map((t) => t.id);
 
     const [hazCounts, reviewedCounts, reports] = await Promise.all([
@@ -161,13 +183,18 @@ export class ReviewTasksService {
     const revMap = new Map(reviewedCounts.map((c) => [c.task_id, c._count._all]));
     const reportMap = new Map(reports.map((r) => [r.task_id, r.status]));
 
-    return tasks.map((t) =>
-      toDto(t, {
-        hazard_count: hazMap.get(t.id) ?? 0,
-        reviewed_count: revMap.get(t.id) ?? 0,
-        report_status: reportMap.get(t.id) ?? null,
-      }),
-    );
+    return {
+      items: tasks.map((t) =>
+        toDto(t, {
+          hazard_count: hazMap.get(t.id) ?? 0,
+          reviewed_count: revMap.get(t.id) ?? 0,
+          report_status: reportMap.get(t.id) ?? null,
+        }),
+      ),
+      total,
+      page,
+      page_size: pageSize,
+    };
   }
 
   async findOne(id: string): Promise<ReviewTaskDetailResponseDto> {

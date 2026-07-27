@@ -164,4 +164,63 @@ describe('ReviewTasks (e2e)', () => {
     expect(a?.status).toBe('passed');
     expect(b?.status).toBe('failed');
   });
+
+  it('lists tasks as a paginated envelope and filters by status', async () => {
+    const hid = await makeHazard('list');
+    const create = await request(app.getHttpServer())
+      .post('/api/v1/review-tasks')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ name: `TL-${Date.now()}`, hazard_ids: [hid] })
+      .expect(201);
+    const taskId = create.body.id;
+
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/review-tasks')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(res.body).toHaveProperty('items');
+    expect(res.body).toHaveProperty('total');
+    expect(res.body.page).toBe(1);
+    expect(res.body.page_size).toBe(10);
+    expect(res.body.total).toBeGreaterThanOrEqual(res.body.items.length);
+    const created = res.body.items.find((t: { id: string }) => t.id === taskId);
+    expect(created).toBeDefined();
+    expect(typeof created.hazard_count).toBe('number');
+    expect(typeof created.reviewed_count).toBe('number');
+
+    // status filter: pending contains the new task, completed does not.
+    const pending = await request(app.getHttpServer())
+      .get('/api/v1/review-tasks?status=pending&page_size=100')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(pending.body.items.some((t: { id: string }) => t.id === taskId)).toBe(true);
+    expect(pending.body.items.every((t: { status: string }) => t.status === 'pending')).toBe(true);
+
+    const completed = await request(app.getHttpServer())
+      .get('/api/v1/review-tasks?status=completed&page_size=100')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(completed.body.items.some((t: { id: string }) => t.id === taskId)).toBe(false);
+  });
+
+  it('rejects an invalid status filter and paginates with page/page_size', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/review-tasks?status=bogus')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(400);
+
+    const first = await request(app.getHttpServer())
+      .get('/api/v1/review-tasks?page=1&page_size=1')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(first.body.page_size).toBe(1);
+    expect(first.body.items.length).toBeLessThanOrEqual(1);
+    if (first.body.total > 1) {
+      const second = await request(app.getHttpServer())
+        .get('/api/v1/review-tasks?page=2&page_size=1')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      expect(second.body.items[0].id).not.toBe(first.body.items[0].id);
+    }
+  });
 });

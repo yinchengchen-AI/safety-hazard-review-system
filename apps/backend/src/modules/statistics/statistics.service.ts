@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { startOfDay, endOfDay, startOfMonth, endOfMonth, subDays, subMonths } from 'date-fns';
@@ -53,7 +53,7 @@ export class StatisticsService {
     };
   }
 
-  async trend(start?: Date, end?: Date): Promise<Array<{
+  async trend(start?: Date, end?: Date, granularity = 'day'): Promise<Array<{
     period: string;
     total_hazards: number | null;
     pending_count: number | null;
@@ -62,12 +62,45 @@ export class StatisticsService {
     review_count: number | null;
     task_count: number | null;
   }>> {
+    if (granularity === 'month') return this.monthlyTrend(start, end);
+    if (granularity !== 'day') {
+      throw new BadRequestException(
+        `Invalid granularity: ${granularity}. Allowed: day, month`,
+      );
+    }
     const where: { stat_date?: { gte?: Date; lte?: Date } } = {};
     if (start) where.stat_date = { ...(where.stat_date ?? {}), gte: start };
     if (end) where.stat_date = { ...(where.stat_date ?? {}), lte: end };
     const rows = await this.prisma.statistics_daily.findMany({ where, orderBy: { stat_date: 'asc' } });
     return rows.map((r) => ({
       period: r.stat_date ? r.stat_date.toISOString().slice(0, 10) : '',
+      total_hazards: r.total_hazards,
+      pending_count: r.pending_count,
+      passed_count: r.passed_count,
+      failed_count: r.failed_count,
+      review_count: r.review_count,
+      task_count: r.task_count,
+    }));
+  }
+
+  /** Monthly trend, same shape as the daily trend but sourced from
+   *  ``statistics_monthly``. ``period`` is the ``YYYY-MM`` month key;
+   *  the date range filters compare against that key. */
+  private async monthlyTrend(start?: Date, end?: Date): Promise<Array<{
+    period: string;
+    total_hazards: number | null;
+    pending_count: number | null;
+    passed_count: number | null;
+    failed_count: number | null;
+    review_count: number | null;
+    task_count: number | null;
+  }>> {
+    const where: { stat_month?: { gte?: string; lte?: string } } = {};
+    if (start) where.stat_month = { ...(where.stat_month ?? {}), gte: start.toISOString().slice(0, 7) };
+    if (end) where.stat_month = { ...(where.stat_month ?? {}), lte: end.toISOString().slice(0, 7) };
+    const rows = await this.prisma.statistics_monthly.findMany({ where, orderBy: { stat_month: 'asc' } });
+    return rows.map((r) => ({
+      period: r.stat_month,
       total_hazards: r.total_hazards,
       pending_count: r.pending_count,
       passed_count: r.passed_count,
