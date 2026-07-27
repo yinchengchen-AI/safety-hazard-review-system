@@ -3,6 +3,7 @@
 # an HTTP server.
 FROM docker.m.daocloud.io/node:20-alpine AS builder
 WORKDIR /app
+RUN apk add --no-cache openssl
 COPY package*.json ./
 RUN npm ci
 COPY tsconfig*.json ./
@@ -16,7 +17,7 @@ ENV NODE_ENV=production
 # P0-6: install CJK fonts so Playwright-rendered PDFs / DOCX exports
 # contain real Chinese glyphs instead of tofu boxes. fontconfig is
 # required so fc-match resolves the requested family.
-RUN apk add --no-cache fontconfig font-noto-cjk ttf-dejavu \
+RUN apk add --no-cache fontconfig font-noto-cjk ttf-dejavu openssl \
     && fc-cache -fv > /dev/null
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
