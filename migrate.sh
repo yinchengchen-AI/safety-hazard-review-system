@@ -26,4 +26,4 @@ docker run --rm \
   -w /app/apps/backend \
   --network host \
   node:20-alpine \
-  sh -c "npx prisma@5 migrate deploy"
+  sh -c "apk add --no-cache openssl >/dev/null && npx prisma@5 migrate deploy"
