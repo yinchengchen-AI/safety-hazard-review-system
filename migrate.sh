@@ -22,9 +22,8 @@ echo "[migrate] DATABASE_URL=$DATABASE_URL"
 
 docker run --rm \
   -e DATABASE_URL="$DATABASE_URL" \
-  -v "$(pwd)/apps/backend/prisma:/app/prisma" \
-  -v "$(pwd)/apps/backend/node_modules/.prisma:/app/node_modules/.prisma" \
+  -v "$(pwd)/apps/backend/prisma:/app/apps/backend/prisma" \
   -w /app/apps/backend \
   --network host \
   node:20-alpine \
-  sh -c "npx prisma migrate deploy"
+  sh -c "npx prisma@5 migrate deploy"
