@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react'
-import { Card, Col, Radio, Row, Statistic, Spin, message } from 'antd'
+import { Card, Col, Grid, Radio, Row, Statistic, Spin, message } from 'antd'
 import { Line } from '@ant-design/charts'
 import request, { getErrorMessage } from '@/lib/api'
 
@@ -30,6 +30,8 @@ export default function StatisticsPage() {
   const [overviewLoading, setOverviewLoading] = useState(true)
   const [trendLoading, setTrendLoading] = useState(true)
   const [granularity, setGranularity] = useState<Granularity>('day')
+  const screens = Grid.useBreakpoint()
+  const isMobile = !screens.md
 
   useEffect(() => {
     const controller = new AbortController()
@@ -112,7 +114,9 @@ export default function StatisticsPage() {
                 xField="date"
                 yField="value"
                 colorField="type"
-                height={280}
+                height={isMobile ? 220 : 280}
+                axis={isMobile ? { x: { labelAutoHide: true, labelAutoRotate: true } } : undefined}
+                legend={isMobile ? { color: { position: 'top' } } : undefined}
               />
             </div>
           ) : (

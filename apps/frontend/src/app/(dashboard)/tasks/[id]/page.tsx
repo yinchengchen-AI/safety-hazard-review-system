@@ -365,7 +365,7 @@ export default function TaskDetailPage() {
       <Card
         title="任务信息"
         extra={
-          <Space wrap>
+          <Space wrap className="task-detail-actions">
             {task.status === 'pending' && (
               <Button danger onClick={handleCancel}>取消任务</Button>
             )}

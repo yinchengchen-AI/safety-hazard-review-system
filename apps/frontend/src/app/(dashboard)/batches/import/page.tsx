@@ -59,16 +59,18 @@ export default function BatchImportPage() {
       </Card>
       {result && (
         <Card style={{ marginTop: 16 }} title="导入结果">
-          <p>批次 ID: {result.batch?.id}</p>
-          <p>成功: {result.success_count} | 失败: {result.fail_count}</p>
-          {result.errors?.length > 0 && (
-            <div>
-              <Typography.Title level={5}>错误明细</Typography.Title>
-              <ul>
-                {result.errors.map((e: any, i: number) => <li key={i}>第 {e.row_index} 行: {e.reason}</li>)}
-              </ul>
-            </div>
-          )}
+          <div className="import-result">
+            <p>批次 ID: {result.batch?.id}</p>
+            <p>成功: {result.success_count} | 失败: {result.fail_count}</p>
+            {result.errors?.length > 0 && (
+              <div>
+                <Typography.Title level={5}>错误明细</Typography.Title>
+                <ul>
+                  {result.errors.map((e: any, i: number) => <li key={i}>第 {e.row_index} 行: {e.reason}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
           <Button onClick={() => router.push('/batches')} type="primary" style={{ marginTop: 16 }}>返回列表</Button>
         </Card>
       )}

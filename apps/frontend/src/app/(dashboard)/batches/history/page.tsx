@@ -197,6 +197,7 @@ export default function BatchesHistoryPage() {
             rowKey="id"
             dataSource={errors}
             size="small"
+            scroll={{ x: 560 }}
             pagination={{ pageSize: 10 }}
             columns={[
               { title: '行号', dataIndex: 'row_index', width: 80 },
